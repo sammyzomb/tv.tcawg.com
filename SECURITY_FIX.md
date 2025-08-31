@@ -4,7 +4,7 @@
 
 ### 高風險問題
 1. **Contentful API Token 外露**
-   - Token: `lODH-WLwHwVZv7O4rFdBWjSnrzaQWGD4koeOZ1Dypj0`
+   - Token: `your-delivery-token-here`
    - 影響: 8個檔案中硬編碼
    - 風險: 任何人都可以訪問您的 Contentful 內容
 

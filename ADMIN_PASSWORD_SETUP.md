@@ -12,8 +12,8 @@
 在專案根目錄建立 `.env` 檔案：
 ```bash
 # 超級管理員設定
-SUPER_ADMIN_EMAIL=sammyzomb@gmail.com
-SUPER_ADMIN_PASSWORD=Ddpeacemisb@
+SUPER_ADMIN_EMAIL=your-admin-email@example.com
+SUPER_ADMIN_PASSWORD=your-admin-password-here
 ```
 
 #### 2. 設定強密碼規則
@@ -35,7 +35,7 @@ SecurePass$456
 如果您暫時無法使用環境變數，可以修改 `admin-login.html` 中的密碼：
 
 ```javascript
-const superAdminPassword = 'Ddpeacemisb@';
+const superAdminPassword = 'your-admin-password-here';
 ```
 
 ## 🔒 安全建議

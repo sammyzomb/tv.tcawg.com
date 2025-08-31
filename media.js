@@ -9,8 +9,8 @@
 
   // 初始化 Contentful client
   const contentfulClient = contentful.createClient({
-    space: 'os5wf90ljenp',
-    accessToken: 'lODH-WLwHwVZv7O4rFdBWjSnrzaQWGD4koeOZ1Dypj0'
+    space: process.env.CONTENTFUL_SPACE_ID || 'your-space-id-here',
+    accessToken: process.env.CONTENTFUL_DELIVERY_TOKEN || 'your-delivery-token-here'
   });
 
   document.addEventListener('DOMContentLoaded', () => {

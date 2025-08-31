@@ -231,16 +231,16 @@
   </div>
 
   <script>
-    // Contentful 設定 - 使用環境變數或預設值
+    // Contentful 設定 - 使用環境變數
     const contentfulClient = contentful.createClient({
-      space: process.env.CONTENTFUL_SPACE_ID || 'os5wf90ljenp',
-      accessToken: process.env.CONTENTFUL_DELIVERY_TOKEN || 'lODH-WLwHwVZv7O4rFdBWjSnrzaQWGD4koeOZ1Dypj0'
+      space: process.env.CONTENTFUL_SPACE_ID || 'your-space-id-here',
+      accessToken: process.env.CONTENTFUL_DELIVERY_TOKEN || 'your-delivery-token-here'
     });
     
     // 授權用戶列表 (實際應用中應該從 Contentful 獲取)
     const authorizedUsers = [
       {
-        email: 'sammyzomb@gmail.com',
+        email: process.env.SUPER_ADMIN_EMAIL || 'your-admin-email@example.com',
         name: '超級管理員',
         role: 'super_admin',
         permissions: ['read', 'write', 'delete', 'publish', 'admin', 'system']
@@ -298,7 +298,7 @@
       if (user) {
         // 這裡應該調用 Contentful 的認證 API
         // 目前使用模擬驗證
-        const superAdminPassword = process.env.SUPER_ADMIN_PASSWORD || 'Ddpeacemisb@';
+        const superAdminPassword = process.env.SUPER_ADMIN_PASSWORD || 'your-admin-password-here';
         
         if (password === superAdminPassword) {
           return user;
