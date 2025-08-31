@@ -9,6 +9,7 @@ secrets/
 *.key
 *.pem
 *.p12
+PRIVATE_TOKENS.txt
 
 # 日誌檔案
 *.log
