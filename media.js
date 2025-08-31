@@ -52,8 +52,11 @@
       ytIdToIndex = {};
       heroVideos.forEach((v, idx) => ytIdToIndex[v.id] = idx);
 
-      if (!heroOrder.length) return;
-      initializeHeroPlayer();
+             if (!heroOrder.length) {
+         console.log('沒有找到 Hero 影片，不初始化播放器');
+         return;
+       }
+       initializeHeroPlayer();
          }).catch(err => {
        console.error('處理 Hero 影片時發生錯誤:', err);
        // 如果 Contentful 載入失敗，不顯示任何影片
@@ -70,8 +73,11 @@
     }
   }
 
-  function onYouTubeIframeAPIReady() {
-    if (!heroVideos.length || !heroOrder.length) return;
+     function onYouTubeIframeAPIReady() {
+     if (!heroVideos.length || !heroOrder.length) {
+       console.log('沒有 Hero 影片可播放');
+       return;
+     }
 
     const mask = document.getElementById('heroMask');
     if (mask) mask.classList.add('show'); // 先蓋遮罩
