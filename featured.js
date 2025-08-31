@@ -26,7 +26,7 @@
     try {
       const entries = await contentfulClient.getEntries({
         content_type: 'video',
-        'fields.精選節目推薦': true,
+        'fields.isFeatured': true,
         order: '-sys.updatedAt',
         limit: 100
       });
@@ -39,7 +39,7 @@
         const mp4   = pick(f, ['MP4 影片網址','mp4Url']);
         const tags  = Array.isArray(f.tags) ? f.tags : [];
         let thumb = '';
-        const cfThumb = f['封面圖']?.fields?.file?.url || f.thumbnail?.fields?.file?.url;
+        const cfThumb = f.thumbnail?.fields?.file?.url;
         if (cfThumb) thumb = cfThumb.startsWith('http') ? cfThumb : `https:${cfThumb}`;
         else if (ytid) thumb = `https://i.ytimg.com/vi/${ytid}/hqdefault.jpg`;
         return { title, desc, ytid, mp4, tags, thumb };

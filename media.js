@@ -17,17 +17,17 @@
     // 抓 Hero 影片
     contentfulClient.getEntries({
       content_type: 'video',
-      'fields.首頁 HERO': true,
+      'fields.isHero': true,
       order: '-sys.updatedAt',
       limit: 1000
     }).then(response => {
       const mapped = response.items.map(item => ({
         sysId: item.sys.id,
         updatedAt: item.sys.updatedAt,
-        id: item.fields['YouTube ID'] || item.fields.youTubeId || item.fields.youtubeId || '',
-        title: item.fields['HERO主題'] || item.fields.heroTitle || item.fields.title || '',
-        desc: item.fields['HERO右下說明文字'] || item.fields.heroText || item.fields.description || '',
-        thumb: item.fields['封面圖']?.fields?.file?.url || item.fields.thumbnail?.fields?.file?.url || ''
+        id: item.fields.youTubeId || item.fields.youtubeId || '',
+        title: item.fields.heroTitle || item.fields.title || '',
+        desc: item.fields.heroText || item.fields.description || '',
+        thumb: item.fields.thumbnail?.fields?.file?.url || ''
       })).filter(v => v.id);
 
       // 去重（同一 YouTube ID 保留較新）
