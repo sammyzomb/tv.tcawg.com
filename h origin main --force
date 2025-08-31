@@ -1,0 +1,10 @@
+[33mca43cef[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m 修正 Contentful 欄位對應，使用正確的 hero 和精選節目欄位
+[33m3353b62[m Update contentful-api.js
+[33m77b259d[m 修復 Contentful API tokens
+[33mfa084fb[m 將 .env 加入忽略清單
+[33m27bf33e[m 覆蓋本機版本到 GitHub
+[33mebe7849[m 更新 Contentful token 並修復網站問題
+[33m9ad7856[m 添加明天到公司電腦的快速提醒卡片
+[33m475214a[m 添加明天到公司電腦的完整操作指南
+[33m1a5637e[m 添加專案文件和 Cursor 同步指南：PROJECT_CONTEXT.md, DEVELOPMENT_NOTES.md, GITHUB_CURSOR_SYNC.md, CURSOR_SYNC_GUIDE.md, GITHUB_QUICK_START.md
+[33m62ca2a1[m 新增節目歸檔與分類系統：包含自動歸檔邏輯、多維度篩選、管理介面和統計分析功能

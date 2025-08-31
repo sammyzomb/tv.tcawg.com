@@ -1,0 +1,125 @@
+{
+  "programTemplates": [
+    {
+      "templateName": "早安世界",
+      "titlePattern": "早安世界 - {地點}",
+      "duration": 60,
+      "category": "亞洲旅遊",
+      "description": "跟著我們一起探索{地點}的早晨，從當地市場到著名景點的寧靜時光",
+      "defaultStatus": "首播",
+      "colorCode": "#4caf50",
+      "videoType": "YouTube",
+      "tags": ["早晨", "亞洲", "文化"]
+    },
+    {
+      "templateName": "世界廚房",
+      "titlePattern": "世界廚房 - {地點}美食之旅",
+      "duration": 45,
+      "category": "美食旅遊",
+      "description": "深入{地點}，品嚐最道地的當地美食與特色料理",
+      "defaultStatus": "重播",
+      "colorCode": "#ff9800",
+      "videoType": "YouTube",
+      "tags": ["美食", "料理", "文化"]
+    },
+    {
+      "templateName": "極地探險",
+      "titlePattern": "極地探險 - {地點}",
+      "duration": 60,
+      "category": "極地旅遊",
+      "description": "在{地點}追尋極光的神秘蹤跡，體驗極地探險的刺激",
+      "defaultStatus": "特別節目",
+      "colorCode": "#2196f3",
+      "videoType": "MP4",
+      "tags": ["極地", "探險", "自然"]
+    },
+    {
+      "templateName": "城市漫步",
+      "titlePattern": "城市漫步 - {地點}",
+      "duration": 45,
+      "category": "歐洲旅遊",
+      "description": "沿著{地點}的街道漫步，感受這座城市的獨特魅力",
+      "defaultStatus": "重播",
+      "colorCode": "#9c27b0",
+      "videoType": "YouTube",
+      "tags": ["城市", "歐洲", "文化"]
+    },
+    {
+      "templateName": "自然奇觀",
+      "titlePattern": "自然奇觀 - {地點}",
+      "duration": 60,
+      "category": "自然旅遊",
+      "description": "探索{地點}的自然奇觀，感受大自然的壯麗景色",
+      "defaultStatus": "首播",
+      "colorCode": "#8bc34a",
+      "videoType": "MP4",
+      "tags": ["自然", "風景", "探險"]
+    }
+  ],
+  "monthlySchedules": [
+    {
+      "monthYear": "2024-01",
+      "programs": [
+        {
+          "airDate": "2024-01-15",
+          "airTime": "06:00",
+          "title": "早安世界 - 日本東京晨間漫步",
+          "duration": 60,
+          "category": "亞洲旅遊",
+          "description": "跟著我們一起探索東京的早晨，從築地市場到淺草寺的寧靜時光",
+          "videoType": "YouTube",
+          "videoId": "dQw4w9WgXcQ",
+          "status": "首播",
+          "createdBy": "admin@travelchannel.com",
+          "createdAt": "2024-01-01T00:00:00.000Z"
+        },
+        {
+          "airDate": "2024-01-15",
+          "airTime": "12:00",
+          "title": "世界廚房 - 義大利羅馬美食之旅",
+          "duration": 45,
+          "category": "美食旅遊",
+          "description": "深入羅馬，品嚐最道地的義大利美食與特色料理",
+          "videoType": "YouTube",
+          "videoId": "abc123def456",
+          "status": "重播",
+          "createdBy": "editor@travelchannel.com",
+          "createdAt": "2024-01-01T00:00:00.000Z"
+        }
+      ],
+      "notes": "2024年1月節目安排，包含新年特別節目"
+    }
+  ],
+  "videoAssets": [
+    {
+      "title": "東京晨間漫步",
+      "videoFile": "https://example.com/videos/tokyo-morning.mp4",
+      "thumbnail": "https://example.com/thumbnails/tokyo-morning.jpg",
+      "duration": 3600,
+      "category": "亞洲旅遊",
+      "description": "東京早晨的寧靜時光，從築地市場到淺草寺",
+      "tags": ["東京", "早晨", "文化"],
+      "uploadDate": "2024-01-01"
+    },
+    {
+      "title": "北極光探險",
+      "videoFile": "https://example.com/videos/aurora-adventure.mp4",
+      "thumbnail": "https://example.com/thumbnails/aurora-adventure.jpg",
+      "duration": 3600,
+      "category": "極地旅遊",
+      "description": "在冰島追尋極光的神秘蹤跡",
+      "tags": ["極光", "冰島", "探險"],
+      "uploadDate": "2024-01-01"
+    }
+  ],
+  "userActivityLogs": [
+    {
+      "userEmail": "admin@travelchannel.com",
+      "action": "創建節目",
+      "target": "早安世界 - 日本東京",
+      "details": "創建了新的節目內容",
+      "timestamp": "2024-01-01T00:00:00.000Z",
+      "ipAddress": "192.168.1.1"
+    }
+  ]
+}

@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>所有節目｜航向世界旅遊頻道</title>
+
+  <!-- 站內樣式 -->
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="favicon.png" type="image/png">
+
+  <!-- 必要套件：Contentful + Twemoji -->
+  <script src="https://cdn.jsdelivr.net/npm/contentful@latest/dist/contentful.browser.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/twemoji@14.0.2/dist/twemoji.min.js" crossorigin="anonymous"></script>
+
+  <!-- 本頁樣式（極簡主題橋接 + 橫向分類條 + 卡片等高 + 區塊收合 + 標籤/徽章） -->
+  <style>
+    :root{ --bg:#ffffff; --text:#111827; --card:#ffffff; --card-border:rgba(0,0,0,.06); --accent:#e0b46a; --active-bg:#f6f6f6; }
+    .dark-theme{ --bg:#0b1620; --text:#e5eef9; --card:#0f2133; --card-border:rgba(255,255,255,.08); --active-bg:#0f2133; }
+    body{ background:var(--bg); color:var(--text); margin:0; }
+
+    .page-wrap { max-width: 1200px; margin: 0 auto; padding: 24px 5%; }
+    .page-head { display:flex; align-items:center; gap:12px; margin: 8px 0 16px; }
+    .page-head h1 { font-weight:900; font-size:28px; margin:0; }
+    .hint { color:#8aa4c2; font-size:14px; }
+
+   /* === 七大洲導覽（修正版：避免直向捲動/換行/基線抖動） === */
+.continent-menu{
+  position: sticky; top: calc(64px + env(safe-area-inset-top, 0px));
+  z-index: 20;
+  display:block;
+  padding:10px 0 14px;
+  background:var(--bg);
+  border-bottom:1px solid var(--card-border);
+  overflow-x:auto;
+  overflow-y:hidden; /* 防止 ::after 造成直向捲動 */
+  -webkit-overflow-scrolling:touch;
+  white-space:nowrap; /* 避免子項換行 */
+  box-sizing:border-box;
+  mask-image: linear-gradient(to right, transparent 0, black 12px, black calc(100% - 12px), transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0, black 12px, black calc(100% - 12px), transparent 100%); /* 新增這行 */
+}
+
+}
+
+/* 置中軌道：所有洲按鈕與分隔線都放這裡（一定要有這層） */
+.continent-track{
+  display:inline-flex; align-items:center; gap:0;
+  width:max-content;
+  margin:0 auto;
+  padding:0 8px;
+}
+
+.continent-item{
+  appearance:none; background:none; border:0; cursor:pointer;
+  display:flex; align-items:center; gap:10px;
+  padding:10px 18px; margin:0;
+  text-align:center;
+  line-height:1.1; position:relative;
+  flex:0 0 auto; transition: color .2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.continent-item .icon{
+  width:20px; height:20px; flex:0 0 auto;
+  stroke: currentColor; fill: none; stroke-width:1.5px; color:#8aa4c2;
+  display:block;                     /* 避免 SVG baseline 位移 */
+}
+.continent-item .label{ display:flex; flex-direction:column; align-items:center; }
+.continent-item .label .zh{ font-weight:900; font-size:16px; color:var(--text); letter-spacing:.02em; }
+.continent-item .label .en{ font-size:12px; color:#8aa4c2; margin-top:2px; }
+
+/* 分隔線（桌面顯示，手機隱藏） */
+.divider{
+  width:1px; height:26px; background:var(--card-border); margin:0 2px;
+  flex:0 0 auto; align-self:center;
+}
+@media (max-width:900px){ .divider{ display:none; } }
+
+/* hover/active 底線維持在容器內（bottom:0） */
+.continent-item::after{
+  content:""; position:absolute; left:18px; right:18px; bottom:0;
+  height:2px; background:var(--accent, #e0b46a); border-radius:2px;
+  transform:scaleX(0); transform-origin:center; transition:transform .18s ease-out;
+}
+.continent-item:hover{ color:var(--accent, #e0b46a); }
+.continent-item:hover .label .zh,
+.continent-item:hover .label .en{ color:var(--accent, #e0b46a); }
+.continent-item:hover::after{ transform:scaleX(1); }
+
+.continent-item.active{ color:var(--accent, #e0b46a); background:transparent; }
+.continent-item.active .label .zh,
+.continent-item.active .label .en{ color:var(--accent, #e0b46a); }
+.continent-item.active::after{ transform:scaleX(1); }
+
+/* 深色主題微調 */
+.dark-theme .continent-menu{ border-bottom-color:rgba(255,255,255,.1); }
+.dark-theme .divider{ background:rgba(255,255,255,.12); }
+.dark-theme .continent-item .label .en{ color:#93a6bf; }
+
+
+    /* === 洲/國家標題 === */
+    .continent-title { margin:24px 0 12px; font-size:26px; font-weight:900; border-left:6px solid #3fa0ff; padding-left:10px; }
+    .country-head{display:flex;align-items:center;gap:10px;margin:12px 0 6px}
+    .country-title{margin:0;font-size:20px;font-weight:800;display:flex;align-items:center;gap:8px}
+    .country-flag{font-size:22px;line-height:1;display:inline-flex;align-items:center}
+    .country-flag img.emoji{height:1.2em;width:auto;vertical-align:-0.15em}
+    .country-count{font-size:12px;font-weight:700;padding:2px 8px;border-radius:999px;background:#e9eef6;color:#0a2a4a}
+    .dark-theme .country-count{background:#0f2a44;color:#cfe4ff}
+
+    /* === 卡片（等高＋按鈕貼底對齊）=== */
+    .video-grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+      gap:16px;
+      align-items:stretch;
+    }
+    .video-card{
+      display:flex; flex-direction:column;
+      border-radius:16px; background:var(--card); border:1px solid var(--card-border);
+      box-shadow:0 8px 24px rgba(0,0,0,.12); overflow:hidden;
+    }
+    .video-thumb{
+      flex:0 0 auto; aspect-ratio:16/9; width:100%; overflow:hidden;
+      border-bottom:1px solid var(--card-border); background:#e5e7eb;
+    }
+    .video-thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
+    .video-content{ display:flex; flex-direction:column; gap:8px; flex:1 1 auto; padding:14px 16px; }
+    .video-title{ font-weight:900; font-size:18px; margin:6px 0 0; line-height:1.35; color:var(--text); }
+    .video-tags{ color:#8aa4c2; font-size:13px; margin-bottom:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .video-desc{
+      color:#93a6bf; font-size:14px; line-height:1.55; overflow:hidden;
+      display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical;
+      min-height:calc(1.55em * 3);
+    }
+    .video-cta{
+      margin-top:auto; align-self:flex-start;
+      padding:10px 14px; border-radius:12px; border:0; background:#3fa0ff; color:#001528; font-weight:800; cursor:pointer;
+    }
+
+    /* === 收合/展開 === */
+    .grid-wrap{position:relative}
+    .grid-wrap.is-collapsed .video-card:nth-child(n+7){display:none}
+    .grid-fade{position:absolute;left:0;right:0;bottom:0;height:72px;background:linear-gradient(to bottom,rgba(0,0,0,0),var(--bg));pointer-events:none;opacity:1;transition:opacity .25s ease}
+    .grid-wrap.is-expanded .grid-fade{opacity:0}
+
+    .country-more-btn{
+      display:inline-flex;align-items:center;gap:8px;justify-content:center;
+      margin:12px auto 28px;padding:10px 16px;border-radius:999px;border:1px solid var(--card-border);
+      background:var(--card);color:var(--text);font-weight:800;cursor:pointer; box-shadow:0 4px 12px rgba(0,0,0,.06)
+    }
+    .country-more-btn:hover{transform:translateY(-1px)}
+    .country-more-btn:active{transform:translateY(0)}
+    .country-more-btn .chev{width:16px;height:16px;transition:transform .25s ease}
+    .country-more-btn.expanded .chev{transform:rotate(180deg)}
+
+    .placeholder { border:1px dashed #3a5b7b; border-radius:12px; padding:24px; color:#8aa4c2; text-align:center; }
+
+    .is-hidden { display: none !important; }
+
+    img.emoji { height: 1em; width: auto; vertical-align: -0.15em; display: inline; }
+    /* 讓每個洲的段落往下預留空間，避免被 sticky 導覽蓋住 */
+section[id^="cont-"] { scroll-margin-top: 150px; }  /* 桌面 */
+@media (max-width:900px){
+  section[id^="cont-"] { scroll-margin-top: 140px; } /* 手機 */
+}
+
+  </style>
+</head>
+<body>
+
+  <!-- 導覽列（沿用全站 .navbar，不在此修改） -->
+  <div class="navbar">
+    <a class="logo" href="index.html"><img src="logo.png" alt="航向世界旅遊頻道 LOGO" /></a>
+    <nav class="desktop-nav">
+      <a href="index.html">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9L12 2L21 9V20a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        <span class="nav-text">首頁</span>
+      </a>
+      <a href="videos.html">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><path d="M8 21h8m-4-4v4"/></svg>
+        <span class="nav-text">所有節目</span>
+      </a>
+      <a href="schedule.html">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        <span class="nav-text">節目表</span>
+      </a>
+      <a href="topics.html">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <span class="nav-text">主題探索</span>
+      </a>
+    </nav>
+
+    <div class="nav-actions">
+      <a href="#" id="theme-switcher" title="切換主題">
+        <svg id="theme-icon-sun" class="nav-icon" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+        <svg id="theme-icon-moon" class="nav-icon" style="display:none;" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+      </a>
+      <a href="login.html" class="login-link">
+        <svg class="nav-icon" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="7" r="4.5" stroke-width="2"/><ellipse cx="10" cy="15.2" rx="6.8" ry="3.2" stroke-width="2"/></svg>
+        <span class="nav-text">會員登入</span>
+      </a>
+      <button id="hamburger-btn" class="hamburger-btn">
+        <svg viewBox="0 0 100 80" width="24" height="24"><rect width="100" height="15" rx="8"></rect><rect y="30" width="100" height="15" rx="8"></rect><rect y="60" width="100" height="15" rx="8"></rect></svg>
+      </button>
+    </div>
+  </div>
+
+  <div id="side-menu" class="side-menu">
+    <a href="index.html">首頁</a>
+    <a href="videos.html">所有節目</a>
+    <a href="schedule.html">節目表</a>
+    <a href="topics.html">主題探索</a>
+  </div>
+  <div id="menu-overlay" class="menu-overlay"></div>
+
+  <!-- 內容區：所有節目 -->
+  <main class="page-wrap">
+    <div class="page-head">
+      <h1>所有節目</h1>
+      <span class="hint">自動依「洲 → 國家／綜合」分組（從標題→標籤→說明文字偵測國家）</span>
+    </div>
+    <div id="all-videos"><div class="placeholder">載入中…</div></div>
+  </main>
+
+  <!-- 站內 JS（主題切換 / 漢堡選單等） -->
+  <script src="script.js"></script>
+
+  <!-- 本頁邏輯：橫向分類條 + 自動分類 + 收合/展開 + 國旗 SVG + 篩選 -->
+  <script>
+  (function(){
+    'use strict';
+
+    const $ = (s, el=document) => el.querySelector(s);
+    const escapeHtml = (s='') => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+    const norm = (str='') => String(str).trim().toLowerCase().replace(/\s+/g,' ').replace(/[()．・·‚’'´`’‘"]/g,'').replace(/台/g,'臺');
+
+    // 固定七大洲（導覽用）
+    const CONTINENTS_7 = [
+      { key:'asia',          label:'亞洲' },
+      { key:'europe',        label:'歐洲' },
+      { key:'north_america', label:'北美洲' },
+      { key:'south_america', label:'南美洲' },
+      { key:'africa',        label:'非洲' },
+      { key:'oceania',       label:'大洋洲' },
+      { key:'antarctica',    label:'南極洲' },
+    ];
+    // 實際渲染時也會用到（加上 other 以容納未知）
+    const CONTINENTS = [...CONTINENTS_7, { key:'other', label:'其他' }];
+
+    const REGION_HINTS = new Map([
+      ['東亞','asia'],['東北亞','asia'],['東南亞','asia'],['南亞','asia'],['中亞','asia'],['西亞','asia'],['中東','asia'],
+      ['歐洲','europe'],['北歐','europe'],['東歐','europe'],['西歐','europe'],['中歐','europe'],['地中海','europe'],['巴爾幹','europe'],['斯堪地那維亞','europe'],
+      ['北美','north_america'],['南美','south_america'],['中南美','south_america'],
+      ['非洲','africa'],['撒哈拉','africa'],['撒哈拉以南非洲','africa'],
+      ['大洋洲','oceania'],['南太平洋','oceania'],['南極','antarctica'],['南極洲','antarctica'],
+      ['east asia','asia'],['southeast asia','asia'],['south asia','asia'],['central asia','asia'],['middle east','asia'],
+      ['europe','europe'],['mediterranean','europe'],['balkans','europe'],['scandinavia','europe'],['nordic','europe'],
+      ['north america','north_america'],['south america','south_america'],['latin america','south_america'],
+      ['africa','africa'],['sub-saharan','africa'],['oceania','oceania'],['antarctica','antarctica'],
+    ]);
+
+    // === 國家索引（節錄；原本內容保留）===
+    const COUNTRY_INDEX = [
+      { country:'日本', aliases:['日本','にほん','nihon','nippon','japan','jp'], continent:'asia' },
+      { country:'韓國', aliases:['韓國','南韓','대한민국','korea','south korea','kr'], continent:'asia' },
+      { country:'台灣', aliases:['臺灣','台灣','taiwan','tw'], continent:'asia' },
+      { country:'中國', aliases:['中國','中國大陸','china','cn'], continent:'asia' },
+      { country:'蒙古', aliases:['蒙古','mongolia','mn'], continent:'asia' },
+      { country:'哈薩克', aliases:['哈薩克','哈薩克斯坦','kazakhstan','kz'], continent:'asia' },
+      { country:'吉爾吉斯', aliases:['吉爾吉斯','吉爾吉斯斯坦','kyrgyzstan','kg','kirgiz'], continent:'asia' },
+      { country:'烏茲別克', aliases:['烏茲別克','烏茲別克斯坦','uzbekistan','uz'], continent:'asia' },
+      { country:'塔吉克', aliases:['塔吉克','塔吉克斯坦','tajikistan','tj'], continent:'asia' },
+      { country:'土庫曼', aliases:['土庫曼','土庫曼斯坦','turkmenistan','tm'], continent:'asia' },
+      { country:'印度', aliases:['印度','india','in'], continent:'asia' },
+      { country:'泰國', aliases:['泰國','thailand','th'], continent:'asia' },
+      { country:'越南', aliases:['越南','vietnam','vn'], continent:'asia' },
+      { country:'馬來西亞', aliases:['馬來西亞','malaysia','my'], continent:'asia' },
+      { country:'印尼', aliases:['印尼','印度尼西亞','indonesia','id'], continent:'asia' },
+      { country:'尼泊爾', aliases:['尼泊爾','nepal','np'], continent:'asia' },
+      { country:'以色列', aliases:['以色列','israel','il'], continent:'asia' },
+      { country:'約旦', aliases:['約旦','jordan','jo'], continent:'asia' },
+      { country:'土耳其', aliases:['土耳其','turkiye','turkey','tr'], continent:'asia' },
+      { country:'伊朗', aliases:['伊朗','iran','ir'], continent:'asia' },
+      { country:'不丹', aliases:['不丹','bhutan','bt'], continent:'asia' },
+      { country:'俄羅斯', aliases:['俄羅斯','russia','ru','西伯利亞','siberia'], continent:'asia' },
+
+      { country:'芬蘭', aliases:['芬蘭','finland','fi'], continent:'europe' },
+      { country:'挪威', aliases:['挪威','norway','no'], continent:'europe' },
+      { country:'瑞典', aliases:['瑞典','sweden','se'], continent:'europe' },
+      { country:'瑞士', aliases:['瑞士','switzerland','ch'], continent:'europe' },
+      { country:'英國', aliases:['英國','uk','united kingdom','england','scotland','wales','northern ireland','gb'], continent:'europe' },
+      { country:'法國', aliases:['法國','france','fr'], continent:'europe' },
+      { country:'德國', aliases:['德國','germany','de'], continent:'europe' },
+      { country:'義大利', aliases:['義大利','意大利','italy','it'], continent:'europe' },
+      { country:'西班牙', aliases:['西班牙','spain','es'], continent:'europe' },
+      { country:'葡萄牙', aliases:['葡萄牙','portugal','pt'], continent:'europe' },
+      { country:'捷克', aliases:['捷克','czech','czechia','cz'], continent:'europe' },
+      { country:'奧地利', aliases:['奧地利','austria','at'], continent:'europe' },
+      { country:'冰島', aliases:['冰島','iceland','is'], continent:'europe' },
+
+      { country:'美國', aliases:['美國','usa','us','united states','america','u.s.'], continent:'north_america' },
+      { country:'加拿大', aliases:['加拿大','canada','ca'], continent:'north_america' },
+      { country:'墨西哥', aliases:['墨西哥','mexico','mx'], continent:'north_america' },
+
+      { country:'巴西', aliases:['巴西','brazil','br'], continent:'south_america' },
+      { country:'阿根廷', aliases:['阿根廷','argentina','ar'], continent:'south_america' },
+      { country:'智利', aliases:['智利','chile','cl'], continent:'south_america' },
+      { country:'祕魯', aliases:['祕魯','秘魯','peru','pe'], continent:'south_america' },
+      { country:'玻利維亞', aliases:['玻利維亞','bolivia','bo'], continent:'south_america' },
+      { country:'哥倫比亞', aliases:['哥倫比亞','colombia','co'], continent:'south_america' },
+
+      { country:'南非', aliases:['南非','south africa','za'], continent:'africa' },
+      { country:'肯亞', aliases:['肯亞','kenya','ke'], continent:'africa' },
+      { country:'摩洛哥', aliases:['摩洛哥','morocco','ma'], continent:'africa' },
+      { country:'埃及', aliases:['埃及','egypt','eg'], continent:'africa' },
+      { country:'坦尚尼亞', aliases:['坦尚尼亞','坦桑尼亞','tanzania','tz'], continent:'africa' },
+
+      { country:'澳洲', aliases:['澳洲','澳大利亞','australia','au'], continent:'oceania' },
+      { country:'紐西蘭', aliases:['紐西蘭','新西蘭','new zealand','nz'], continent:'oceania' },
+    ];
+
+    const COUNTRY_FLAGS = {
+      '日本':'🇯🇵','韓國':'🇰🇷','台灣':'🇹🇼','中國':'🇨🇳','蒙古':'🇲🇳','哈薩克':'🇰🇿','吉爾吉斯':'🇰🇬','烏茲別克':'🇺🇿','塔吉克':'🇹🇯','土庫曼':'🇹🇲',
+      '印度':'🇮🇳','泰國':'🇹🇭','越南':'🇻🇳','馬來西亞':'🇲🇾','印尼':'🇮🇩','尼泊爾':'🇳🇵','以色列':'🇮🇱','約旦':'🇯🇴','土耳其':'🇹🇷','伊朗':'🇮🇷','不丹':'🇧🇹',
+      '俄羅斯':'🇷🇺','芬蘭':'🇫🇮','挪威':'🇳🇴','瑞典':'🇸🇪','瑞士':'🇨🇭','英國':'🇬🇧','法國':'🇫🇷','德國':'🇩🇪','義大利':'🇮🇹','西班牙':'🇪🇸','葡萄牙':'🇵🇹','捷克':'🇨🇿','奧地利':'🇦🇹','冰島':'🇮🇸',
+      '美國':'🇺🇸','加拿大':'🇨🇦','墨西哥':'🇲🇽',
+      '巴西':'🇧🇷','阿根廷':'🇦🇷','智利':'🇨🇱','祕魯':'🇵🇪','玻利維亞':'🇧🇴','哥倫比亞':'🇨🇴',
+      '南非':'🇿🇦','肯亞':'🇰🇪','摩洛哥':'🇲🇦','埃及':'🇪🇬','坦尚尼亞':'🇹🇿',
+      '澳洲':'🇦🇺','紐西蘭':'🇳🇿'
+    };
+    const getFlag = (country) => COUNTRY_FLAGS[country] || '';
+
+    // === 別名索引（國名 + 常見城市/地標）===
+    const ALIAS_EXACT = new Map();
+    const ALIAS_TEXT  = [];
+
+    for (const row of COUNTRY_INDEX) {
+      for (const a of row.aliases) {
+        const key = norm(a);
+        const val = { country: row.country, continent: row.continent };
+        ALIAS_EXACT.set(key, val);
+        if (key.length >= 2) ALIAS_TEXT.push({ alias: key, ...val, weight: 2 });
+      }
+    }
+
+    const CITY_ALIASES = [
+      ['雅加達','印尼','asia'], ['日惹','印尼','asia'], ['泗水','印尼','asia'], ['萬隆','印尼','asia'],
+      ['峇里','印尼','asia'], ['巴里島','印尼','asia'], ['峇里島','印尼','asia'], ['龍目','印尼','asia'],
+      ['爪哇','印尼','asia'], ['蘇門答臘','印尼','asia'],
+      ['曼谷','泰國','asia'], ['清邁','泰國','asia'], ['普吉','泰國','asia'], ['芭達雅','泰國','asia'],
+      ['胡志明','越南','asia'], ['河內','越南','asia'], ['峴港','越南','asia'],
+      ['伊斯坦堡','土耳其','asia'], ['卡帕多奇亞','土耳其','asia'], ['安卡拉','土耳其','asia'],
+      ['東京','日本','asia'], ['大阪','日本','asia'], ['京都','日本','asia'], ['沖繩','日本','asia'],
+      ['吉隆坡','馬來西亞','asia'], ['檳城','馬來西亞','asia'], ['亞庇','馬來西亞','asia'],
+      ['貝加爾湖','俄羅斯','asia'], ['baikal','俄羅斯','asia'], ['baikai','俄羅斯','asia'],
+      ['馬賽馬拉','肯亞','africa'], ['masai mara','肯亞','africa'],
+      ['蘇黎世','瑞士','europe'], ['日內瓦','瑞士','europe'],
+      ['jakarta','印尼','asia'], ['bali','印尼','asia'], ['yogyakarta','印尼','asia'], ['bandung','印尼','asia'],
+      ['surabaya','印尼','asia'], ['bangkok','泰國','asia'], ['chiang mai','泰國','asia'], ['phuket','泰國','asia'],
+      ['istanbul','土耳其','asia'], ['cappadocia','土耳其','asia'], ['tokyo','日本','asia'], ['kyoto','日本','asia'],
+      ['osaka','日本','asia'], ['okinawa','日本','asia'], ['kuala lumpur','馬來西亞','asia'], ['penang','馬來西亞','asia'],
+      ['geneva','瑞士','europe'], ['zurich','瑞士','europe'],
+    ];
+    for (const [alias, country, continent] of CITY_ALIASES) {
+      const k = norm(alias);
+      const val = { country, continent };
+      ALIAS_EXACT.set(k, val);
+      ALIAS_TEXT.push({ alias: k, ...val, weight: 1 });
+    }
+    ALIAS_TEXT.sort((a, b) => (b.alias.length - a.alias.length) || (b.weight - a.weight));
+
+    function guessCountryAndContinent({ title='', desc='', tags=[] }) {
+      const nt = norm(title), nd = norm(desc);
+      const nTags = (Array.isArray(tags) ? tags : []).map(t => norm(String(t))).filter(Boolean);
+      for (const t of nTags) { const hit = ALIAS_EXACT.get(t); if (hit) return hit; }
+      for (const row of ALIAS_TEXT) if (nt.includes(row.alias)) return row;
+      for (const row of ALIAS_TEXT) if (nd.includes(row.alias)) return row;
+      for (const t of nTags) { const cont = REGION_HINTS.get(t); if (cont) return { country:null, continent:cont }; }
+      for (const [hint, cont] of REGION_HINTS.entries()) {
+        const h = norm(hint); if (h.length>2 && (nt.includes(h) || nd.includes(h))) return { country:null, continent:cont };
+      }
+      return { country:null, continent:'other' };
+    }
+
+    function classifyItem(v) {
+      const { country, continent } = guessCountryAndContinent({ title:v.title||'', desc:v.desc||'', tags:v.tags||[] });
+      const contKey = continent || 'other';
+      const contLabel = (CONTINENTS.find(c=>c.key===contKey)||{label:'其他'}).label;
+      let countryKey = country ? norm(country) : 'mixed';
+      let countryLabel = country || '綜合';
+      return { continentKey:contKey, continentLabel:contLabel, countryKey, countryLabel };
+    }
+
+    (async function run(){
+      const container = $('#all-videos');
+      if (!container) return;
+      container.innerHTML = '<div class="placeholder">載入中…</div>';
+
+      let res;
+      try {
+        const client = window.contentful.createClient({
+          space: 'os5wf90ljenp',
+          accessToken: 'lODH-WLwHwVZv7O4rFdBWjSnrzaQWGD4koeOZ1Dypj0'
+        });
+        res = await client.getEntries({ content_type:'video', order:'-sys.updatedAt', limit:500 });
+      } catch (e) {
+        console.error('Contentful 連線失敗（videos.html）：', e);
+        container.innerHTML = '<div class="placeholder">❌ 目前無法載入所有節目。</div>';
+        return;
+      }
+
+      const pick = (obj, keys) => { for (const k of keys) if (obj && obj[k]!=null && obj[k]!=='') return obj[k]; return ''; };
+      const items = (res.items||[]).map(it=>{
+        const f = it.fields||{};
+        const title = pick(f,['影片標題','title']);
+        const desc  = pick(f,['精選推薦影片說明文字','description']);
+        const ytid  = pick(f,['YouTube ID','youTubeId']);
+        const mp4   = pick(f,['MP4 影片網址','mp4Url']);
+        const tags  = Array.isArray(f.tags)?f.tags:[];
+        let thumb   = f.thumbnail?.fields?.file?.url || '';
+        if (thumb && !thumb.startsWith('http')) thumb = 'https:' + thumb;
+        if (!thumb && ytid) thumb = `https://i.ytimg.com/vi/${ytid}/hqdefault.jpg`;
+        return { title, desc, ytid, mp4, tags, thumb };
+      });
+
+      // 分組
+      const groups = {};
+      for (const v of items) {
+        const slot = classifyItem(v);
+        groups[slot.continentKey] ??= { label: slot.continentLabel, countries:{} };
+        groups[slot.continentKey].countries[slot.countryKey] ??= { label: slot.countryLabel, items: [] };
+        groups[slot.continentKey].countries[slot.countryKey].items.push(v);
+      }
+
+      // 渲染
+      container.innerHTML = '';
+      // === 洲別固定導覽（七大洲） → 橫向分類條 ===
+const nav = document.createElement('nav');
+nav.className = 'continent-menu';
+
+/* 內層軌道（一定要有這層，所有按鈕與分隔線都放這裡） */
+const track = document.createElement('div');
+track.className = 'continent-track';
+
+// 線條 SVG 小圖示（非 emoji）
+const ICON_SVGS = {
+  asia: `<svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M2 12h20M12 2a8 8 0 0 1 0 20M12 2a8 8 0 0 0 0 20"></path></svg>`,
+  europe: `<svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M2 12h20M7 12a5 5 0 0 0 10 0 5 7 0 0 0-10 0z"></path></svg>`,
+  north_america: `<svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M2 12h20M8 8l3 2 1 3 4 1"></path></svg>`,
+  south_america: `<svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M2 12h20M10 8l2 3-1 3 1 3"></path></svg>`,
+  africa: `<svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M2 12h20M9 7l5 1 2 3-2 4-4 1"></path></svg>`,
+  oceania: `<svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M2 12h20M14 15l2 1M9 16l1-2"></path></svg>`,
+  antarctica: `<svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M2 12h20M8 15h8M10 9h4"></path></svg>`,
+  all: `<svg class="icon" viewBox="0 0 24 24"><path d="M12 3l2.7 5.5L20 9l-4 4 1 6-5-3-5 3 1-6-4-4 5.3-.5L12 3z"></path></svg>`
+};
+
+function makeItem(key, zh, en){
+  const btn = document.createElement('button');
+  btn.className = 'continent-item';
+  btn.type = 'button';
+  btn.dataset.key = key;
+  const icon = ICON_SVGS[key] || ICON_SVGS.asia;
+  btn.innerHTML = `
+    ${icon}
+    <span class="label">
+      <span class="zh">${zh}</span>
+      <span class="en">${en}</span>
+    </span>`;
+  return btn;
+}
+
+const mapEn = {
+  asia:'Asia', europe:'Europe', north_america:'North America',
+  south_america:'South America', africa:'Africa', oceania:'Oceania', antarctica:'Antarctica'
+};
+
+CONTINENTS_7.forEach((c, i) => {
+  const btn = makeItem(c.key, c.label, mapEn[c.key] || '');
+  track.appendChild(btn);                       // ← 改：append 到 track
+  if (i < CONTINENTS_7.length - 1) {
+    const divi = document.createElement('i');
+    divi.className = 'divider';
+    divi.setAttribute('aria-hidden', 'true');
+    track.appendChild(divi);                   // ← 改：append 到 track
+  }
+});
+
+// 右側加上一顆「全部」
+const divLast = document.createElement('i');
+divLast.className = 'divider';
+divLast.setAttribute('aria-hidden', 'true');
+track.appendChild(divLast);                    // ← 改：append 到 track
+
+const showAllBtn = document.createElement('button');
+showAllBtn.className = 'continent-item';
+showAllBtn.type = 'button';
+showAllBtn.innerHTML = `
+  ${ICON_SVGS.all}
+  <span class="label">
+    <span class="zh">全部</span>
+    <span class="en">All</span>
+  </span>`;
+track.appendChild(showAllBtn);                 // ← 改：append 到 track
+
+nav.appendChild(track);                        // ← 關鍵：把 track 放到 nav
+container.appendChild(nav);
+
+    
+      // === 各洲內容 ===
+      for (const c of CONTINENTS) {
+        const node = groups[c.key];
+        if (!node) continue;
+
+        const contSection = document.createElement('section');
+        contSection.id = `cont-${c.key}`;
+        contSection.innerHTML = `<h2 class="continent-title">${node.label}</h2><div class="continent-body"></div>`;
+        container.appendChild(contSection);
+        const body = contSection.querySelector('.continent-body');
+
+        const entries = Object.entries(node.countries).sort((a,b)=>{
+          const A = a[1].label === '綜合' ? '~~~' : a[1].label;
+          const B = b[1].label === '綜合' ? '~~~' : b[1].label;
+          return String(A).localeCompare(String(B), 'zh-Hant');
+        });
+
+        for (const [ckey, bucket] of entries) {
+          const flag = bucket.label === '綜合' ? '' : getFlag(bucket.label);
+          const block = document.createElement('div');
+          block.id = `country-${c.key}-${ckey}`;
+          block.innerHTML = `
+            <div class="country-head">
+              <h3 class="country-title">
+                ${flag ? `<span class="country-flag">${flag}</span>` : ''}${bucket.label}
+              </h3>
+              <span class="country-count">共 ${bucket.items.length} 支</span>
+            </div>
+            <div class="grid-wrap">
+              <div class="video-grid"></div>
+              <div class="grid-fade" style="${bucket.items.length>6?'':'display:none'}"></div>
+            </div>`;
+          body.appendChild(block);
+
+          const wrap = block.querySelector('.grid-wrap');
+          const grid = wrap.querySelector('.video-grid');
+          const frag = document.createDocumentFragment();
+
+          bucket.items.forEach(v=>{
+            const safeTitle = escapeHtml(v.title || '未命名影片');
+            const safeDesc  = v.desc ? escapeHtml(v.desc) : '';
+            const ytFallback = v.ytid ? `https://i.ytimg.com/vi/${v.ytid}/hqdefault.jpg` : '';
+
+            const card = document.createElement('div');
+            card.className = 'video-card';
+            card.innerHTML = `
+              <div class="video-thumb">
+                ${v.thumb ? `<img src="${v.thumb}" alt="${safeTitle}" loading="lazy" decoding="async"
+                              onerror="this.onerror=null;this.src='${ytFallback}';">`
+                          : `<div style="width:100%;height:100%;background:#e5e7eb;"></div>`}
+              </div>
+              <div class="video-content">
+                ${Array.isArray(v.tags)&&v.tags.length ? `<div class="video-tags">${v.tags.map(t=>escapeHtml(String(t))).join(' / ')}</div>` : ``}
+                <div class="video-title">${safeTitle}</div>
+                ${safeDesc ? `<div class="video-desc">${safeDesc}</div>` : ``}
+                ${
+                  v.ytid
+                    ? `<button class="video-cta" data-videoid="${escapeHtml(v.ytid)}">立即觀看</button>`
+                    : (v.mp4 ? `<a class="video-cta" href="${escapeHtml(v.mp4)}" target="_blank" rel="noopener">播放 MP4</a>` : ``)
+                }
+              </div>`;
+            frag.appendChild(card);
+          });
+          grid.appendChild(frag);
+
+          const MAX_PER_COUNTRY = 6;
+          if (bucket.items.length > MAX_PER_COUNTRY) {
+            wrap.classList.add('is-collapsed');
+            const btn = document.createElement('button');
+            btn.className = 'country-more-btn';
+            btn.innerHTML = `
+              <span class="lbl">顯示更多</span>
+              <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+              <span class="more-count">（+${bucket.items.length - MAX_PER_COUNTRY}）</span>`;
+            btn.addEventListener('click', () => {
+              const expanded = wrap.classList.toggle('is-expanded');
+              wrap.classList.toggle('is-collapsed', !expanded);
+              btn.classList.toggle('expanded', expanded);
+              btn.querySelector('.lbl').textContent = expanded ? '收合' : '顯示更多';
+              const mc = btn.querySelector('.more-count');
+              if (mc) mc.textContent = expanded ? '' : `（+${bucket.items.length - MAX_PER_COUNTRY}）`;
+              const fade = wrap.querySelector('.grid-fade');
+              if (fade) fade.style.opacity = expanded ? '0' : '1';
+            });
+            block.appendChild(btn);
+          }
+        }
+      }
+
+      // 只把「國旗」轉成 SVG
+      if (window.twemoji) {
+        document.querySelectorAll('.country-flag').forEach(node => {
+          twemoji.parse(node, {
+            base: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/',
+            folder: 'svg',
+            ext: '.svg'
+          });
+        });
+      }
+
+      // 點卡片播放
+      document.body.addEventListener('click', (e)=>{
+        const btn = e.target?.closest?.('.video-cta');
+        if (!btn) return;
+        const id = btn.dataset.videoid;
+        if (!id) return;
+        if (typeof window.openFullscreenPlayer === 'function') {
+          window.openFullscreenPlayer(id);
+        } else {
+          window.open(`https://www.youtube.com/watch?v=${encodeURIComponent(id)}`, '_blank', 'noopener');
+        }
+      });
+
+      /* =========================
+         導覽互動：active / 篩選 / 錨點 / 自動展開
+         ========================= */
+      const navItems = nav.querySelectorAll('.continent-item');
+
+      function setActive(key){
+        navItems.forEach(el => el.classList.toggle('active', el.dataset.key === key));
+        showAllBtn.classList.toggle('active', !key); // 沒 key 代表顯示全部
+      }
+
+      const allContinentSections = () => Array.from(document.querySelectorAll('[id^="cont-"]'));
+
+      function filterByContinent(key){
+        setActive(key);
+        const sections = allContinentSections();
+        sections.forEach(sec=>{
+          const isTarget = sec.id === `cont-${key}`;
+          sec.classList.toggle('is-hidden', !isTarget);
+        });
+        const url = new URL(window.location);
+        url.hash = `cont-${key}`;
+        history.replaceState(null, "", url);
+        const target = document.getElementById(`cont-${key}`);
+        if (target) target.scrollIntoView({ behavior:'smooth', block:'start' });
+      }
+
+      function showAll(){
+        setActive(null);
+        allContinentSections().forEach(sec=>sec.classList.remove('is-hidden'));
+        const url = new URL(window.location);
+        url.hash = '';
+        history.replaceState(null, "", url);
+      }
+
+      navItems.forEach(el=>{
+        el.addEventListener('click', (ev)=>{
+          ev.preventDefault();
+          const key = el.dataset.key;
+          filterByContinent(key);
+          collapseAllCountryGrids();
+          expandFirstCountryIn(key);
+        }, { passive:false });
+      });
+
+      showAllBtn.addEventListener('click', (ev)=>{
+        ev.preventDefault();
+        showAll();
+        collapseAllCountryGrids();
+      }, { passive:false });
+
+      (function initFromHash(){
+        const h = location.hash.replace(/^#/, '');
+        const mm = h.match(/^cont\-(asia|europe|north_america|south_america|africa|oceania|antarctica)$/);
+        if (mm) {
+          filterByContinent(mm[1]);
+          collapseAllCountryGrids();
+          expandFirstCountryIn(mm[1]);
+        } else {
+          showAll();
+          collapseAllCountryGrids();
+        }
+      })();
+
+      window.addEventListener('hashchange', ()=>{
+        const h = location.hash.replace(/^#/, '');
+        const mm = h.match(/^cont\-(asia|europe|north_america|south_america|africa|oceania|antarctica)$/);
+        if (mm) {
+          filterByContinent(mm[1]);
+          collapseAllCountryGrids();
+          expandFirstCountryIn(mm[1]);
+        } else {
+          showAll();
+          collapseAllCountryGrids();
+        }
+      });
+
+      function collapseAllCountryGrids(){
+        const wraps = document.querySelectorAll('.grid-wrap');
+        wraps.forEach(wrap=>{
+          const grid = wrap.querySelector('.video-grid');
+          const total = grid ? grid.children.length : 0;
+          const max = 6;
+          const btn = wrap.parentElement.querySelector('.country-more-btn');
+
+          wrap.classList.remove('is-expanded');
+          if (total > max) {
+            wrap.classList.add('is-collapsed');
+            const fade = wrap.querySelector('.grid-fade');
+            if (fade) fade.style.opacity = '1';
+            if (btn){
+              btn.classList.remove('expanded');
+              const lbl = btn.querySelector('.lbl'); if (lbl) lbl.textContent = '顯示更多';
+              const mc  = btn.querySelector('.more-count'); if (mc) mc.textContent = `（+${Math.max(total - max, 0)}）`;
+            }
+          } else {
+            wrap.classList.remove('is-collapsed');
+            if (btn){
+              btn.classList.remove('expanded');
+              const lbl = btn.querySelector('.lbl'); if (lbl) lbl.textContent = '';
+              const mc  = btn.querySelector('.more-count'); if (mc) mc.textContent = '';
+            }
+          }
+        });
+      }
+
+      function expandFirstCountryIn(contKey){
+        const sec = document.getElementById(`cont-${contKey}`);
+        if (!sec) return;
+        const firstWrap = sec.querySelector('.grid-wrap');
+        if (!firstWrap) return;
+
+        const grid = firstWrap.querySelector('.video-grid');
+        const total = grid ? grid.children.length : 0;
+        const max = 6;
+        const btn = firstWrap.parentElement.querySelector('.country-more-btn');
+
+        if (total > max){
+          firstWrap.classList.remove('is-collapsed');
+          firstWrap.classList.add('is-expanded');
+          const fade = firstWrap.querySelector('.grid-fade');
+          if (fade) fade.style.opacity = '0';
+          if (btn){
+            btn.classList.add('expanded');
+            const lbl = btn.querySelector('.lbl'); if (lbl) lbl.textContent = '收合';
+            const mc  = btn.querySelector('.more-count'); if (mc) mc.textContent = '';
+          }
+        }
+      }
+    })();
+  })();
+  </script>
+</body>
+</html>

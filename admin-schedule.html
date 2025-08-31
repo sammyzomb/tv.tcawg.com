@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>節目表管理 - 航向世界旅遊頻道</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+    .header { background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    .header h1 { color: #2b71d2; margin-bottom: 10px; }
+    .header p { color: #666; }
+    
+    .admin-panel { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    .form-group { margin-bottom: 15px; }
+    .form-group label { display: block; margin-bottom: 5px; font-weight: 600; color: #333; }
+    .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px; }
+    .form-group textarea { height: 80px; resize: vertical; }
+    
+    .btn { background: #2b71d2; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 14px; margin-right: 10px; }
+    .btn:hover { background: #1e5bb8; }
+    .btn-secondary { background: #6c757d; }
+    .btn-secondary:hover { background: #5a6268; }
+    .btn-danger { background: #dc3545; color: white; }
+    .btn-danger:hover { background: #c82333; }
+    
+    .programs-list { margin-top: 20px; }
+    .program-item { background: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 10px; border-left: 4px solid #2b71d2; }
+    .program-item h3 { margin-bottom: 5px; color: #333; }
+    .program-item p { color: #666; font-size: 14px; margin-bottom: 5px; }
+    .program-item .time { font-weight: 600; color: #2b71d2; }
+    
+    .template-section { background: #e9ecef; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+    .template-section h3 { margin-bottom: 10px; color: #495057; }
+    
+    .status { padding: 10px; border-radius: 5px; margin-bottom: 15px; }
+    .status.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+    .status.error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🎯 節目表管理系統</h1>
+      <p>輕鬆管理您的旅遊節目表，支援批量添加和範本功能</p>
+    </div>
+    
+    <div class="admin-panel">
+      <div id="status" class="status" style="display: none;"></div>
+      
+      <!-- 節目範本區 -->
+      <div class="template-section">
+        <h3>📋 節目範本</h3>
+        <div class="form-group">
+          <label>選擇範本：</label>
+          <select id="templateSelect">
+            <option value="">-- 選擇節目範本 --</option>
+            <option value="morning">早安世界 - 晨間旅遊</option>
+            <option value="kitchen">世界廚房 - 美食之旅</option>
+            <option value="adventure">極地探險 - 冒險旅遊</option>
+            <option value="city">城市漫步 - 城市旅遊</option>
+            <option value="nature">自然奇觀 - 自然旅遊</option>
+          </select>
+        </div>
+        <button class="btn" onclick="loadTemplate()">載入範本</button>
+      </div>
+      
+      <!-- 節目添加表單 -->
+      <form id="programForm">
+        <h3>📺 添加節目</h3>
+        
+        <div class="form-group">
+          <label>播出日期：</label>
+          <input type="date" id="airDate" required>
+        </div>
+        
+        <div class="form-group">
+          <label>播出時間：</label>
+          <input type="time" id="airTime" required>
+        </div>
+        
+        <div class="form-group">
+          <label>節目標題：</label>
+          <input type="text" id="title" placeholder="例如：早安世界 - 日本東京晨間漫步" required>
+        </div>
+        
+        <div class="form-group">
+          <label>節目時長（分鐘）：</label>
+          <input type="number" id="duration" min="15" max="180" value="60" required>
+        </div>
+        
+        <div class="form-group">
+          <label>節目分類：</label>
+          <select id="category" required>
+            <option value="">-- 選擇分類 --</option>
+            <option value="亞洲旅遊">亞洲旅遊</option>
+            <option value="歐洲旅遊">歐洲旅遊</option>
+            <option value="美洲旅遊">美洲旅遊</option>
+            <option value="美食旅遊">美食旅遊</option>
+            <option value="極地旅遊">極地旅遊</option>
+            <option value="自然旅遊">自然旅遊</option>
+            <option value="文化旅遊">文化旅遊</option>
+            <option value="冒險旅遊">冒險旅遊</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label>節目描述：</label>
+          <textarea id="description" placeholder="簡短描述節目內容..."></textarea>
+        </div>
+        
+        <div class="form-group">
+          <label>YouTube ID：</label>
+          <input type="text" id="youtubeId" placeholder="例如：dQw4w9WgXcQ">
+        </div>
+        
+        <div class="form-group">
+          <label>節目狀態：</label>
+          <select id="status">
+            <option value="首播">首播</option>
+            <option value="重播">重播</option>
+            <option value="特別節目">特別節目</option>
+          </select>
+        </div>
+        
+        <button type="submit" class="btn">添加節目</button>
+        <button type="button" class="btn btn-secondary" onclick="clearForm()">清空表單</button>
+      </form>
+      
+      <!-- 節目列表 -->
+      <div class="programs-list">
+        <h3>📋 已添加的節目</h3>
+        <div id="programsList">
+          <p style="color: #999; text-align: center; padding: 20px;">尚未添加節目</p>
+        </div>
+      </div>
+      
+      <!-- 批量操作 -->
+      <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee;">
+        <h3>🔄 批量操作</h3>
+        <button class="btn" onclick="exportToCSV()">匯出為 CSV</button>
+        <button class="btn btn-secondary" onclick="importFromCSV()">從 CSV 匯入</button>
+        <button class="btn" onclick="saveToContentful()">儲存到 Contentful</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+// 統一的節目資料管理
+let programs = [];
+
+// 載入所有節目資料（合併兩個系統的資料）
+function loadAllPrograms() {
+  // 從節目表管理載入
+  const schedulePrograms = JSON.parse(localStorage.getItem('adminPrograms') || '[]');
+  
+  // 從月曆管理載入
+  const calendarData = JSON.parse(localStorage.getItem('calendarData') || '{}');
+  const calendarPrograms = Object.values(calendarData).map(program => ({
+    ...program,
+    id: program.id || Date.now() + Math.random()
+  }));
+  
+  // 合併資料，避免重複
+  const allPrograms = [...schedulePrograms];
+  
+  calendarPrograms.forEach(calendarProgram => {
+    const exists = allPrograms.find(p => 
+      p.airDate === calendarProgram.airDate && 
+      p.airTime === calendarProgram.airTime &&
+      p.title === calendarProgram.title
+    );
+    if (!exists) {
+      allPrograms.push(calendarProgram);
+    }
+  });
+  
+  programs = allPrograms;
+  localStorage.setItem('adminPrograms', JSON.stringify(programs));
+  
+  // 同時更新月曆資料
+  const calendarDataNew = {};
+  programs.forEach(program => {
+    const slotKey = `${program.airDate}-${program.airTime}`;
+    calendarDataNew[slotKey] = program;
+  });
+  localStorage.setItem('calendarData', JSON.stringify(calendarDataNew));
+}
+
+// 顯示已添加的節目
+function displayPrograms() {
+  const programsList = document.getElementById('programsList');
+  if (!programsList) return;
+  
+  if (programs.length === 0) {
+    programsList.innerHTML = '<p style="color: #999; text-align: center; padding: 20px;">尚未添加節目</p>';
+    return;
+  }
+  
+  programsList.innerHTML = programs.map((program, index) => `
+    <div class="program-item">
+      <h3>${program.title}</h3>
+      <p><strong>播出時間：</strong>${program.airDate} ${program.airTime}</p>
+      <p><strong>時長與分類：</strong>${program.duration}分鐘 | ${program.category}</p>
+      <p><strong>描述：</strong>${program.description}</p>
+      <p><strong>來源：</strong>${program.source || '節目表管理'}</p>
+      <button class="btn btn-danger" onclick="deleteProgram(${index})">刪除</button>
+    </div>
+  `).join('');
+}
+
+// 添加節目
+function addProgram() {
+  const title = document.getElementById('title').value;
+  const airDate = document.getElementById('airDate').value;
+  const airTime = document.getElementById('airTime').value;
+  const duration = document.getElementById('duration').value;
+  const category = document.getElementById('category').value;
+  const description = document.getElementById('description').value;
+  const youtubeId = document.getElementById('youtubeId').value;
+  const status = document.getElementById('status').value;
+
+  if (!title || !airDate || !airTime || !duration || !category) {
+    showStatus('請填寫所有必填欄位', 'error');
+    return;
+  }
+
+  const newProgram = {
+    title,
+    airDate,
+    airTime,
+    duration,
+    category,
+    description,
+    youtubeId,
+    status,
+    id: Date.now(),
+    source: '節目表管理'
+  };
+
+  programs.push(newProgram);
+  saveAllPrograms();
+  
+  displayPrograms();
+  showStatus('節目添加成功！', 'success');
+  document.getElementById('programForm').reset();
+}
+
+// 刪除節目
+function deleteProgram(index) {
+  programs.splice(index, 1);
+  saveAllPrograms();
+  displayPrograms();
+  showStatus('節目已刪除', 'success');
+}
+
+// 儲存所有節目資料
+function saveAllPrograms() {
+  localStorage.setItem('adminPrograms', JSON.stringify(programs));
+  
+  // 同時更新月曆資料
+  const calendarData = {};
+  programs.forEach(program => {
+    const slotKey = `${program.airDate}-${program.airTime}`;
+    calendarData[slotKey] = program;
+  });
+  localStorage.setItem('calendarData', JSON.stringify(calendarData));
+  
+  // 更新首頁節目表
+  updateHomePageSchedule();
+}
+
+// 更新首頁節目表
+function updateHomePageSchedule() {
+  const today = new Date().toISOString().split('T')[0];
+  const todayPrograms = programs.filter(p => p.airDate === today);
+  
+  const scheduleData = {
+    today: {
+      date: today,
+      dayOfWeek: getDayOfWeek(new Date()),
+      month: `${new Date().getMonth() + 1}月`,
+      day: `${new Date().getDate()}日`,
+      schedule: todayPrograms.map(p => ({
+        time: p.airTime,
+        title: p.title,
+        duration: p.duration,
+        category: p.category,
+        description: p.description,
+        thumbnail: p.youtubeId ? `https://i.ytimg.com/vi/${p.youtubeId}/hqdefault.jpg` : 'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop',
+        youtubeId: p.youtubeId,
+        isPremiere: p.status === '首播',
+        isSpecial: p.status === '特別節目'
+      }))
+    }
+  };
+  
+  // 儲存到 localStorage，讓首頁可以讀取
+  localStorage.setItem('currentSchedule', JSON.stringify(scheduleData));
+}
+
+// 獲取星期幾
+function getDayOfWeek(date) {
+  const days = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+  return days[date.getDay()];
+}
+
+// 顯示狀態訊息
+function showStatus(message, type) {
+  const status = document.getElementById('status');
+  status.textContent = message;
+  status.className = `status ${type}`;
+  status.style.display = 'block';
+  setTimeout(() => {
+    status.style.display = 'none';
+  }, 3000);
+}
+
+// 載入範本
+function loadTemplate() {
+  const templateSelect = document.getElementById('templateSelect');
+  const selectedTemplate = templateSelect.value;
+  
+  if (!selectedTemplate) {
+    showStatus('請選擇一個範本', 'error');
+    return;
+  }
+  
+  const templates = {
+    morning: {
+      title: '早安世界 - 日本東京晨間漫步',
+      duration: '60',
+      category: '亞洲旅遊',
+      description: '跟著我們一起探索東京的早晨，從築地市場到淺草寺的寧靜時光'
+    },
+    kitchen: {
+      title: '世界廚房 - 義大利托斯卡尼美食之旅',
+      duration: '45',
+      category: '美食旅遊',
+      description: '深入托斯卡尼鄉村，品嚐最道地的義大利美食與美酒'
+    },
+    adventure: {
+      title: '極地探險 - 加拿大黃刀鎮極光之旅',
+      duration: '60',
+      category: '極地旅遊',
+      description: '在零下40度的黃刀鎮，追尋北極光的神秘蹤跡'
+    },
+    city: {
+      title: '城市漫步 - 巴黎塞納河畔的浪漫',
+      duration: '45',
+      category: '歐洲旅遊',
+      description: '沿著塞納河漫步，感受花都巴黎的浪漫情懷'
+    },
+    nature: {
+      title: '自然奇觀 - 紐西蘭米佛峽灣',
+      duration: '60',
+      category: '自然旅遊',
+      description: '探索世界第八大奇觀，米佛峽灣的壯麗景色'
+    }
+  };
+  
+  const template = templates[selectedTemplate];
+  document.getElementById('title').value = template.title;
+  document.getElementById('duration').value = template.duration;
+  document.getElementById('category').value = template.category;
+  document.getElementById('description').value = template.description;
+  
+  showStatus('範本載入成功', 'success');
+}
+
+// 匯出為 CSV
+function exportToCSV() {
+  if (programs.length === 0) {
+    showStatus('沒有節目可以匯出', 'error');
+    return;
+  }
+  
+  const csvContent = [
+    ['節目標題', '播出日期', '播出時間', '時長', '分類', '描述', 'YouTube ID', '狀態', '來源'],
+    ...programs.map(p => [
+      p.title,
+      p.airDate,
+      p.airTime,
+      p.duration,
+      p.category,
+      p.description,
+      p.youtubeId,
+      p.status,
+      p.source || '節目表管理'
+    ])
+  ].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
+  
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = `節目表_${new Date().toISOString().split('T')[0]}.csv`;
+  link.click();
+  
+  showStatus('CSV 檔案已下載', 'success');
+}
+
+// 從 CSV 匯入
+function importFromCSV() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.csv';
+  input.onchange = function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const csv = e.target.result;
+      const lines = csv.split('\n');
+      const headers = lines[0].split(',').map(h => h.replace(/"/g, ''));
+      
+      const newPrograms = [];
+      for (let i = 1; i < lines.length; i++) {
+        if (!lines[i].trim()) continue;
+        const values = lines[i].split(',').map(v => v.replace(/"/g, ''));
+        if (values.length >= 5) {
+          newPrograms.push({
+            title: values[0],
+            airDate: values[1],
+            airTime: values[2],
+            duration: values[3],
+            category: values[4],
+            description: values[5] || '',
+            youtubeId: values[6] || '',
+            status: values[7] || '',
+            source: values[8] || 'CSV匯入',
+            id: Date.now() + i
+          });
+        }
+      }
+      
+      programs = newPrograms;
+      saveAllPrograms();
+      displayPrograms();
+      showStatus(`成功匯入 ${newPrograms.length} 個節目`, 'success');
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
+// 儲存到 Contentful
+function saveToContentful() {
+  showStatus('Contentful 整合功能開發中...', 'error');
+}
+
+// 頁面載入時初始化
+document.addEventListener('DOMContentLoaded', function() {
+  loadAllPrograms();
+  displayPrograms();
+  
+  // 設定今天的日期為預設值
+  const today = new Date().toISOString().split('T')[0];
+  const airDateInput = document.getElementById('airDate');
+  if (airDateInput) {
+    airDateInput.value = today;
+  }
+});
+</script>
+</body>
+</html>

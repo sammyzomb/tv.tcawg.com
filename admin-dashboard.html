@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>管理後台 - 航向世界旅遊頻道</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .dashboard-container {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+      padding: 40px;
+      width: 90%;
+      max-width: 800px;
+      text-align: center;
+    }
+    
+    .logo {
+      width: 80px;
+      height: 80px;
+      background: linear-gradient(135deg, #2b71d2, #1e5bb8);
+      border-radius: 50%;
+      margin: 0 auto 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 2rem;
+      font-weight: bold;
+    }
+    
+    .welcome-title {
+      color: #333;
+      margin-bottom: 10px;
+      font-size: 1.8rem;
+      font-weight: 600;
+    }
+    
+    .welcome-subtitle {
+      color: #666;
+      margin-bottom: 30px;
+      font-size: 1rem;
+    }
+    
+    .management-options {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    
+    .option-card {
+      background: #f8f9fa;
+      border: 2px solid #e9ecef;
+      border-radius: 15px;
+      padding: 30px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      color: inherit;
+    }
+    
+    .option-card:hover {
+      border-color: #2b71d2;
+      background: #e3f2fd;
+      transform: translateY(-5px);
+      box-shadow: 0 10px 25px rgba(43, 113, 210, 0.2);
+    }
+    
+    .option-icon {
+      font-size: 3rem;
+      margin-bottom: 15px;
+    }
+    
+    .option-title {
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 10px;
+    }
+    
+    .option-description {
+      color: #666;
+      font-size: 0.9rem;
+      line-height: 1.5;
+      margin-bottom: 15px;
+    }
+    
+    .option-features {
+      list-style: none;
+      text-align: left;
+      font-size: 0.85rem;
+      color: #555;
+    }
+    
+    .option-features li {
+      margin-bottom: 5px;
+      padding-left: 15px;
+      position: relative;
+    }
+    
+    .option-features li:before {
+      content: "✓";
+      position: absolute;
+      left: 0;
+      color: #4caf50;
+      font-weight: bold;
+    }
+    
+    .logout-btn {
+      background: #dc3545;
+      color: white;
+      border: none;
+      padding: 12px 25px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: all 0.3s ease;
+    }
+    
+    .logout-btn:hover {
+      background: #c82333;
+      transform: translateY(-2px);
+    }
+    
+    .user-info {
+      background: #e3f2fd;
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      border-left: 4px solid #2b71d2;
+    }
+    
+    .user-name {
+      font-weight: 600;
+      color: #2b71d2;
+      margin-bottom: 5px;
+    }
+    
+    .user-role {
+      color: #666;
+      font-size: 0.9rem;
+    }
+    
+    .quick-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 15px;
+      margin-bottom: 30px;
+    }
+    
+    .stat-card {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 10px;
+      border: 1px solid #e9ecef;
+    }
+    
+    .stat-number {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #2b71d2;
+      margin-bottom: 5px;
+    }
+    
+    .stat-label {
+      font-size: 0.8rem;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard-container">
+    <div class="logo">📺</div>
+    
+    <h1 class="welcome-title">歡迎來到管理後台</h1>
+    <p class="welcome-subtitle">航向世界旅遊頻道 - 節目管理系統</p>
+    
+    <div class="user-info" id="userInfo">
+      <!-- 用戶資訊將由 JavaScript 動態載入 -->
+    </div>
+    
+    <div class="quick-stats" id="quickStats">
+      <!-- 快速統計將由 JavaScript 動態載入 -->
+    </div>
+    
+    <div class="management-options">
+      <a href="admin-schedule.html" class="option-card">
+        <div class="option-icon">📋</div>
+        <div class="option-title">節目表管理</div>
+        <div class="option-description">
+          單一節目添加和管理，適合詳細設定每個節目的完整資訊
+        </div>
+        <ul class="option-features">
+          <li>逐個添加節目</li>
+          <li>詳細節目資訊設定</li>
+          <li>節目範本快速載入</li>
+          <li>CSV 匯入匯出</li>
+          <li>節目檔案管理</li>
+        </ul>
+      </a>
+      
+      <a href="admin-calendar.html" class="option-card">
+        <div class="option-icon">📅</div>
+        <div class="option-title">月曆節目管理</div>
+        <div class="option-description">
+          月曆式排程管理，適合整體節目規劃和視覺化排程
+        </div>
+        <ul class="option-features">
+          <li>月曆視覺化介面</li>
+          <li>快速範本添加</li>
+          <li>自動填充功能</li>
+          <li>週期模式生成</li>
+          <li>整體節目規劃</li>
+        </ul>
+      </a>
+    </div>
+    
+    <button class="logout-btn" onclick="logout()">🚪 登出系統</button>
+  </div>
+
+  <script>
+    // 登入驗證檢查
+    function checkAuth() {
+      const user = sessionStorage.getItem('adminUser');
+      const loginTime = sessionStorage.getItem('loginTime');
+      
+      if (!user || !loginTime) {
+        // 未登入，跳轉到登入頁面
+        window.location.href = 'admin-login.html';
+        return null;
+      }
+      
+      // 檢查登入是否超過 8 小時
+      const loginDate = new Date(loginTime);
+      const now = new Date();
+      const hoursDiff = (now - loginDate) / (1000 * 60 * 60);
+      
+      if (hoursDiff >= 8) {
+        // 登入已過期，清除 session 並跳轉到登入頁面
+        sessionStorage.removeItem('adminUser');
+        sessionStorage.removeItem('loginTime');
+        window.location.href = 'admin-login.html';
+        return null;
+      }
+      
+      return JSON.parse(user);
+    }
+    
+    // 登出功能
+    function logout() {
+      sessionStorage.removeItem('adminUser');
+      sessionStorage.removeItem('loginTime');
+      window.location.href = 'admin-login.html';
+    }
+    
+    // 載入用戶資訊
+    function loadUserInfo() {
+      const user = checkAuth();
+      if (!user) return;
+      
+      const userInfoDiv = document.getElementById('userInfo');
+      userInfoDiv.innerHTML = `
+        <div class="user-name">👤 ${user.name}</div>
+        <div class="user-role">角色：${user.role} | 權限：${user.permissions.join(', ')}</div>
+      `;
+    }
+    
+    // 載入快速統計
+    function loadQuickStats() {
+      // 從 localStorage 載入節目資料
+      const schedulePrograms = JSON.parse(localStorage.getItem('adminPrograms') || '[]');
+      const calendarData = JSON.parse(localStorage.getItem('calendarData') || '{}');
+      
+      const totalPrograms = schedulePrograms.length + Object.keys(calendarData).length;
+      const today = new Date().toISOString().split('T')[0];
+      const todayPrograms = schedulePrograms.filter(p => p.airDate === today).length;
+      
+      const statsDiv = document.getElementById('quickStats');
+      statsDiv.innerHTML = `
+        <div class="stat-card">
+          <div class="stat-number">${totalPrograms}</div>
+          <div class="stat-label">總節目數</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number">${todayPrograms}</div>
+          <div class="stat-label">今日節目</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number">${schedulePrograms.length}</div>
+          <div class="stat-label">節目表管理</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number">${Object.keys(calendarData).length}</div>
+          <div class="stat-label">月曆管理</div>
+        </div>
+      `;
+    }
+    
+    // 頁面載入時初始化
+    document.addEventListener('DOMContentLoaded', function() {
+      loadUserInfo();
+      loadQuickStats();
+    });
+  </script>
+</body>
+</html>
+
