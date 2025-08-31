@@ -71,15 +71,21 @@ python -m http.server 8000
 ## 🔄 日常同步流程
 
 ### 下班前（目前電腦）：
-```bash
-git add .
-git commit -m "更新描述：做了什麼修改"
-git push
-```
+1. **開啟 GitHub Desktop**
+2. **檢查變更**：在 "Changes" 標籤查看修改的檔案
+3. **提交變更**：寫提交訊息，點擊 "Commit to main"
+4. **推送變更**：點擊 "Push origin"
 
 ### 上班時（工作電腦）：
+1. **開啟 GitHub Desktop**
+2. **拉取最新變更**：點擊 "Fetch origin" → "Pull origin"
+
+### 終端機備用方案：
 ```bash
-git pull
+git --no-pager pull origin main
+git add .
+git commit -m "更新描述"
+git push origin main
 ```
 
 ## 📋 重要檔案清單

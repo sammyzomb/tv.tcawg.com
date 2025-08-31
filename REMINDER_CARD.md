@@ -42,15 +42,20 @@ python -m http.server 8000
 ## 🔄 日常同步指令
 
 **開始工作：**
-```bash
-git pull
-```
+1. 開啟 GitHub Desktop
+2. 點擊 "Fetch origin" → "Pull origin"
 
 **結束工作：**
+1. 在 "Changes" 標籤選擇檔案
+2. 寫提交訊息，點擊 "Commit to main"
+3. 點擊 "Push origin"
+
+**終端機備用方案：**
 ```bash
+git --no-pager pull origin main
 git add .
 git commit -m "更新描述"
-git push
+git push origin main
 ```
 
 ## 📁 重要檔案
