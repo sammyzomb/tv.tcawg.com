@@ -1,5 +1,18 @@
 // featured.js：精選節目（每頁 8 個，導到 videos.html）
 (function(){
+  // 初始化 Contentful client
+  const contentfulClient = contentful.createClient({
+    space: 'os5wf90ljenp',
+    accessToken: 'lODH-WLwHwVZv7O4rFdBWjSnrzaQWGD4koeOZ1Dypj0'
+  });
+
+  // HTML 轉義函數
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
   document.addEventListener('DOMContentLoaded', async () => {
     const container = document.getElementById('featured-videos');
     if (!container) return;
@@ -13,7 +26,7 @@
     try {
       const entries = await contentfulClient.getEntries({
         content_type: 'video',
-        'fields.isFeatured': true,
+        'fields.精選節目推薦': true,
         order: '-sys.updatedAt',
         limit: 100
       });
@@ -26,7 +39,7 @@
         const mp4   = pick(f, ['MP4 影片網址','mp4Url']);
         const tags  = Array.isArray(f.tags) ? f.tags : [];
         let thumb = '';
-        const cfThumb = f.thumbnail?.fields?.file?.url;
+        const cfThumb = f['封面圖']?.fields?.file?.url || f.thumbnail?.fields?.file?.url;
         if (cfThumb) thumb = cfThumb.startsWith('http') ? cfThumb : `https:${cfThumb}`;
         else if (ytid) thumb = `https://i.ytimg.com/vi/${ytid}/hqdefault.jpg`;
         return { title, desc, ytid, mp4, tags, thumb };
