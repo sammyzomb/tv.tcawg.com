@@ -706,16 +706,28 @@
                 createdAt: new Date().toISOString()
             };
 
-            // 儲存到 sessionStorage（模擬資料庫）
-            const programs = JSON.parse(sessionStorage.getItem('programs') || '[]');
+            // 添加唯一ID
+            programData.id = Date.now().toString();
+            
+            // 儲存到 localStorage（統一資料管理）
+            const programs = JSON.parse(localStorage.getItem('tv_programs_data') || '[]');
             programs.push(programData);
-            sessionStorage.setItem('programs', JSON.stringify(programs));
+            localStorage.setItem('tv_programs_data', JSON.stringify(programs));
+            
+            // 觸發資料更新事件（統一同步機制）
+            const event = new CustomEvent('programsDataUpdated', {
+                detail: { programs: programs }
+            });
+            window.dispatchEvent(event);
 
             // 顯示成功訊息
             const previewContainer = document.getElementById('previewContainer');
             previewContainer.innerHTML = `
                 <div class="status-message status-success">
-                    ✅ 節目上傳成功！節目已儲存到系統中。
+                    ✅ 節目上傳成功！節目已儲存到系統中。<br>
+                    📅 播出時間：${programData.airDate} ${programData.airTime}<br>
+                    🎬 節目標題：${programData.title}<br>
+                    👤 上架者：${programData.createdBy}
                 </div>
             `;
 

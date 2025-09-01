@@ -21,58 +21,149 @@
       background: white;
       border-radius: 20px;
       box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-      padding: 40px;
+      padding: 50px;
       width: 90%;
-      max-width: 400px;
+      max-width: 500px;
       text-align: center;
     }
     
-    .logo {
-      width: 80px;
-      height: 80px;
-      background: linear-gradient(135deg, #2b71d2, #1e5bb8);
-      border-radius: 50%;
-      margin: 0 auto 20px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-size: 2rem;
-      font-weight: bold;
-    }
+            .logo {
+          width: 120px;
+          height: 120px;
+          background: linear-gradient(135deg, #2b71d2, #1e5bb8);
+          border-radius: 25px;
+          margin: 0 auto 30px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          position: relative;
+          box-shadow: 0 8px 25px rgba(43, 113, 210, 0.3);
+          overflow: hidden;
+        }
+
+        .logo::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%);
+          animation: shimmer 3s infinite;
+        }
+
+        @keyframes shimmer {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(100%); }
+        }
+
+        .logo-icon {
+          width: 60px;
+          height: 60px;
+          position: relative;
+          z-index: 2;
+        }
+
+        .logo-icon svg {
+          width: 100%;
+          height: 100%;
+          fill: none;
+          stroke: white;
+          stroke-width: 2;
+          stroke-linecap: round;
+          stroke-linejoin: round;
+        }
     
     .login-title {
       color: #333;
-      margin-bottom: 10px;
-      font-size: 1.5rem;
+      margin-bottom: 15px;
+      font-size: 1.8rem;
       font-weight: 600;
     }
     
     .login-subtitle {
       color: #666;
-      margin-bottom: 30px;
-      font-size: 0.9rem;
+      margin-bottom: 40px;
+      font-size: 1rem;
     }
     
     .form-group {
-      margin-bottom: 20px;
+      margin-bottom: 25px;
       text-align: left;
     }
     
     .form-group label {
-      display: block;
+      display: flex;
+      align-items: center;
       margin-bottom: 8px;
       color: #333;
       font-weight: 500;
       font-size: 0.9rem;
     }
+
+    .input-icon {
+      margin-right: 8px;
+      color: #2b71d2;
+      opacity: 0.8;
+    }
+
+    .password-input-container {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    
+    .password-input-container input {
+      flex: 1;
+      border-top-right-radius: 0;
+      border-bottom-right-radius: 0;
+    }
+    
+    .password-toggle {
+      background: #f8f9fa;
+      border: 2px solid #e1e5e9;
+      border-left: none;
+      border-top-left-radius: 0;
+      border-bottom-left-radius: 0;
+      padding: 12px 15px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .password-toggle:hover {
+      background: #e9ecef;
+      border-color: #2b71d2;
+    }
+    
+    .password-toggle:focus {
+      outline: none;
+      border-color: #2b71d2;
+      box-shadow: 0 0 0 3px rgba(43, 113, 210, 0.1);
+    }
+
+    .toggle-icon {
+      color: #666;
+      transition: color 0.3s ease;
+    }
+
+    .password-toggle:hover .toggle-icon {
+      color: #2b71d2;
+    }
+
+    .hint-icon {
+      color: #666;
+      opacity: 0.7;
+    }
     
     .form-group input {
       width: 100%;
-      padding: 12px 15px;
+      padding: 15px 18px;
       border: 2px solid #e1e5e9;
-      border-radius: 10px;
-      font-size: 1rem;
+      border-radius: 12px;
+      font-size: 1.1rem;
       transition: all 0.3s ease;
     }
     
@@ -87,13 +178,13 @@
       background: linear-gradient(135deg, #2b71d2, #1e5bb8);
       color: white;
       border: none;
-      padding: 15px;
-      border-radius: 10px;
-      font-size: 1rem;
+      padding: 18px;
+      border-radius: 12px;
+      font-size: 1.1rem;
       font-weight: 600;
       cursor: pointer;
       transition: all 0.3s ease;
-      margin-bottom: 20px;
+      margin-bottom: 30px;
     }
     
     .login-btn:hover {
@@ -106,6 +197,15 @@
       cursor: not-allowed;
       transform: none;
       box-shadow: none;
+    }
+
+    .btn-icon {
+      margin-right: 8px;
+      transition: transform 0.3s ease;
+    }
+
+    .login-btn:hover .btn-icon {
+      transform: translateX(2px);
     }
     
     .error-message {
@@ -144,11 +244,11 @@
     }
     
     .footer {
-      margin-top: 30px;
-      padding-top: 20px;
+      margin-top: 40px;
+      padding-top: 25px;
       border-top: 1px solid #eee;
       color: #999;
-      font-size: 0.8rem;
+      font-size: 0.9rem;
     }
     
     .contentful-info {
@@ -163,6 +263,13 @@
     .contentful-info h4 {
       color: #333;
       margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+    }
+
+    .info-icon {
+      margin-right: 8px;
+      color: #2b71d2;
     }
     
     .contentful-info ul {
@@ -187,7 +294,23 @@
 </head>
 <body>
   <div class="login-container">
-    <div class="logo">📺</div>
+    <div class="logo">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <!-- 電視機外框 -->
+          <rect x="2" y="6" width="20" height="12" rx="2" ry="2"/>
+          <!-- 電視機底座 -->
+          <rect x="9" y="18" width="6" height="2" rx="1" ry="1"/>
+          <!-- 螢幕內容 -->
+          <rect x="4" y="8" width="16" height="8" rx="1" ry="1" fill="none" stroke="white" stroke-width="0.5" opacity="0.3"/>
+          <!-- 控制按鈕 -->
+          <circle cx="18" cy="8" r="0.8" fill="none" stroke="white" stroke-width="0.5" opacity="0.5"/>
+          <!-- 信號波紋 -->
+          <path d="M 2 4 Q 4 2 6 4 Q 8 6 10 4 Q 12 2 14 4 Q 16 6 18 4 Q 20 2 22 4" 
+                fill="none" stroke="white" stroke-width="0.8" opacity="0.6"/>
+        </svg>
+      </div>
+    </div>
     <h1 class="login-title">管理員登入</h1>
     <p class="login-subtitle">航向世界旅遊頻道 - 節目管理系統</p>
     
@@ -196,38 +319,60 @@
     
     <form id="loginForm">
       <div class="form-group">
-        <label for="email">電子郵件</label>
-        <input type="email" id="email" name="email" required placeholder="請輸入您的 Contentful 帳號">
+        <label for="email">
+          <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+            <polyline points="22,6 12,13 2,6"/>
+          </svg>
+          電子郵件
+        </label>
+        <input type="email" id="email" name="email" required placeholder="請輸入您的電子郵件">
       </div>
       
       <div class="form-group">
-        <label for="password">密碼</label>
-        <input type="password" id="password" name="password" required placeholder="請輸入您的密碼">
+        <label for="password">
+          <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <circle cx="12" cy="16" r="1"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+          密碼
+        </label>
+        <div class="password-input-container">
+          <input type="password" id="password" name="password" required placeholder="請輸入您的密碼">
+          <button type="button" id="togglePassword" class="password-toggle">
+            <svg class="toggle-icon" id="toggleIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+          </button>
+        </div>
+        <small style="color: #666; font-size: 0.8rem; margin-top: 5px; display: block;">
+          <svg class="hint-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline; margin-right: 4px;">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="16" x2="12" y2="12"/>
+            <line x1="12" y1="8" x2="12.01" y2="8"/>
+          </svg>
+          提示：密碼應包含大小寫字母、數字和特殊符號
+        </small>
       </div>
       
       <button type="submit" class="login-btn" id="loginBtn">
         <span class="loading" id="loadingSpinner" style="display: none;"></span>
+        <svg class="btn-icon" id="btnIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+          <polyline points="10,17 15,12 10,7"/>
+          <line x1="15" y1="12" x2="3" y2="12"/>
+        </svg>
         <span id="loginText">登入系統</span>
       </button>
     </form>
     
-         <div class="contentful-info">
-       <h4>🔐 系統說明</h4>
-       <ul>
-         <li><strong>已整合 Contentful CMS</strong> - 使用真實 API 連接</li>
-         <li>所有操作都會記錄在 Contentful</li>
-         <li>支援內容管理、排程管理、影片管理</li>
-         <li>請使用您的管理員帳號登入</li>
-       </ul>
-       <div style="margin-top: 15px; padding: 10px; background: #d4edda; border-radius: 5px; border-left: 4px solid #28a745;">
-         <strong>✅ Contentful 整合完成：</strong><br>
-         已設置 Delivery API、Preview API 和 Management API Token
-       </div>
-     </div>
+
     
     <div class="footer">
       <p>© 2024 航向世界旅遊頻道</p>
-      <p>Powered by Contentful CMS</p>
+      <p>硬編碼管理員系統</p>
     </div>
   </div>
 
@@ -241,7 +386,7 @@
     // 授權用戶列表 (實際應用中應該從 Contentful 獲取)
     const authorizedUsers = [
       {
-        email: process.env.SUPER_ADMIN_EMAIL || 'your-admin-email@example.com',
+        email: 'sammyzomb@gmail.com',
         name: '超級管理員',
         role: 'super_admin',
         permissions: ['read', 'write', 'delete', 'publish', 'admin', 'system']
@@ -260,11 +405,39 @@
       hideMessages();
       
       try {
+        // 基本輸入驗證
+        if (!email || !password) {
+          showError('請輸入完整的登入資訊');
+          return;
+        }
+        
+        // 防止暴力破解：檢查登入嘗試次數
+        const loginAttempts = parseInt(sessionStorage.getItem('loginAttempts') || '0');
+        const lastAttemptTime = sessionStorage.getItem('lastAttemptTime');
+        const now = new Date().getTime();
+        
+        // 如果超過5次失敗嘗試，鎖定15分鐘
+        if (loginAttempts >= 5 && lastAttemptTime) {
+          const lockTime = 15 * 60 * 1000; // 15分鐘
+          if (now - parseInt(lastAttemptTime) < lockTime) {
+            const remainingTime = Math.ceil((lockTime - (now - parseInt(lastAttemptTime))) / 1000 / 60);
+            showError(`登入已被鎖定，請 ${remainingTime} 分鐘後再試`);
+            return;
+          } else {
+            // 鎖定時間已過，重置計數器
+            sessionStorage.removeItem('loginAttempts');
+            sessionStorage.removeItem('lastAttemptTime');
+          }
+        }
+        
         // 驗證用戶
         const user = await authenticateUser(email, password);
         
         if (user) {
-          // 登入成功
+          // 登入成功，重置失敗計數器
+          sessionStorage.removeItem('loginAttempts');
+          sessionStorage.removeItem('lastAttemptTime');
+          
           showSuccess('登入成功！正在跳轉到管理系統...');
           
           // 儲存用戶資訊到 sessionStorage
@@ -277,12 +450,21 @@
           }, 1500);
           
         } else {
-          showError('登入失敗：帳號或密碼錯誤');
+          // 登入失敗，增加失敗計數器
+          const currentAttempts = parseInt(sessionStorage.getItem('loginAttempts') || '0') + 1;
+          sessionStorage.setItem('loginAttempts', currentAttempts.toString());
+          sessionStorage.setItem('lastAttemptTime', new Date().getTime().toString());
+          
+          if (currentAttempts >= 5) {
+            showError('登入失敗：帳號或密碼錯誤。系統已被鎖定15分鐘，請稍後再試。');
+          } else {
+            showError(`登入失敗：帳號或密碼錯誤。還剩 ${5 - currentAttempts} 次嘗試機會。`);
+          }
         }
         
       } catch (error) {
         console.error('登入錯誤:', error);
-        showError('登入失敗：請檢查網路連線或聯絡系統管理員');
+        showError('登入失敗：系統錯誤，請稍後再試');
       } finally {
         showLoading(false);
       }
@@ -290,22 +472,56 @@
     
     // 驗證用戶
     async function authenticateUser(email, password) {
+      console.log('=== 登入調試資訊 ===');
+      console.log('輸入的 email:', email);
+      console.log('輸入的 password:', password);
+      
       // 模擬 API 延遲
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // 檢查是否為授權用戶
-      const user = authorizedUsers.find(u => u.email === email);
+      // 首先檢查硬編碼的超級管理員
+      const superAdminUser = authorizedUsers.find(u => u.email === email);
+      console.log('超級管理員檢查結果:', superAdminUser);
       
-      if (user) {
-        // 這裡應該調用 Contentful 的認證 API
-        // 目前使用模擬驗證
-        const superAdminPassword = process.env.SUPER_ADMIN_PASSWORD || 'your-admin-password-here';
-        
+      if (superAdminUser) {
+        // 優先使用動態設定的密碼，如果沒有則使用預設密碼
+        const dynamicPassword = localStorage.getItem('super_admin_password');
+        const superAdminPassword = dynamicPassword || 'Ddpeacemisb@';
+        console.log('超級管理員密碼比對:', password === superAdminPassword);
         if (password === superAdminPassword) {
-          return user;
+          console.log('超級管理員登入成功');
+          return superAdminUser;
         }
       }
       
+      // 檢查動態創建的管理員
+      const systemAdmins = JSON.parse(localStorage.getItem('system_admins') || '[]');
+      console.log('系統管理員列表:', systemAdmins);
+      
+      const dynamicAdmin = systemAdmins.find(admin => admin.email === email);
+      console.log('找到的動態管理員:', dynamicAdmin);
+      
+      if (dynamicAdmin) {
+        // 檢查帳號是否被停用
+        if (dynamicAdmin.status !== 'active') {
+          console.log('帳號已被停用');
+          return null;
+        }
+        
+        console.log('動態管理員密碼比對:', password === dynamicAdmin.password);
+        if (dynamicAdmin.password === password) {
+          console.log('動態管理員登入成功');
+          // 轉換為登入系統需要的格式
+          return {
+            email: dynamicAdmin.email,
+            name: dynamicAdmin.name,
+            role: dynamicAdmin.role,
+            permissions: dynamicAdmin.permissions
+          };
+        }
+      }
+      
+      console.log('登入失敗：未找到匹配的用戶或密碼錯誤');
       return null;
     }
     
@@ -368,9 +584,45 @@
       }
     }
     
-    // 頁面載入時檢查登入狀態
+    // 頁面載入時初始化所有功能
     document.addEventListener('DOMContentLoaded', function() {
+      console.log('Login page - DOM Content Loaded');
+      
+      // 檢查登入狀態
       checkLoginStatus();
+      
+      // 密碼顯示/隱藏切換
+      const togglePassword = document.getElementById('togglePassword');
+      console.log('Login page - Toggle password button found:', !!togglePassword);
+      
+      if (togglePassword) {
+        togglePassword.addEventListener('click', function(e) {
+          e.preventDefault();
+          console.log('Login page - Toggle password clicked');
+          const passwordInput = document.getElementById('password');
+          const toggleIcon = document.getElementById('toggleIcon');
+          
+          if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            toggleIcon.innerHTML = `
+              <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+              <line x1="1" y1="1" x2="23" y2="23"/>
+            `;
+            toggleIcon.title = '隱藏密碼';
+            console.log('Login page - Password now visible');
+          } else {
+            passwordInput.type = 'password';
+            toggleIcon.innerHTML = `
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+              <circle cx="12" cy="12" r="3"/>
+            `;
+            toggleIcon.title = '顯示密碼';
+            console.log('Login page - Password now hidden');
+          }
+        });
+      }
+      
+      console.log('Login page - 初始化完成');
     });
   </script>
 </body>
