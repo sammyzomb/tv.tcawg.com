@@ -10,6 +10,7 @@ class LoginAuditSystem {
 
   // 記錄登入嘗試
   async logLoginAttempt(email, password, ipAddress, userAgent, success, reason = '') {
+    const logEntry = {
       id: this.generateLogId(),
       timestamp: new Date().toISOString(),
       email: email,
