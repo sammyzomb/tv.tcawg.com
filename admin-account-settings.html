@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>帳號設定 - 旅遊影片管理系統</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2b71d2, #1e5bb8);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+        }
+
+        .user-info {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #2196f3;
+        }
+
+        .user-details {
+            color: #1565c0;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .back-btn {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: #5a6268;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            border-left: 4px solid #2b71d2;
+        }
+
+        .section h3 {
+            color: #2b71d2;
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #2b71d2;
+            box-shadow: 0 0 0 3px rgba(43, 113, 210, 0.1);
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #2b71d2, #1e5bb8);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin-right: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(43, 113, 210, 0.3);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #dc3545, #c82333);
+        }
+
+        .btn-danger:hover {
+            box-shadow: 0 8px 20px rgba(220, 53, 69, 0.3);
+        }
+
+        .message {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .current-info {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #2196f3;
+        }
+
+        .current-info h4 {
+            color: #1565c0;
+            margin-bottom: 10px;
+        }
+
+        .info-item {
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .warning-box {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .warning-box h4 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚙️ 帳號設定</h1>
+            <p>管理系統登入帳號和密碼</p>
+        </div>
+
+        <div class="user-info">
+            <div class="user-details" id="userDetails">
+                載入中...
+            </div>
+            <button class="back-btn" onclick="window.location.href='admin-dashboard.html'">
+                ← 返回主控台
+            </button>
+        </div>
+
+        <div class="content">
+            <div class="warning-box">
+                <h4>⚠️ 重要提醒</h4>
+                <p>只有超級管理員可以修改系統登入設定。修改後請妥善保管新的帳號密碼。</p>
+            </div>
+
+            <div class="message" id="message"></div>
+
+            <!-- 當前帳號資訊 -->
+            <div class="section">
+                <h3>📋 當前帳號資訊</h3>
+                <div class="current-info" id="currentInfo">
+                    <h4>超級管理員帳號</h4>
+                    <div class="info-item">📧 電子郵件：<span id="currentEmail">載入中...</span></div>
+                    <div class="info-item">👤 姓名：<span id="currentName">載入中...</span></div>
+                    <div class="info-item">🔑 角色：<span id="currentRole">載入中...</span></div>
+                </div>
+            </div>
+
+            <!-- 修改帳號資訊 -->
+            <div class="section">
+                <h3>✏️ 修改帳號資訊</h3>
+                <form id="updateAccountForm">
+                    <div class="form-group">
+                        <label for="newEmail">新的電子郵件 *</label>
+                        <input type="email" id="newEmail" name="newEmail" required 
+                               placeholder="例如：newadmin@tcawg.com">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="newName">新的姓名 *</label>
+                        <input type="text" id="newName" name="newName" required 
+                               placeholder="例如：新管理員">
+                    </div>
+
+                    <button type="submit" class="btn">
+                        ✅ 更新帳號資訊
+                    </button>
+                </form>
+            </div>
+
+            <!-- 修改密碼 -->
+            <div class="section">
+                <h3>🔐 修改密碼</h3>
+                <form id="updatePasswordForm">
+                    <div class="form-group">
+                        <label for="currentPassword">當前密碼 *</label>
+                        <input type="password" id="currentPassword" name="currentPassword" required 
+                               placeholder="請輸入當前密碼">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="newPassword">新密碼 *</label>
+                        <input type="password" id="newPassword" name="newPassword" required 
+                               placeholder="至少8個字符">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="confirmPassword">確認新密碼 *</label>
+                        <input type="password" id="confirmPassword" name="confirmPassword" required 
+                               placeholder="再次輸入新密碼">
+                    </div>
+
+                    <button type="submit" class="btn">
+                        🔑 更新密碼
+                    </button>
+                </form>
+            </div>
+
+            <!-- 重置系統 -->
+            <div class="section">
+                <h3>🔄 系統重置</h3>
+                <p>重置所有管理員帳號，恢復預設設定（僅限緊急情況使用）</p>
+                <button class="btn btn-danger" onclick="resetSystem()">
+                    🚨 重置系統
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 檢查超級管理員權限
+        function checkSuperAdminAuth() {
+            const user = JSON.parse(sessionStorage.getItem('adminUser') || 'null');
+            
+            if (!user) {
+                window.location.href = 'admin-login.html';
+                return false;
+            }
+            
+            if (user.role !== 'super_admin') {
+                alert('⚠️ 權限不足\n\n只有超級管理員才能修改系統設定。');
+                window.location.href = 'admin-dashboard.html';
+                return false;
+            }
+            
+            return user;
+        }
+
+        // 顯示訊息
+        function showMessage(text, type = 'success') {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = text;
+            messageDiv.className = `message ${type}`;
+            messageDiv.style.display = 'block';
+            
+            if (type === 'success') {
+                setTimeout(() => {
+                    messageDiv.style.display = 'none';
+                }, 5000);
+            }
+        }
+
+        // 載入當前帳號資訊
+        function loadCurrentInfo() {
+            const user = checkSuperAdminAuth();
+            if (!user) return;
+
+            document.getElementById('userDetails').textContent = `👤 ${user.name} (超級管理員)`;
+            document.getElementById('currentEmail').textContent = user.email;
+            document.getElementById('currentName').textContent = user.name;
+            document.getElementById('currentRole').textContent = user.role;
+
+            // 預設填入當前資訊
+            document.getElementById('newEmail').value = user.email;
+            document.getElementById('newName').value = user.name;
+        }
+
+        // 更新帳號資訊
+        document.getElementById('updateAccountForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const newEmail = document.getElementById('newEmail').value;
+            const newName = document.getElementById('newName').value;
+
+            // 更新 admin-login.html 中的授權用戶
+            const currentUser = checkSuperAdminAuth();
+            if (!currentUser) return;
+
+            // 更新 sessionStorage 中的用戶資訊
+            currentUser.email = newEmail;
+            currentUser.name = newName;
+            sessionStorage.setItem('adminUser', JSON.stringify(currentUser));
+
+            // 更新頁面顯示
+            loadCurrentInfo();
+
+            showMessage(`✅ 帳號資訊更新成功！\n\n📧 新郵件：${newEmail}\n👤 新姓名：${newName}`);
+        });
+
+        // 更新密碼
+        document.getElementById('updatePasswordForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            // 驗證當前密碼
+            if (currentPassword !== 'Ddpeacemisb@') {
+                showMessage('當前密碼錯誤', 'error');
+                return;
+            }
+
+            // 驗證新密碼
+            if (newPassword.length < 8) {
+                showMessage('新密碼至少需要8個字符', 'error');
+                return;
+            }
+
+            if (newPassword !== confirmPassword) {
+                showMessage('兩次輸入的新密碼不一致', 'error');
+                return;
+            }
+
+            // 儲存新密碼到 localStorage
+            localStorage.setItem('super_admin_password', newPassword);
+            
+            // 更新 admin-login.html 中的密碼（動態方式）
+            const currentUser = checkSuperAdminAuth();
+            if (currentUser) {
+                currentUser.password = newPassword;
+                sessionStorage.setItem('adminUser', JSON.stringify(currentUser));
+            }
+
+            showMessage(`✅ 密碼更新成功！\n\n🔑 新密碼：${newPassword}\n\n⚠️ 請記住新密碼，下次登入時使用。`);
+
+            // 清空表單
+            this.reset();
+        });
+
+        // 重置系統
+        function resetSystem() {
+            if (!confirm('⚠️ 確定要重置系統嗎？\n\n這將清除所有管理員帳號並恢復預設設定。\n\n此操作無法撤銷！')) {
+                return;
+            }
+
+            // 清除所有管理員資料
+            localStorage.removeItem('system_admins');
+            sessionStorage.removeItem('adminUser');
+            sessionStorage.removeItem('loginTime');
+
+            showMessage('✅ 系統已重置！\n\n請重新登入系統。', 'success');
+
+            setTimeout(() => {
+                window.location.href = 'admin-login.html';
+            }, 3000);
+        }
+
+        // 頁面載入時初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            loadCurrentInfo();
+        });
+    </script>
+</body>
+</html>
