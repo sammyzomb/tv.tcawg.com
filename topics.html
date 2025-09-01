@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>主題探索｜航向世界旅遊頻道</title>
+
+  <!-- 站內樣式 -->
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+
+  <!-- 必要套件：Contentful + Twemoji -->
+  <!-- 移除 Contentful 與 browser-config（此頁不需要） -->
+  <!-- <script src="https://cdn.jsdelivr.net/npm/contentful@latest/dist/contentful.browser.min.js"></script> -->
+  <script src="https://cdn.jsdelivr.net/npm/twemoji@14.0.2/dist/twemoji.min.js" crossorigin="anonymous"></script>
+  <!-- <script src="browser-config.js"></script> -->
+
+  <!-- 本頁樣式 -->
+  <style>
+    :root{ --bg:#ffffff; --text:#111827; --card:#ffffff; --card-border:rgba(0,0,0,.06); --accent:#e0b46a; --active-bg:#f6f6f6; }
+    .dark-theme{ --bg:#0b1620; --text:#e5eef9; --card:#0f2133; --card-border:rgba(255,255,255,.08); --active-bg:#0f2133; }
+    
+    body{ 
+      background:var(--bg); 
+      color:var(--text); 
+      margin:0 !important; 
+      padding: 0 !important;
+      min-height: 100vh !important;
+    }
+
+    .page-wrap { 
+      max-width: 1200px !important; 
+      margin: 0 auto !important; 
+      padding: 20px 5% !important; 
+    }
+    
+    .page-head { 
+      display:flex !important; 
+      align-items:center !important; 
+      gap:12px !important; 
+      margin: 0 0 20px 0 !important; 
+      padding: 0 !important;
+    }
+    
+    .page-head h1 { 
+      font-weight:900 !important; 
+      font-size:24px !important; 
+      margin:0 !important; 
+      padding: 0 !important;
+    }
+    
+    .hint { 
+      color:#8aa4c2 !important; 
+      font-size:14px !important; 
+      margin: 0 0 30px 0 !important; 
+      padding: 0 !important;
+    }
+
+    /* 搜尋功能 */
+    .search-section {
+      margin: 0 0 40px 0 !important;
+      padding: 0 !important;
+    }
+
+    .search-box {
+      display: flex;
+      max-width: 500px;
+      margin: 0 auto 20px !important;
+      border: 2px solid var(--card-border);
+      border-radius: 12px;
+      overflow: hidden;
+      background: var(--bg);
+      transition: all 0.3s ease;
+    }
+
+    .search-box:focus-within {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(224, 180, 106, 0.1);
+    }
+
+    .search-input {
+      flex: 1;
+      padding: 12px 16px;
+      border: none;
+      outline: none;
+      font-size: 15px;
+      background: transparent;
+      color: var(--text);
+    }
+
+    .search-input::placeholder {
+      color: #9ca3af;
+    }
+
+    .search-btn {
+      padding: 12px 16px;
+      border: none;
+      background: var(--accent);
+      color: white;
+      cursor: pointer;
+      transition: background 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .search-btn:hover {
+      background: #d1a55c;
+    }
+
+    .search-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px !important;
+      justify-content: center;
+      margin-top: 0 !important;
+      margin-bottom: 0 !important;
+      padding: 0 !important;
+      line-height: 1 !important;
+    }
+
+    .search-tag {
+      padding: 6px 12px !important;
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 12px !important;
+      color: var(--text);
+      font-size: 13px !important;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      user-select: none;
+      margin: 0 !important;
+      line-height: 1.2 !important;
+    }
+
+    .search-tag:hover {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+
+    .search-tag.active {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+
+    /* 主題分類網格 */
+    .topics-section {
+      margin-bottom: 50px;
+    }
+
+    .section-title {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 30px;
+      color: var(--text);
+      text-align: center;
+    }
+
+    /* Reset 可能來自全域樣式的干擾 */
+    .navbar + .page-wrap { margin-top: 0 !important; }
+    .page-wrap { margin-top: 0 !important; }
+    .page-head{ display:none !important; }
+    .simple-page-title{ font-weight:900; font-size:24px; margin:0 0 6px 0; color:var(--text); }
+    .page-head h1 { writing-mode: horizontal-tb !important; transform:none !important; rotate:none !important; }
+    .page-head { position: relative; }
+
+    /* 新增：頂部標題+搜尋橫列 */
+    .header-row{ display:grid; grid-auto-flow: column; align-items:end; justify-content:center; column-gap:24px; margin-bottom: 12px; }
+    .header-left{ flex: 0 1 420px; text-align: center; }
+    .header-right{ flex: 1 1 auto; display:flex; justify-content:center; }
+    .header-right .search-box{ width:100%; max-width: 680px; margin:0 !important; }
+    .hint{ margin:0 0 10px 0 !important; }
+
+    .topics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 30px;
+      margin-top: 0;
+    }
+
+    .topic-card {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 30px;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      min-height: 200px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .topic-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+      border-color: var(--accent);
+    }
+
+    .topic-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--accent), #f59e0b);
+    }
+
+    .topic-icon {
+      width: 56px;
+      height: 56px;
+      background: linear-gradient(135deg, var(--accent), #f59e0b);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+      color: white;
+      font-size: 28px;
+    }
+
+    .topic-title {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: var(--text);
+    }
+
+    .topic-desc {
+      color: #6b7280;
+      font-size: 15px;
+      line-height: 1.5;
+      margin-bottom: 20px;
+      flex-grow: 1;
+    }
+
+    .topic-stats {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-size: 13px;
+      color: #8aa4c2;
+    }
+
+    .topic-stats span {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* 節目列表 */
+    .videos-section {
+      margin: 0 !important;
+    }
+
+    .video-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 24px;
+    }
+
+    .video-card {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .video-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+
+    .video-thumb {
+      aspect-ratio: 16/9;
+      overflow: hidden;
+      background: var(--card-bg);
+    }
+
+    .video-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .video-content {
+      padding: 20px;
+    }
+
+    .video-title {
+      font-weight: 600;
+      margin-bottom: 10px;
+      color: var(--text);
+      line-height: 1.4;
+      font-size: 16px;
+    }
+
+    .video-desc {
+      font-size: 14px;
+      color: #6b7280;
+      line-height: 1.5;
+      margin-bottom: 16px;
+    }
+
+    .video-cta {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.3s ease;
+      font-size: 14px;
+    }
+
+    .video-cta:hover {
+      background: #d1a55c;
+    }
+
+    /* 響應式設計 */
+    @media (max-width: 768px) {
+      .page-wrap {
+        padding: 16px 4% !important;
+      }
+      
+      .topics-grid {
+        grid-template-columns: 1fr;
+        gap: 24px;
+      }
+      
+      .topic-card {
+        padding: 24px;
+        min-height: 180px;
+      }
+      
+      .video-grid {
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 20px;
+      }
+      
+      .search-section {
+        margin: 0 0 30px 0 !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 導覽列 -->
+  <div class="navbar">
+    <a class="logo" href="index.html"><img src="logo.png" alt="航向世界旅遊頻道 LOGO" /></a>
+    
+    <nav class="desktop-nav">
+      <a href="index.html">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9L12 2L21 9V20a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        <span class="nav-text">首頁</span>
+      </a>
+      <a href="videos.html">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><path d="M8 21h8m-4-4v4"/></svg>
+        <span class="nav-text">所有節目</span>
+      </a>
+      <a href="schedule.html">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        <span class="nav-text">節目表</span>
+      </a>
+      <a href="topics.html" class="active">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <span class="nav-text">主題探索</span>
+      </a>
+    </nav>
+
+    <div class="nav-actions">
+        <a href="#" id="theme-switcher" title="切換主題">
+            <svg id="theme-icon-sun" class="nav-icon" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+            <svg id="theme-icon-moon" class="nav-icon" style="display: none;" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+        </a>
+        <a href="login.html" class="login-link">
+            <svg class="nav-icon" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="10" cy="7" r="4.5" stroke-width="2"/><ellipse cx="10" cy="15.2" rx="6.8" ry="3.2" stroke-width="2"/></svg>
+            <span class="nav-text">會員登入</span>
+        </a>
+        <button id="hamburger-btn" class="hamburger-btn">
+            <svg viewBox="0 0 100 80" width="24" height="24">
+              <rect width="100" height="15" rx="8"></rect>
+              <rect y="30" width="100" height="15" rx="8"></rect>
+              <rect y="60" width="100" height="15" rx="8"></rect>
+            </svg>
+        </button>
+    </div>
+  </div>
+
+  <div id="side-menu" class="side-menu">
+    <a href="index.html">首頁</a>
+    <a href="videos.html">所有節目</a>
+    <a href="schedule.html">節目表</a>
+    <a href="topics.html">主題探索</a>
+  </div>
+  <div id="menu-overlay" class="menu-overlay"></div>
+
+  <!-- 主要內容 -->
+  <div class="page-wrap">
+    <div class="header-row">
+      <div class="header-left">
+        <div class="simple-page-title">主題探索</div>
+        <p class="hint">搜尋和探索不同主題的旅遊節目</p>
+      </div>
+      <div class="header-right">
+        <div class="search-box">
+          <input type="text" id="search-input" placeholder="輸入關鍵字搜尋節目..." class="search-input">
+          <button id="search-btn" class="search-btn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 搜尋標籤列 -->
+    <div class="search-section">
+      <div class="search-tags" id="search-tags">
+        <!-- 熱門搜尋標籤將由 JavaScript 動態載入 -->
+      </div>
+    </div>
+
+    <!-- 主題分類網格 -->
+    <div class="topics-section">
+      <h2 class="section-title">熱門主題分類</h2>
+      <div class="topics-grid" id="topics-grid">
+        <!-- 主題分類卡片將由 JavaScript 動態載入 -->
+      </div>
+    </div>
+
+    <!-- 精選節目 -->
+    <div class="videos-section" id="featured-videos-section" style="display: none;">
+      <h2 class="section-title">精選節目</h2>
+      <div class="video-grid" id="featured-videos">
+        <!-- 節目卡片將由 JavaScript 動態載入 -->
+      </div>
+    </div>
+  </div>
+
+  <!-- 全螢幕播放器 -->
+  <div class="fullscreen-player" id="fullscreenPlayer"></div>
+
+  <!-- 除錯資訊 -->
+  <div id="topics-debug" style="max-width:1200px;margin:20px auto;padding:12px 16px;border:1px dashed #ccc;font:12px/1.4 monospace;color:#555;background:#fafafa;display:none"></div>
+
+  <script src="https://www.youtube.com/iframe_api"></script>
+  <!-- 移除 script.js 引用，避免載入節目表功能 -->
+  
+  <!-- 內嵌 JavaScript 確保功能正常 -->
+  <script>
+    function dbg(msg){
+      const box = document.getElementById('topics-debug');
+      if (!box) return;
+      box.style.display = 'block';
+      box.innerHTML += msg + '<br/>';
+      console.log('[topics]', msg);
+    }
+
+    // 主題切換：支援太陽/月亮按鈕，並記住使用者選擇
+    function applyTheme(theme){
+      const isDark = theme === 'dark';
+      document.body.classList.toggle('dark-theme', isDark);
+      const sun = document.getElementById('theme-icon-sun');
+      const moon = document.getElementById('theme-icon-moon');
+      if (sun && moon){
+        sun.style.display = isDark ? 'none' : '';
+        moon.style.display = isDark ? '' : 'none';
+      }
+      try { localStorage.setItem('site-theme', theme); } catch(e) {}
+    }
+
+    function initThemeToggle(){
+      let saved = 'light';
+      try { saved = localStorage.getItem('site-theme') || 'light'; } catch(e) {}
+      applyTheme(saved);
+      const switcher = document.getElementById('theme-switcher');
+      if (switcher){
+        switcher.addEventListener('click', (ev)=>{
+          ev.preventDefault();
+          const next = document.body.classList.contains('dark-theme') ? 'light' : 'dark';
+          applyTheme(next);
+        });
+      }
+    }
+
+    // 主題分類資料
+    const TOPICS_DATA = [
+      {
+        id: 'asia',
+        title: '亞洲風情',
+        description: '探索亞洲各國的獨特文化、美食與自然景觀',
+        icon: '🌏',
+        tags: ['日本', '韓國', '泰國', '越南'],
+        videoCount: 45
+      },
+      {
+        id: 'europe',
+        title: '歐洲經典',
+        description: '體驗歐洲的歷史文化、藝術建築與浪漫風情',
+        icon: '🏛️',
+        tags: ['法國', '義大利', '德國', '西班牙'],
+        videoCount: 38
+      },
+      {
+        id: 'americas',
+        title: '美洲奇景',
+        description: '從北極到南極，探索美洲大陸的自然奇觀',
+        icon: '🗽',
+        tags: ['美國', '加拿大', '巴西', '阿根廷'],
+        videoCount: 32
+      },
+      {
+        id: 'nature',
+        title: '自然探索',
+        description: '深入世界各地的自然奇景與野生動物',
+        icon: '🏔️',
+        tags: ['山脈', '海洋', '森林', '沙漠'],
+        videoCount: 28
+      },
+      {
+        id: 'culture',
+        title: '文化遺產',
+        description: '探索世界各地的歷史遺跡與文化傳統',
+        icon: '🏺',
+        tags: ['古蹟', '博物館', '傳統', '節慶'],
+        videoCount: 35
+      },
+      {
+        id: 'food',
+        title: '美食之旅',
+        description: '環遊世界，品嚐各地特色美食與料理',
+        icon: '🍜',
+        tags: ['拉麵', '披薩', '海鮮', '甜點'],
+        videoCount: 42
+      }
+    ];
+
+    // 熱門搜尋標籤
+    const POPULAR_TAGS = [
+      '日本', '韓國', '台灣', '中國', '泰國', '越南', '馬來西亞', '印尼',
+      '歐洲', '法國', '德國', '義大利', '西班牙', '英國', '荷蘭',
+      '美國', '加拿大', '澳洲', '紐西蘭', '非洲', '南美洲',
+      '自然', '文化', '美食', '冒險', '城市', '度假', '歷史', '藝術'
+    ];
+
+    // HTML 轉義函數
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // 渲染熱門搜尋標籤
+    function renderSearchTags() {
+      const container = document.getElementById('search-tags');
+      if (!container) return;
+
+      const displayTags = POPULAR_TAGS.slice(0, 16);
+      
+      container.innerHTML = displayTags.map(tag => `
+        <span class="search-tag" data-tag="${tag}">${escapeHtml(tag)}</span>
+      `).join('');
+
+      // 添加點擊事件
+      container.addEventListener('click', handleTagClick);
+    }
+
+    // 渲染主題分類卡片
+    function renderTopicsGrid() {
+      const container = document.getElementById('topics-grid');
+      if (!container) return;
+
+      container.innerHTML = TOPICS_DATA.map(topic => `
+        <div class="topic-card" data-topic-id="${topic.id}">
+          <div class="topic-icon">${topic.icon}</div>
+          <div class="topic-title">${escapeHtml(topic.title)}</div>
+          <div class="topic-desc">${escapeHtml(topic.description)}</div>
+          <div class="topic-stats">
+            <span>📺 ${topic.videoCount} 個節目</span>
+            <span>🏷️ ${topic.tags.slice(0, 2).join('、')}</span>
+          </div>
+        </div>
+      `).join('');
+
+      // 添加主題卡片點擊事件
+      container.addEventListener('click', handleTopicClick);
+    }
+
+    // 處理標籤點擊
+    function handleTagClick(e) {
+      const tag = e.target.closest('.search-tag');
+      if (!tag) return;
+
+      const tagText = tag.dataset.tag;
+      const searchInput = document.getElementById('search-input');
+      
+      searchInput.value = tagText;
+      
+      // 移除其他標籤的 active 狀態
+      document.querySelectorAll('.search-tag').forEach(t => t.classList.remove('active'));
+      
+      // 添加當前標籤的 active 狀態
+      tag.classList.add('active');
+      
+      // 執行搜尋
+      performSearch(tagText);
+    }
+
+    // 處理主題卡片點擊
+    function handleTopicClick(e) {
+      const topicCard = e.target.closest('.topic-card');
+      if (!topicCard) return;
+
+      const topicId = topicCard.dataset.topicId;
+      const topic = TOPICS_DATA.find(t => t.id === topicId);
+      
+      if (topic) {
+        const searchInput = document.getElementById('search-input');
+        searchInput.value = topic.title;
+        performSearch(topic.title);
+        
+        const resultsSection = document.getElementById('featured-videos-section');
+        if (resultsSection) {
+          resultsSection.scrollIntoView({ behavior: 'smooth' });
+        }
+      }
+    }
+
+    // 執行搜尋
+    function performSearch(query) {
+      const container = document.getElementById('featured-videos');
+      const section = document.getElementById('featured-videos-section');
+      
+      if (!container || !section) return;
+
+      container.innerHTML = '<div style="text-align: center; padding: 40px; color: #6b7280;">搜尋中...</div>';
+      section.style.display = 'block';
+
+      // 模擬搜尋結果
+      setTimeout(() => {
+        container.innerHTML = `
+          <div style="text-align: center; padding: 40px; color: #6b7280;">
+            <div style="font-size: 48px; margin-bottom: 16px;">🔍</div>
+            <div>搜尋「${query}」的結果</div>
+            <div style="font-size: 14px; margin-top: 8px;">這裡會顯示相關的旅遊節目</div>
+          </div>
+        `;
+      }, 1000);
+    }
+
+    // 設置搜尋事件
+    function setupSearchEvents() {
+      const searchInput = document.getElementById('search-input');
+      const searchBtn = document.getElementById('search-btn');
+
+      searchBtn.addEventListener('click', () => {
+        const query = searchInput.value.trim();
+        if (query) {
+          performSearch(query);
+        }
+      });
+
+      searchInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          const query = searchInput.value.trim();
+          if (query) {
+            performSearch(query);
+          }
+        }
+      });
+    }
+
+    // 頁面載入完成後初始化
+    document.addEventListener('DOMContentLoaded', () => {
+      dbg('DOM 載入完成');
+      initThemeToggle(); dbg('主題切換初始化完成');
+      renderSearchTags(); dbg('已渲染搜尋標籤');
+      renderTopicsGrid(); dbg('已渲染主題卡片：'+TOPICS_DATA.length);
+      setupSearchEvents(); dbg('已綁定搜尋事件');
+    });
+  </script>
+</body>
+</html>

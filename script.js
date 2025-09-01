@@ -411,7 +411,7 @@ document.addEventListener('DOMContentLoaded', () => {
           const todayPrograms = response.items.filter(item => 
             item.fields.airDate === today
           ).map(item => ({
-            time: item.fields.airTime || item.fields.播出時間 || '00:00',
+            time: item.fields.airTime || '00:00',
             title: item.fields.title || item.fields.節目標題 || '未命名節目',
             duration: (item.fields.duration || item.fields.節目時長 || 60).toString(),
             category: item.fields.category || item.fields.節目分類 || '旅遊節目',

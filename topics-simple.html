@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>主題探索測試｜航向世界旅遊頻道</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: Arial, sans-serif;
+      background: #ffffff;
+      color: #333;
+    }
+    
+    .navbar {
+      background: #f8f9fa;
+      padding: 15px 20px;
+      border-bottom: 1px solid #e9ecef;
+    }
+    
+    .logo {
+      font-size: 20px;
+      font-weight: bold;
+      color: #007bff;
+    }
+    
+    .page-wrap {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+    
+    .page-head {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+    
+    .page-head h1 {
+      font-size: 36px;
+      color: #333;
+      margin-bottom: 10px;
+    }
+    
+    .hint {
+      color: #666;
+      font-size: 16px;
+    }
+    
+    .search-section {
+      margin-bottom: 50px;
+      text-align: center;
+    }
+    
+    .search-box {
+      display: flex;
+      max-width: 500px;
+      margin: 0 auto 20px;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    
+    .search-input {
+      flex: 1;
+      padding: 15px;
+      border: none;
+      outline: none;
+      font-size: 16px;
+    }
+    
+    .search-btn {
+      padding: 15px 20px;
+      border: none;
+      background: #007bff;
+      color: white;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    
+    .search-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      margin-top: 20px;
+    }
+    
+    .search-tag {
+      padding: 8px 16px;
+      background: #f8f9fa;
+      border: 1px solid #ddd;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    
+    .search-tag:hover {
+      background: #007bff;
+      color: white;
+    }
+    
+    .topics-section {
+      margin-bottom: 50px;
+    }
+    
+    .section-title {
+      font-size: 28px;
+      text-align: center;
+      margin-bottom: 40px;
+      color: #333;
+    }
+    
+    .topics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 30px;
+    }
+    
+    .topic-card {
+      background: white;
+      border: 1px solid #e9ecef;
+      border-radius: 12px;
+      padding: 30px;
+      text-align: center;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      transition: transform 0.3s;
+    }
+    
+    .topic-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+    }
+    
+    .topic-icon {
+      font-size: 48px;
+      margin-bottom: 20px;
+    }
+    
+    .topic-title {
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 15px;
+      color: #333;
+    }
+    
+    .topic-desc {
+      color: #666;
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+    
+    .topic-stats {
+      color: #007bff;
+      font-weight: bold;
+    }
+    
+    .videos-section {
+      display: none;
+    }
+    
+    .video-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+    }
+    
+    .video-card {
+      background: white;
+      border: 1px solid #e9ecef;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .video-thumb {
+      height: 150px;
+      background: #f8f9fa;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #666;
+    }
+    
+    .video-content {
+      padding: 20px;
+    }
+    
+    .video-title {
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+    
+    .video-cta {
+      background: #007bff;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <!-- 簡化導覽列 -->
+  <div class="navbar">
+    <div class="logo">航向世界旅遊頻道</div>
+  </div>
+
+  <!-- 主要內容 -->
+  <div class="page-wrap">
+    <div class="page-head">
+      <h1>主題探索</h1>
+      <p class="hint">搜尋和探索不同主題的旅遊節目</p>
+    </div>
+
+    <!-- 搜尋欄位 -->
+    <div class="search-section">
+      <div class="search-box">
+        <input type="text" id="search-input" placeholder="輸入關鍵字搜尋節目..." class="search-input">
+        <button id="search-btn" class="search-btn">搜尋</button>
+      </div>
+      <div class="search-tags" id="search-tags">
+        <!-- 熱門搜尋標籤 -->
+      </div>
+    </div>
+
+    <!-- 主題分類網格 -->
+    <div class="topics-section">
+      <h2 class="section-title">熱門主題分類</h2>
+      <div class="topics-grid" id="topics-grid">
+        <!-- 主題分類卡片 -->
+      </div>
+    </div>
+
+    <!-- 精選節目 -->
+    <div class="videos-section" id="featured-videos-section">
+      <h2 class="section-title">精選節目</h2>
+      <div class="video-grid" id="featured-videos">
+        <!-- 節目卡片 -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 主題分類資料
+    const TOPICS_DATA = [
+      {
+        id: 'asia',
+        title: '亞洲風情',
+        description: '探索亞洲各國的獨特文化、美食與自然景觀',
+        icon: '🌏',
+        tags: ['日本', '韓國', '泰國', '越南'],
+        videoCount: 45
+      },
+      {
+        id: 'europe',
+        title: '歐洲經典',
+        description: '體驗歐洲的歷史文化、藝術建築與浪漫風情',
+        icon: '🏛️',
+        tags: ['法國', '義大利', '德國', '西班牙'],
+        videoCount: 38
+      },
+      {
+        id: 'americas',
+        title: '美洲奇景',
+        description: '從北極到南極，探索美洲大陸的自然奇觀',
+        icon: '🗽',
+        tags: ['美國', '加拿大', '巴西', '阿根廷'],
+        videoCount: 32
+      },
+      {
+        id: 'nature',
+        title: '自然探索',
+        description: '深入世界各地的自然奇景與野生動物',
+        icon: '🏔️',
+        tags: ['山脈', '海洋', '森林', '沙漠'],
+        videoCount: 28
+      },
+      {
+        id: 'culture',
+        title: '文化遺產',
+        description: '探索世界各地的歷史遺跡與文化傳統',
+        icon: '🏺',
+        tags: ['古蹟', '博物館', '傳統', '節慶'],
+        videoCount: 35
+      },
+      {
+        id: 'food',
+        title: '美食之旅',
+        description: '環遊世界，品嚐各地特色美食與料理',
+        icon: '🍜',
+        tags: ['拉麵', '披薩', '海鮮', '甜點'],
+        videoCount: 42
+      }
+    ];
+
+    // 熱門搜尋標籤
+    const POPULAR_TAGS = [
+      '日本', '韓國', '台灣', '中國', '泰國', '越南', '馬來西亞', '印尼',
+      '歐洲', '法國', '德國', '義大利', '西班牙', '英國', '荷蘭',
+      '美國', '加拿大', '澳洲', '紐西蘭', '非洲', '南美洲',
+      '自然', '文化', '美食', '冒險', '城市', '度假', '歷史', '藝術'
+    ];
+
+    // 渲染熱門搜尋標籤
+    function renderSearchTags() {
+      const container = document.getElementById('search-tags');
+      if (!container) return;
+
+      const displayTags = POPULAR_TAGS.slice(0, 16);
+      
+      container.innerHTML = displayTags.map(tag => `
+        <span class="search-tag" onclick="searchTag('${tag}')">${tag}</span>
+      `).join('');
+    }
+
+    // 渲染主題分類卡片
+    function renderTopicsGrid() {
+      const container = document.getElementById('topics-grid');
+      if (!container) return;
+
+      container.innerHTML = TOPICS_DATA.map(topic => `
+        <div class="topic-card" onclick="searchTopic('${topic.title}')">
+          <div class="topic-icon">${topic.icon}</div>
+          <div class="topic-title">${topic.title}</div>
+          <div class="topic-desc">${topic.description}</div>
+          <div class="topic-stats">📺 ${topic.videoCount} 個節目</div>
+        </div>
+      `).join('');
+    }
+
+    // 搜尋標籤
+    function searchTag(tag) {
+      document.getElementById('search-input').value = tag;
+      performSearch(tag);
+    }
+
+    // 搜尋主題
+    function searchTopic(topic) {
+      document.getElementById('search-input').value = topic;
+      performSearch(topic);
+    }
+
+    // 執行搜尋
+    function performSearch(query) {
+      const section = document.getElementById('featured-videos-section');
+      const container = document.getElementById('featured-videos');
+      
+      if (!section || !container) return;
+
+      section.style.display = 'block';
+      container.innerHTML = `
+        <div style="text-align: center; padding: 40px; color: #666;">
+          <div style="font-size: 48px; margin-bottom: 16px;">🔍</div>
+          <div style="font-size: 20px; margin-bottom: 10px;">搜尋「${query}」的結果</div>
+          <div>這裡會顯示相關的旅遊節目</div>
+        </div>
+      `;
+      
+      section.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // 設置搜尋事件
+    function setupSearchEvents() {
+      const searchInput = document.getElementById('search-input');
+      const searchBtn = document.getElementById('search-btn');
+
+      searchBtn.addEventListener('click', () => {
+        const query = searchInput.value.trim();
+        if (query) {
+          performSearch(query);
+        }
+      });
+
+      searchInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          const query = searchInput.value.trim();
+          if (query) {
+            performSearch(query);
+          }
+        }
+      });
+    }
+
+    // 頁面載入完成後初始化
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log('簡化主題探索頁面載入完成');
+      renderSearchTags();
+      renderTopicsGrid();
+      setupSearchEvents();
+    });
+  </script>
+</body>
+</html>

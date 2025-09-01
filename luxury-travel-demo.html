@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高端旅遊電視台 - 專業示範頁面</title>
+    
+    <!-- 高端旅遊套件 CSS -->
+    <link rel="stylesheet" href="enhanced-styles.css">
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- 外部套件 CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.4/css/lightbox.min.css">
+    
+    <style>
+        /* 高端旅遊示範頁面專用樣式 */
+        .luxury-section {
+            padding: 80px 0;
+            background: var(--warm-white);
+        }
+        
+        .luxury-section:nth-child(even) {
+            background: white;
+        }
+        
+        .luxury-section h2 {
+            text-align: center;
+            margin-bottom: 60px;
+            color: var(--deep-navy);
+            font-size: 2.8rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+        
+        .luxury-section h3 {
+            color: var(--deep-navy);
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+        
+        .luxury-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 50px;
+            margin: 60px 0;
+        }
+        
+        .luxury-card {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 12px 40px var(--shadow-soft);
+            border: 1px solid rgba(212, 175, 55, 0.1);
+            text-align: center;
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .luxury-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 50px var(--shadow-medium);
+        }
+        
+        .luxury-icon {
+            font-size: 3.5rem;
+            margin-bottom: 24px;
+            color: var(--luxury-gold);
+            opacity: 0.9;
+        }
+        
+        .hero-luxury-demo {
+            background: linear-gradient(135deg, var(--deep-navy) 0%, var(--navy-light) 100%);
+            color: var(--warm-white);
+            padding: 140px 0;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .hero-luxury-demo h1 {
+            font-size: 4rem;
+            margin-bottom: 28px;
+            font-weight: 700;
+            letter-spacing: -1px;
+            color: var(--warm-white);
+            animation: fadeInUp 1.2s ease-out;
+        }
+        
+        .hero-luxury-demo p {
+            font-size: 1.4rem;
+            margin-bottom: 40px;
+            color: var(--luxury-gold-light);
+            font-weight: 400;
+            line-height: 1.7;
+            animation: fadeInUp 1.2s ease-out 0.2s both;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .swiper-luxury {
+            margin: 60px 0;
+        }
+        
+        .swiper-slide {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            text-align: center;
+            height: 250px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            color: var(--deep-navy);
+            font-weight: 600;
+            box-shadow: 0 8px 25px var(--shadow-soft);
+            border: 1px solid rgba(212, 175, 55, 0.1);
+        }
+        
+        .destination-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin: 40px 0;
+        }
+        
+        .destination-card {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 8px 25px var(--shadow-soft);
+            transition: all 0.4s ease;
+        }
+        
+        .destination-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 15px 40px var(--shadow-medium);
+        }
+        
+        .destination-image {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(135deg, var(--deep-navy), var(--navy-light));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--warm-white);
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        
+        .destination-content {
+            padding: 24px;
+        }
+        
+        .destination-tags {
+            margin: 16px 0;
+        }
+        
+        .tag-luxury.selected {
+            background: var(--luxury-gold);
+            color: var(--deep-navy);
+        }
+        
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 40px;
+            margin: 40px 0;
+        }
+        
+        .video-card {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 8px 25px var(--shadow-soft);
+            transition: all 0.4s ease;
+            cursor: pointer;
+        }
+        
+        .video-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 15px 40px var(--shadow-medium);
+        }
+        
+        .video-thumbnail {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(135deg, var(--deep-navy), var(--navy-light));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--warm-white);
+            font-size: 3rem;
+            position: relative;
+        }
+        
+        .video-thumbnail::after {
+            content: '▶';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 4rem;
+            color: var(--luxury-gold);
+            opacity: 0.9;
+        }
+        
+        .video-content {
+            padding: 24px;
+        }
+        
+        .video-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--deep-navy);
+            margin-bottom: 12px;
+        }
+        
+        .video-description {
+            color: var(--soft-gray);
+            line-height: 1.6;
+            margin-bottom: 16px;
+        }
+        
+        .video-duration {
+            color: var(--luxury-gold);
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- 高端導覽列 -->
+    <nav class="navbar navbar-luxury">
+        <div class="logo">
+            <img src="logo.png" alt="Teavel Logo" style="max-height: 45px;">
+        </div>
+        <div class="desktop-nav">
+            <a href="#home">首頁</a>
+            <a href="#destinations">目的地</a>
+            <a href="#videos">旅遊影片</a>
+            <a href="#experiences">獨特體驗</a>
+        </div>
+        <div class="nav-actions">
+            <button class="btn-luxury-secondary" onclick="toggleTheme()">切換主題</button>
+        </div>
+    </nav>
+
+    <!-- 高端頁首 -->
+    <section class="hero-luxury-demo" id="home">
+        <h1 class="animate-on-scroll">探索世界的美好</h1>
+        <p class="animate-on-scroll">專為追求卓越的旅遊愛好者打造，帶您體驗最精緻的旅程與最動人的故事</p>
+        <button class="btn-luxury animate-on-scroll" onclick="showWelcomeMessage()">
+            開始探索
+        </button>
+    </section>
+
+    <!-- 目的地探索 -->
+    <section class="luxury-section" id="destinations">
+        <h2 data-aos="fade-up">精選目的地</h2>
+        <div class="destination-grid">
+            <div class="destination-card" data-aos="fade-up" data-aos-delay="100">
+                <div class="destination-image">歐洲風情</div>
+                <div class="destination-content">
+                    <h3>歐洲經典之旅</h3>
+                    <p>探索歐洲大陸的歷史文化與藝術瑰寶，體驗最純正的歐式風情</p>
+                    <div class="destination-tags">
+                        <span class="tag-luxury">文化</span>
+                        <span class="tag-luxury">歷史</span>
+                        <span class="tag-luxury">藝術</span>
+                    </div>
+                    <button class="btn-luxury" onclick="showDestinationInfo('歐洲經典之旅')">
+                        深入了解
+                    </button>
+                </div>
+            </div>
+            
+            <div class="destination-card" data-aos="fade-up" data-aos-delay="200">
+                <div class="destination-image">亞洲秘境</div>
+                <div class="destination-content">
+                    <h3>亞洲秘境探索</h3>
+                    <p>深入亞洲的神秘角落，發現古老文明與現代魅力的完美融合</p>
+                    <div class="destination-tags">
+                        <span class="tag-luxury">神秘</span>
+                        <span class="tag-luxury">文化</span>
+                        <span class="tag-luxury">自然</span>
+                    </div>
+                    <button class="btn-luxury" onclick="showDestinationInfo('亞洲秘境探索')">
+                        深入了解
+                    </button>
+                </div>
+            </div>
+            
+            <div class="destination-card" data-aos="fade-up" data-aos-delay="300">
+                <div class="destination-image">美洲奇景</div>
+                <div class="destination-content">
+                    <h3>美洲奇景之旅</h3>
+                    <p>橫跨美洲大陸，體驗從北極到南極的壯麗景觀與多元文化</p>
+                    <div class="destination-tags">
+                        <span class="tag-luxury">自然</span>
+                        <span class="tag-luxury">冒險</span>
+                        <span class="tag-luxury">多元</span>
+                    </div>
+                    <button class="btn-luxury" onclick="showDestinationInfo('美洲奇景之旅')">
+                        深入了解
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 旅遊影片展示 -->
+    <section class="luxury-section" id="videos">
+        <h2 data-aos="fade-up">精選旅遊影片</h2>
+        <div class="video-grid">
+            <div class="video-card" data-aos="fade-up" data-aos-delay="100">
+                <div class="video-thumbnail" data-video-id="europe-2024"></div>
+                <div class="video-content">
+                    <div class="video-title">歐洲文藝復興之旅</div>
+                    <div class="video-description">深入佛羅倫斯、羅馬與威尼斯，探索文藝復興時期的藝術瑰寶</div>
+                    <div class="video-duration">45:30</div>
+                </div>
+            </div>
+            
+            <div class="video-card" data-aos="fade-up" data-aos-delay="200">
+                <div class="video-thumbnail" data-video-id="asia-2024"></div>
+                <div class="video-content">
+                    <div class="video-title">亞洲古文明探索</div>
+                    <div class="video-description">走訪吳哥窟、泰姬陵與長城，感受東方文明的深厚底蘊</div>
+                    <div class="video-duration">52:15</div>
+                </div>
+            </div>
+            
+            <div class="video-card" data-aos="fade-up" data-aos-delay="300">
+                <div class="video-thumbnail" data-video-id="america-2024"></div>
+                <div class="video-content">
+                    <div class="video-title">美洲自然奇觀</div>
+                    <div class="video-description">從大峽谷到亞馬遜雨林，體驗美洲大陸的自然奇蹟</div>
+                    <div class="video-duration">48:45</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 特色服務 -->
+    <section class="luxury-section">
+        <h2 data-aos="fade-up">專業服務特色</h2>
+        <div class="luxury-grid">
+            <div class="luxury-card" data-aos="fade-up" data-aos-delay="100">
+                <div class="luxury-icon">✈️</div>
+                <h3>私人訂製行程</h3>
+                <p>根據您的喜好與需求，量身打造專屬的旅遊體驗，讓每一趟旅程都獨一無二</p>
+                <button class="btn-luxury-secondary">了解更多</button>
+            </div>
+            
+            <div class="luxury-card" data-aos="fade-up" data-aos-delay="200">
+                <div class="luxury-icon">🏨</div>
+                <h3>精品住宿體驗</h3>
+                <p>精選全球頂級酒店與特色民宿，為您提供最舒適與獨特的住宿體驗</p>
+                <button class="btn-luxury-secondary">了解更多</button>
+            </div>
+            
+            <div class="luxury-card" data-aos="fade-up" data-aos-delay="300">
+                <div class="luxury-icon">🎯</div>
+                <h3>專業導遊服務</h3>
+                <p>資深旅遊專家與當地文化導師，帶您深入了解每個目的地的精髓</p>
+                <button class="btn-luxury-secondary">了解更多</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- 輪播展示 -->
+    <section class="luxury-section">
+        <h2 data-aos="fade-up">精彩內容輪播</h2>
+        <div class="swiper-container swiper-luxury" data-aos="zoom-in">
+            <div class="swiper-wrapper">
+                <div class="swiper-slide">歐洲文藝復興藝術之旅</div>
+                <div class="swiper-slide">亞洲古文明深度探索</div>
+                <div class="swiper-slide">美洲自然奇觀攝影之旅</div>
+                <div class="swiper-slide">非洲野生動物觀察</div>
+                <div class="swiper-slide">大洋洲島嶼度假體驗</div>
+            </div>
+            <div class="swiper-pagination"></div>
+            <div class="swiper-button-next"></div>
+            <div class="swiper-button-prev"></div>
+        </div>
+    </section>
+
+    <!-- 圖片畫廊 -->
+    <section class="luxury-section" id="gallery">
+        <h2 data-aos="fade-up">精選旅遊圖片</h2>
+        <div class="luxury-grid">
+            <div class="luxury-card" data-aos="fade-up">
+                <h3>點擊圖片查看高品質展示</h3>
+                <a href="https://via.placeholder.com/800x600/1B365D/ffffff?text=歐洲風情" 
+                   data-lightbox="travel-gallery" 
+                   data-title="歐洲文藝復興建築">
+                    <img src="https://via.placeholder.com/400x300/1B365D/ffffff?text=歐洲風情" 
+                         alt="歐洲風情" 
+                         style="width: 100%; border-radius: 12px; cursor: pointer; margin-bottom: 20px;">
+                </a>
+                <p>歐洲文藝復興時期的建築藝術</p>
+            </div>
+            
+            <div class="luxury-card" data-aos="fade-up" data-aos-delay="100">
+                <h3>亞洲古文明遺跡</h3>
+                <a href="https://via.placeholder.com/800x600/2C5AA0/ffffff?text=亞洲秘境" 
+                   data-lightbox="travel-gallery" 
+                   data-title="亞洲古文明遺跡">
+                    <img src="https://via.placeholder.com/400x300/2C5AA0/ffffff?text=亞洲秘境" 
+                         alt="亞洲秘境" 
+                         style="width: 100%; border-radius: 12px; cursor: pointer; margin-bottom: 20px;">
+                </a>
+                <p>神秘古老的東方文明遺跡</p>
+            </div>
+            
+            <div class="luxury-card" data-aos="fade-up" data-aos-delay="200">
+                <h3>美洲自然奇觀</h3>
+                <a href="https://via.placeholder.com/800x600/D4AF37/ffffff?text=美洲奇景" 
+                   data-lightbox="travel-gallery" 
+                   data-title="美洲自然奇觀">
+                    <img src="https://via.placeholder.com/400x300/D4AF37/ffffff?text=美洲奇景" 
+                         alt="美洲奇景" 
+                         style="width: 100%; border-radius: 12px; cursor: pointer; margin-bottom: 20px;">
+                </a>
+                <p>壯麗震撼的自然景觀</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- 頁尾 -->
+    <footer style="background: var(--deep-navy); color: var(--warm-white); padding: 60px 0; text-align: center; margin-top: 80px;">
+        <div style="max-width: 800px; margin: 0 auto;">
+            <h3 style="color: var(--luxury-gold); margin-bottom: 20px; font-size: 1.8rem;">Teavel 高端旅遊電視台</h3>
+            <p style="color: var(--luxury-gold-light); line-height: 1.6; margin-bottom: 30px;">
+                專為追求卓越的旅遊愛好者打造，帶您探索世界的美好與精彩
+            </p>
+            <div style="margin-top: 40px;">
+                <span style="color: var(--soft-gray); font-size: 0.9rem;">
+                    © 2024 Teavel 高端旅遊電視台. 保留所有權利.
+                </span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript 套件 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.4/js/lightbox.min.js"></script>
+    
+    <!-- 自定義腳本 -->
+    <script src="enhanced-ui.js"></script>
+    
+    <script>
+        // 高端旅遊示範頁面專用腳本
+        function toggleTheme() {
+            document.body.classList.toggle('dark-theme');
+            const button = event.target;
+            button.textContent = document.body.classList.contains('dark-theme') ? '淺色主題' : '深色主題';
+        }
+        
+        function showWelcomeMessage() {
+            if (window.LuxuryTravelUI) {
+                window.LuxuryTravelUI.showNotification('🌟 歡迎來到 Teavel 高端旅遊電視台！', 'success');
+            }
+        }
+        
+        function showDestinationInfo(destination) {
+            if (window.LuxuryTravelUI) {
+                window.LuxuryTravelUI.showDestinationInfo(destination);
+            }
+        }
+        
+        // 添加滾動動畫類別
+        document.addEventListener('DOMContentLoaded', function() {
+            const animatedElements = document.querySelectorAll('[data-aos]');
+            animatedElements.forEach(el => {
+                el.classList.add('animate-on-scroll');
+            });
+        });
+    </script>
+</body>
+</html>

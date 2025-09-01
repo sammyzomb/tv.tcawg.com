@@ -1309,4 +1309,120 @@ body.dark-theme .schedule-item:hover .program-category {
 .schedule-item:nth-child(7) { animation-delay: 0.7s; }
 .schedule-item:nth-child(8) { animation-delay: 0.8s; }
 
+/* === 美觀套件增強效果 === */
+/* 保持原有設計風格，只添加流暢的動畫效果 */
+
+/* 導覽列連結懸停效果 */
+.desktop-nav a {
+  transition: all 0.3s ease;
+}
+
+.desktop-nav a:hover {
+  transform: translateY(-2px);
+}
+
+/* 按鈕懸停效果 */
+.section-cta-btn {
+  transition: all 0.3s ease;
+}
+
+.section-cta-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+/* 節目表項目懸停效果 */
+.schedule-item {
+  transition: all 0.3s ease;
+}
+
+.schedule-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* 影片卡片懸停效果 */
+.video-card {
+  transition: all 0.3s ease;
+}
+
+.video-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* 導覽箭頭懸停效果 */
+.schedule-nav-arrow {
+  transition: all 0.3s ease;
+}
+
+.schedule-nav-arrow:hover {
+  transform: scale(1.1);
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+/* 主題切換按鈕效果 */
+#theme-switcher {
+  transition: all 0.3s ease;
+}
+
+#theme-switcher:hover {
+  transform: rotate(15deg);
+}
+
+/* 漢堡選單按鈕效果 */
+.hamburger-btn {
+  transition: all 0.3s ease;
+}
+
+.hamburger-btn:hover {
+  transform: scale(1.05);
+}
+
+/* 側邊選單動畫 */
+.side-menu {
+  transition: transform 0.3s ease;
+}
+
+.side-menu.active {
+  transform: translateX(0);
+}
+
+/* 選單遮罩動畫 */
+.menu-overlay {
+  transition: opacity 0.3s ease;
+}
+
+.menu-overlay.active {
+  opacity: 1;
+}
+
+/* 頁面載入時的淡入效果 */
+.hero-main-title h1 {
+  animation: fadeInUp 1s ease-out;
+}
+
+.hero-main-title p {
+  animation: fadeInUp 1s ease-out 0.2s both;
+}
+
+/* 響應式動畫調整 */
+@media (max-width: 768px) {
+  .desktop-nav a:hover {
+    transform: none;
+  }
+  
+  .section-cta-btn:hover {
+    transform: none;
+  }
+  
+  .schedule-item:hover {
+    transform: none;
+  }
+  
+  .video-card:hover {
+    transform: none;
+  }
+}
+
 

@@ -1,0 +1,162 @@
+/* === 簡化美觀套件 - 專為現有設計風格 === */
+
+/* --- 基礎動畫效果 --- */
+@import url('https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css');
+
+/* --- 保持原有設計的動畫類別 --- */
+.fade-in-up {
+  animation: fadeInUp 0.8s ease-out;
+}
+
+.fade-in-left {
+  animation: fadeInLeft 0.8s ease-out;
+}
+
+.fade-in-right {
+  animation: fadeInRight 0.8s ease-out;
+}
+
+/* --- 現有元件的微調美化 --- */
+
+/* 導覽列微調 */
+.navbar {
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+}
+
+/* 按鈕微調 */
+.section-cta-btn {
+  position: relative;
+  overflow: hidden;
+}
+
+.section-cta-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.section-cta-btn:hover::before {
+  left: 100%;
+}
+
+/* 節目表項目微調 */
+.schedule-item {
+  border-left: 3px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.schedule-item:hover {
+  border-left-color: var(--primary-color, #2b71d2);
+}
+
+/* 影片卡片微調 */
+.video-card {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.video-card img {
+  transition: transform 0.3s ease;
+}
+
+.video-card:hover img {
+  transform: scale(1.05);
+}
+
+/* 導覽箭頭微調 */
+.schedule-nav-arrow {
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.schedule-nav-arrow:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+/* 主題切換按鈕微調 */
+#theme-switcher {
+  border-radius: 50%;
+  padding: 8px;
+  transition: all 0.3s ease;
+}
+
+#theme-switcher:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+/* 漢堡選單微調 */
+.hamburger-btn {
+  border-radius: 6px;
+  transition: all 0.3s ease;
+}
+
+.hamburger-btn:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+/* 側邊選單微調 */
+.side-menu {
+  backdrop-filter: blur(10px);
+}
+
+.side-menu a {
+  transition: all 0.3s ease;
+  border-left: 3px solid transparent;
+}
+
+.side-menu a:hover {
+  border-left-color: var(--primary-color, #2b71d2);
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+/* 載入動畫 */
+.loading-simple {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid var(--primary-color, #2b71d2);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 20px auto;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* 簡化通知樣式 */
+.notification-simple {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: var(--primary-color, #2b71d2);
+  color: white;
+  padding: 12px 20px;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 10000;
+  animation: slideInRight 0.3s ease-out;
+  font-size: 14px;
+}
+
+/* 響應式調整 */
+@media (max-width: 768px) {
+  .navbar {
+    backdrop-filter: none;
+  }
+  
+  .side-menu {
+    backdrop-filter: none;
+  }
+  
+  .section-cta-btn::before {
+    display: none;
+  }
+}
