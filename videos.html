@@ -12,6 +12,7 @@
   <!-- 必要套件：Contentful + Twemoji -->
   <script src="https://cdn.jsdelivr.net/npm/contentful@latest/dist/contentful.browser.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/twemoji@14.0.2/dist/twemoji.min.js" crossorigin="anonymous"></script>
+  <script src="browser-config.js"></script>
 
   <!-- 本頁樣式（極簡主題橋接 + 橫向分類條 + 卡片等高 + 區塊收合 + 標籤/徽章） -->
   <style>
@@ -398,7 +399,7 @@ section[id^="cont-"] { scroll-margin-top: 150px; }  /* 桌面 */
 
       let res;
       try {
-        const client = window.contentful.createClient({
+        const client = contentful.createClient({
           space: process.env.CONTENTFUL_SPACE_ID || 'your-space-id-here',
           accessToken: process.env.CONTENTFUL_DELIVERY_TOKEN || 'your-delivery-token-here'
         });
