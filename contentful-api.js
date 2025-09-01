@@ -243,4 +243,11 @@ class ContentfulAPI {
 }
 
 // 創建全域實例
-window.contentfulAPI = new ContentfulAPI();
+if (typeof window !== 'undefined') {
+  window.contentfulAPI = new ContentfulAPI();
+}
+
+// 如果是在 Node.js 環境中，導出類別
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = ContentfulAPI;
+}
