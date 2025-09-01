@@ -6,17 +6,17 @@ const BROWSER_CONFIG = {
   // Contentful 設定
   CONTENTFUL_SPACE_ID: 'os5wf90ljenp',
   CONTENTFUL_DELIVERY_TOKEN: 'lODH-WLwHwVZv7O4rFdBWjSnrzaQWGD4koeOZ1Dypj0',
-  CONTENTFUL_PREVIEW_TOKEN: process.env.CONTENTFUL_PREVIEW_TOKEN || 'your-preview-token-here',
-  CONTENTFUL_MANAGEMENT_TOKEN: process.env.CONTENTFUL_MANAGEMENT_TOKEN || 'your-management-token-here',
+  CONTENTFUL_PREVIEW_TOKEN: 'your-preview-token-here',
+  CONTENTFUL_MANAGEMENT_TOKEN: 'your-management-token-here',
   
   // 管理員設定
-  SUPER_ADMIN_EMAIL: process.env.SUPER_ADMIN_EMAIL || 'your-admin-email@example.com',
-  SUPER_ADMIN_PASSWORD: process.env.SUPER_ADMIN_PASSWORD || 'your-admin-password-here',
+  SUPER_ADMIN_EMAIL: 'your-admin-email@example.com',
+  SUPER_ADMIN_PASSWORD: 'your-admin-password-here',
   
   // 網站設定
-  SITE_URL: process.env.SITE_URL || 'https://tv.tcawg.com',
+  SITE_URL: 'https://tv.tcawg.com',
   SITE_NAME: '旅遊電視台網站',
-  ENVIRONMENT: process.env.NODE_ENV || 'development'
+  ENVIRONMENT: 'development'
 };
 
 // 提供環境變數相容性

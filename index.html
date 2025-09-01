@@ -6,6 +6,9 @@
   <title>航向世界旅遊頻道</title>
   
   <link rel="stylesheet" href="style.css">
+  <!-- 簡化美觀套件 CSS - 保持原有設計風格 -->
+  <link rel="stylesheet" href="simple-enhanced-styles.css">
+  
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <script src="https://cdn.jsdelivr.net/npm/contentful@latest/dist/contentful.browser.min.js"></script>
   <script src="browser-config.js"></script>
@@ -18,7 +21,7 @@
     <a class="logo" href="index.html"><img src="logo.png" alt="航向世界旅遊頻道 LOGO" /></a>
     
     <nav class="desktop-nav">
-      <a href="index.html">
+      <a href="index.html" class="active">
         <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9L12 2L21 9V20a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
         <span class="nav-text">首頁</span>
       </a>
@@ -74,6 +77,7 @@
     </div>
     <div class="hero-caption" id="heroCaption"></div>
   </div>
+  
   <section class="schedule-section">
     <div class="section-title-container">
         <div class="title-left">

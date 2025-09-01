@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>主題探索測試</title>
+  
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: Arial, sans-serif;
+      background: #f0f0f0;
+    }
+    
+    .test-container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .test-title {
+      text-align: center;
+      color: #333;
+      margin-bottom: 30px;
+    }
+    
+    .search-box {
+      display: flex;
+      margin-bottom: 30px;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    
+    .search-input {
+      flex: 1;
+      padding: 15px;
+      border: none;
+      outline: none;
+      font-size: 16px;
+    }
+    
+    .search-btn {
+      padding: 15px 20px;
+      background: #007bff;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    
+    .topics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+    }
+    
+    .topic-card {
+      background: #f8f9fa;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 20px;
+      text-align: center;
+    }
+    
+    .topic-icon {
+      font-size: 40px;
+      margin-bottom: 15px;
+    }
+    
+    .topic-title {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 10px;
+      color: #333;
+    }
+    
+    .topic-desc {
+      color: #666;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+    
+    .debug-info {
+      background: #e9ecef;
+      padding: 15px;
+      border-radius: 5px;
+      margin-top: 20px;
+      font-family: monospace;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="test-container">
+    <h1 class="test-title">主題探索測試頁面</h1>
+    
+    <div class="search-box">
+      <input type="text" id="search-input" placeholder="輸入關鍵字搜尋..." class="search-input">
+      <button id="search-btn" class="search-btn">搜尋</button>
+    </div>
+    
+    <div id="topics-grid" class="topics-grid">
+      <!-- 主題卡片將在這裡顯示 -->
+    </div>
+    
+    <div class="debug-info">
+      <strong>除錯資訊：</strong><br>
+      <div id="debug-output">載入中...</div>
+    </div>
+  </div>
+
+  <script>
+    // 除錯函數
+    function debugLog(message) {
+      console.log(message);
+      const debugOutput = document.getElementById('debug-output');
+      if (debugOutput) {
+        debugOutput.innerHTML += message + '<br>';
+      }
+    }
+    
+    // 主題資料
+    const topics = [
+      {
+        icon: '🌏',
+        title: '亞洲風情',
+        description: '探索亞洲各國的獨特文化'
+      },
+      {
+        icon: '🏛️',
+        title: '歐洲經典',
+        description: '體驗歐洲的歷史文化與藝術'
+      },
+      {
+        icon: '🗽',
+        title: '美洲奇景',
+        description: '從北極到南極的自然奇觀'
+      },
+      {
+        icon: '🏔️',
+        title: '自然探索',
+        description: '深入世界各地的自然景觀'
+      }
+    ];
+    
+    // 渲染主題卡片
+    function renderTopics() {
+      debugLog('開始渲染主題卡片...');
+      
+      const container = document.getElementById('topics-grid');
+      if (!container) {
+        debugLog('❌ 找不到 topics-grid 容器');
+        return;
+      }
+      
+      debugLog('✅ 找到 topics-grid 容器');
+      
+      const html = topics.map(topic => `
+        <div class="topic-card">
+          <div class="topic-icon">${topic.icon}</div>
+          <div class="topic-title">${topic.title}</div>
+          <div class="topic-desc">${topic.description}</div>
+        </div>
+      `).join('');
+      
+      container.innerHTML = html;
+      debugLog('✅ 主題卡片渲染完成，共 ' + topics.length + ' 個');
+    }
+    
+    // 搜尋功能
+    function setupSearch() {
+      debugLog('設置搜尋功能...');
+      
+      const searchBtn = document.getElementById('search-btn');
+      const searchInput = document.getElementById('search-input');
+      
+      if (searchBtn && searchInput) {
+        searchBtn.addEventListener('click', () => {
+          const query = searchInput.value.trim();
+          if (query) {
+            debugLog('🔍 搜尋: ' + query);
+            alert('搜尋: ' + query);
+          }
+        });
+        debugLog('✅ 搜尋功能設置完成');
+      } else {
+        debugLog('❌ 找不到搜尋元素');
+      }
+    }
+    
+    // 頁面載入完成後執行
+    document.addEventListener('DOMContentLoaded', () => {
+      debugLog('🚀 DOM 載入完成');
+      debugLog('開始初始化頁面...');
+      
+      // 檢查必要元素
+      const topicsGrid = document.getElementById('topics-grid');
+      const searchInput = document.getElementById('search-input');
+      const searchBtn = document.getElementById('search-btn');
+      
+      debugLog('檢查元素:');
+      debugLog('- topics-grid: ' + (topicsGrid ? '✅ 存在' : '❌ 不存在'));
+      debugLog('- search-input: ' + (searchInput ? '✅ 存在' : '❌ 不存在'));
+      debugLog('- search-btn: ' + (searchBtn ? '✅ 存在' : '❌ 不存在'));
+      
+      // 執行功能
+      renderTopics();
+      setupSearch();
+      
+      debugLog('🎉 頁面初始化完成！');
+    });
+    
+    // 額外檢查：確保腳本正在執行
+    debugLog('📜 腳本開始執行');
+  </script>
+</body>
+</html>

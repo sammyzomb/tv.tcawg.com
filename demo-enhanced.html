@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>美觀套件示範 - Teavel Video Site</title>
+    
+    <!-- 美觀套件 CSS -->
+    <link rel="stylesheet" href="enhanced-styles.css">
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- 外部套件 CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.4/css/lightbox.min.css">
+    
+    <style>
+        /* 示範頁面專用樣式 */
+        .demo-section {
+            padding: 60px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .demo-section h2 {
+            text-align: center;
+            margin-bottom: 40px;
+            color: var(--primary-color);
+            font-size: 2.5rem;
+        }
+        
+        .demo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin: 40px 0;
+        }
+        
+        .demo-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .demo-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        }
+        
+        .demo-icon {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            color: var(--primary-color);
+        }
+        
+        .hero-demo {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 120px 0;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .hero-demo h1 {
+            font-size: 3.5rem;
+            margin-bottom: 20px;
+            animation: fadeInUp 1s ease-out;
+        }
+        
+        .hero-demo p {
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+            animation: fadeInUp 1s ease-out 0.2s both;
+        }
+        
+        .swiper-demo {
+            margin: 40px 0;
+        }
+        
+        .swiper-slide {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: var(--text-color);
+        }
+    </style>
+</head>
+<body>
+    <!-- 導覽列 -->
+    <nav class="navbar navbar-enhanced">
+        <div class="logo">
+            <img src="logo.png" alt="Teavel Logo">
+        </div>
+        <div class="desktop-nav">
+            <a href="#home">首頁</a>
+            <a href="#animations">動畫</a>
+            <a href="#components">元件</a>
+            <a href="#gallery">圖片</a>
+        </div>
+        <div class="nav-actions">
+            <button class="btn-modern" onclick="toggleTheme()">切換主題</button>
+        </div>
+    </nav>
+
+    <!-- 頁首示範 -->
+    <section class="hero-demo" id="home">
+        <h1 class="animate-on-scroll">🎨 美觀套件示範</h1>
+        <p class="animate-on-scroll">體驗現代化的網頁設計與互動效果</p>
+        <button class="btn-modern animate-on-scroll" onclick="showDemoNotification()">
+            開始體驗
+        </button>
+    </section>
+
+    <!-- 動畫效果示範 -->
+    <section class="demo-section" id="animations">
+        <h2 data-aos="fade-up">✨ 動畫效果</h2>
+        <div class="demo-grid">
+            <div class="demo-card" data-aos="fade-up" data-aos-delay="100">
+                <div class="demo-icon">🎭</div>
+                <h3>淡入動畫</h3>
+                <p>元素從下方淡入，創造流暢的視覺體驗</p>
+                <button class="btn-modern" onclick="triggerAnimation(this)">觸發動畫</button>
+            </div>
+            
+            <div class="demo-card" data-aos="fade-up" data-aos-delay="200">
+                <div class="demo-icon">🚀</div>
+                <h3>彈跳效果</h3>
+                <p>元素彈跳進入，增加趣味性</p>
+                <button class="btn-modern" onclick="triggerBounce(this)">彈跳動畫</button>
+            </div>
+            
+            <div class="demo-card" data-aos="fade-up" data-aos-delay="300">
+                <div class="demo-icon">🌀</div>
+                <h3>旋轉動畫</h3>
+                <p>元素旋轉進入，展現動態效果</p>
+                <button class="btn-modern" onclick="triggerRotate(this)">旋轉動畫</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- 元件示範 -->
+    <section class="demo-section" id="components">
+        <h2 data-aos="fade-up">🎯 美觀元件</h2>
+        <div class="demo-grid">
+            <div class="demo-card card-modern" data-aos="fade-left">
+                <div class="demo-icon">💎</div>
+                <h3>現代化卡片</h3>
+                <p>懸停時有陰影和位移效果</p>
+                <input type="text" class="input-modern" placeholder="試試這個輸入框">
+            </div>
+            
+            <div class="demo-card card-modern" data-aos="fade-right">
+                <div class="demo-icon">🎨</div>
+                <h3>漸變按鈕</h3>
+                <p>點擊時有漣漪效果</p>
+                <button class="btn-modern">點擊我</button>
+            </div>
+            
+            <div class="demo-card card-modern" data-aos="fade-up">
+                <div class="demo-icon">⚡</div>
+                <h3>載入動畫</h3>
+                <p>顯示載入狀態的旋轉器</p>
+                <button class="btn-modern" onclick="toggleLoading(this)">切換載入</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- 輪播示範 -->
+    <section class="demo-section">
+        <h2 data-aos="fade-up">🎠 輪播展示</h2>
+        <div class="swiper-container swiper-demo" data-aos="zoom-in">
+            <div class="swiper-wrapper">
+                <div class="swiper-slide">🎬 影片 1</div>
+                <div class="swiper-slide">🎭 影片 2</div>
+                <div class="swiper-slide">🎪 影片 3</div>
+                <div class="swiper-slide">🎨 影片 4</div>
+                <div class="swiper-slide">🚀 影片 5</div>
+            </div>
+            <div class="swiper-pagination"></div>
+            <div class="swiper-button-next"></div>
+            <div class="swiper-button-prev"></div>
+        </div>
+    </section>
+
+    <!-- 圖片燈箱示範 -->
+    <section class="demo-section" id="gallery">
+        <h2 data-aos="fade-up">🖼️ 圖片燈箱</h2>
+        <div class="demo-grid">
+            <div class="demo-card" data-aos="fade-up">
+                <h3>點擊圖片查看燈箱效果</h3>
+                <a href="https://via.placeholder.com/400x300/667eea/ffffff?text=圖片+1" 
+                   data-lightbox="gallery" 
+                   data-title="示範圖片 1">
+                    <img src="https://via.placeholder.com/400x300/667eea/ffffff?text=圖片+1" 
+                         alt="示範圖片 1" 
+                         style="width: 100%; border-radius: 10px; cursor: pointer;">
+                </a>
+            </div>
+            
+            <div class="demo-card" data-aos="fade-up" data-aos-delay="100">
+                <h3>多張圖片燈箱</h3>
+                <a href="https://via.placeholder.com/400x300/764ba2/ffffff?text=圖片+2" 
+                   data-lightbox="gallery" 
+                   data-title="示範圖片 2">
+                    <img src="https://via.placeholder.com/400x300/764ba2/ffffff?text=圖片+2" 
+                         alt="示範圖片 2" 
+                         style="width: 100%; border-radius: 10px; cursor: pointer;">
+                </a>
+            </div>
+            
+            <div class="demo-card" data-aos="fade-up" data-aos-delay="200">
+                <h3>高品質圖片展示</h3>
+                <a href="https://via.placeholder.com/400x300/4a90e2/ffffff?text=圖片+3" 
+                   data-lightbox="gallery" 
+                   data-title="示範圖片 3">
+                    <img src="https://via.placeholder.com/400x300/4a90e2/ffffff?text=圖片+3" 
+                         alt="示範圖片 3" 
+                         style="width: 100%; border-radius: 10px; cursor: pointer;">
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- 頁尾 -->
+    <footer style="background: var(--card-bg); padding: 40px 0; text-align: center; margin-top: 60px;">
+        <p>🎨 美觀套件示範頁面 - Teavel Video Site</p>
+        <p>使用 Animate.css、AOS、Swiper、Lightbox 等套件</p>
+    </footer>
+
+    <!-- JavaScript 套件 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.4/js/lightbox.min.js"></script>
+    
+    <!-- 自定義腳本 -->
+    <script src="enhanced-ui.js"></script>
+    
+    <script>
+        // 示範頁面專用腳本
+        function toggleTheme() {
+            document.body.classList.toggle('dark-theme');
+            const button = event.target;
+            button.textContent = document.body.classList.contains('dark-theme') ? '淺色主題' : '深色主題';
+        }
+        
+        function showDemoNotification() {
+            if (window.EnhancedUI) {
+                window.EnhancedUI.showNotification('🎉 歡迎來到美觀套件示範頁面！', 'success');
+            }
+        }
+        
+        function triggerAnimation(element) {
+            element.style.animation = 'none';
+            element.offsetHeight; // 觸發重排
+            element.style.animation = 'fadeInUp 0.8s ease-out';
+        }
+        
+        function triggerBounce(element) {
+            element.style.animation = 'none';
+            element.offsetHeight;
+            element.style.animation = 'bounceIn 1s ease-out';
+        }
+        
+        function triggerRotate(element) {
+            element.style.animation = 'none';
+            element.offsetHeight;
+            element.style.animation = 'rotateIn 1s ease-out';
+        }
+        
+        function toggleLoading(element) {
+            const container = element.parentElement;
+            const existingSpinner = container.querySelector('.loading-spinner');
+            
+            if (existingSpinner) {
+                existingSpinner.remove();
+                element.textContent = '切換載入';
+            } else {
+                if (window.EnhancedUI) {
+                    window.EnhancedUI.showLoading(container);
+                    element.textContent = '隱藏載入';
+                }
+            }
+        }
+        
+        // 添加滾動動畫類別
+        document.addEventListener('DOMContentLoaded', function() {
+            const animatedElements = document.querySelectorAll('[data-aos]');
+            animatedElements.forEach(el => {
+                el.classList.add('animate-on-scroll');
+            });
+        });
+    </script>
+</body>
+</html>

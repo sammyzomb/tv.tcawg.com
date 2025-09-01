@@ -1,0 +1,23 @@
+{
+  "name": "teavel-video-site",
+  "version": "1.0.0",
+  "description": "Teavel Video Site - 美觀的影片網站",
+  "main": "index.html",
+  "scripts": {
+    "dev": "live-server --port=3000 --open=/",
+    "build": "echo 'Build completed'",
+    "start": "live-server --port=3000"
+  },
+  "keywords": ["video", "streaming", "website"],
+  "author": "Teavel Team",
+  "license": "MIT",
+  "devDependencies": {
+    "live-server": "^1.2.2"
+  },
+  "dependencies": {
+    "animate.css": "^4.1.1",
+    "aos": "^2.3.4",
+    "swiper": "^11.0.5",
+    "lightbox2": "^2.11.4"
+  }
+}
