@@ -194,6 +194,34 @@
             color: #856404;
             margin-bottom: 10px;
         }
+
+        .password-strength {
+            margin-top: 8px;
+            padding: 8px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            border: 1px solid #dee2e6;
+        }
+
+        .strength-bar {
+            width: 100%;
+            height: 6px;
+            background: #e9ecef;
+            border-radius: 3px;
+            margin-top: 5px;
+            overflow: hidden;
+        }
+
+        .strength-fill {
+            height: 100%;
+            transition: all 0.3s ease;
+            border-radius: 3px;
+        }
+
+        .strength-weak { background: #dc3545; width: 25%; }
+        .strength-medium { background: #ffc107; width: 50%; }
+        .strength-strong { background: #28a745; width: 75%; }
+        .strength-very-strong { background: #20c997; width: 100%; }
     </style>
 </head>
 <body>
@@ -213,10 +241,10 @@
         </div>
 
         <div class="content">
-            <div class="warning-box">
-                <h4>⚠️ 重要提醒</h4>
-                <p>只有超級管理員可以修改系統登入設定。修改後請妥善保管新的帳號密碼。</p>
-            </div>
+                    <div class="warning-box">
+            <h4>⚠️ 重要提醒</h4>
+            <p>所有管理員都可以修改自己的密碼。超級管理員還可以修改帳號資訊和重置系統。修改後請妥善保管新的帳號密碼。</p>
+        </div>
 
             <div class="message" id="message"></div>
 
@@ -266,7 +294,13 @@
                     <div class="form-group">
                         <label for="newPassword">新密碼 *</label>
                         <input type="password" id="newPassword" name="newPassword" required 
-                               placeholder="至少8個字符">
+                               placeholder="至少8個字符" oninput="checkPasswordStrength(this.value)">
+                        <div class="password-strength" id="passwordStrength" style="display: none;">
+                            <small>密碼強度：<span id="strengthText">弱</span></small>
+                            <div class="strength-bar">
+                                <div class="strength-fill" id="strengthFill"></div>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="form-group">
@@ -302,13 +336,97 @@
                 return false;
             }
             
-            if (user.role !== 'super_admin') {
-                alert('⚠️ 權限不足\n\n只有超級管理員才能修改系統設定。');
-                window.location.href = 'admin-dashboard.html';
-                return false;
+            // 允許超級管理員和普通管理員都可以修改自己的密碼
+            return user;
+        }
+
+        // 檢查是否為超級管理員
+        function isSuperAdmin() {
+            const user = JSON.parse(sessionStorage.getItem('adminUser') || 'null');
+            return user && user.role === 'super_admin';
+        }
+
+        // 檢查密碼強度
+        function checkPasswordStrength(password) {
+            const strengthDiv = document.getElementById('passwordStrength');
+            const strengthText = document.getElementById('strengthText');
+            const strengthFill = document.getElementById('strengthFill');
+            
+            if (!password) {
+                strengthDiv.style.display = 'none';
+                return;
             }
             
-            return user;
+            strengthDiv.style.display = 'block';
+            
+            let score = 0;
+            let feedback = [];
+            
+            // 長度檢查
+            if (password.length >= 8) score += 1;
+            if (password.length >= 12) score += 1;
+            
+            // 字符類型檢查
+            if (/[A-Z]/.test(password)) score += 1;
+            if (/[a-z]/.test(password)) score += 1;
+            if (/\d/.test(password)) score += 1;
+            if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) score += 1;
+            
+            // 複雜度檢查
+            if (password.length > 8 && /[A-Z]/.test(password) && /[a-z]/.test(password) && /\d/.test(password)) {
+                score += 1;
+            }
+            
+            // 設定強度等級
+            let strength, className;
+            if (score <= 2) {
+                strength = '弱';
+                className = 'strength-weak';
+            } else if (score <= 4) {
+                strength = '中等';
+                className = 'strength-medium';
+            } else if (score <= 6) {
+                strength = '強';
+                className = 'strength-strong';
+            } else {
+                strength = '非常強';
+                className = 'strength-very-strong';
+            }
+            
+            strengthText.textContent = strength;
+            strengthFill.className = `strength-fill ${className}`;
+        }
+
+        // 驗證密碼強度
+        function validatePassword(password) {
+            const minLength = 8;
+            const hasUpperCase = /[A-Z]/.test(password);
+            const hasLowerCase = /[a-z]/.test(password);
+            const hasNumbers = /\d/.test(password);
+            const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+            
+            const errors = [];
+            
+            if (password.length < minLength) {
+                errors.push(`密碼至少需要 ${minLength} 個字符`);
+            }
+            if (!hasUpperCase) {
+                errors.push('密碼需要包含大寫字母');
+            }
+            if (!hasLowerCase) {
+                errors.push('密碼需要包含小寫字母');
+            }
+            if (!hasNumbers) {
+                errors.push('密碼需要包含數字');
+            }
+            if (!hasSpecialChar) {
+                errors.push('密碼需要包含特殊符號 (!@#$%^&*)');
+            }
+            
+            return {
+                isValid: errors.length === 0,
+                errors: errors
+            };
         }
 
         // 顯示訊息
@@ -330,7 +448,10 @@
             const user = checkSuperAdminAuth();
             if (!user) return;
 
-            document.getElementById('userDetails').textContent = `👤 ${user.name} (超級管理員)`;
+            const isSuper = isSuperAdmin();
+            const roleText = isSuper ? '超級管理員' : '普通管理員';
+            
+            document.getElementById('userDetails').textContent = `👤 ${user.name} (${roleText})`;
             document.getElementById('currentEmail').textContent = user.email;
             document.getElementById('currentName').textContent = user.name;
             document.getElementById('currentRole').textContent = user.role;
@@ -338,20 +459,31 @@
             // 預設填入當前資訊
             document.getElementById('newEmail').value = user.email;
             document.getElementById('newName').value = user.name;
+
+            // 根據權限顯示/隱藏功能
+            if (!isSuper) {
+                // 普通管理員只能修改自己的密碼，不能修改帳號資訊
+                document.getElementById('updateAccountForm').style.display = 'none';
+                document.querySelector('h3:contains("修改帳號資訊")').style.display = 'none';
+            }
         }
 
-        // 更新帳號資訊
+        // 更新帳號資訊（僅超級管理員）
         document.getElementById('updateAccountForm').addEventListener('submit', function(e) {
             e.preventDefault();
+            
+            if (!isSuperAdmin()) {
+                showMessage('只有超級管理員可以修改帳號資訊', 'error');
+                return;
+            }
             
             const newEmail = document.getElementById('newEmail').value;
             const newName = document.getElementById('newName').value;
 
-            // 更新 admin-login.html 中的授權用戶
+            // 更新 sessionStorage 中的用戶資訊
             const currentUser = checkSuperAdminAuth();
             if (!currentUser) return;
 
-            // 更新 sessionStorage 中的用戶資訊
             currentUser.email = newEmail;
             currentUser.name = newName;
             sessionStorage.setItem('adminUser', JSON.stringify(currentUser));
@@ -362,7 +494,7 @@
             showMessage(`✅ 帳號資訊更新成功！\n\n📧 新郵件：${newEmail}\n👤 新姓名：${newName}`);
         });
 
-        // 更新密碼
+        // 更新密碼（所有管理員都可以）
         document.getElementById('updatePasswordForm').addEventListener('submit', function(e) {
             e.preventDefault();
             
@@ -370,47 +502,89 @@
             const newPassword = document.getElementById('newPassword').value;
             const confirmPassword = document.getElementById('confirmPassword').value;
 
+            const currentUser = checkSuperAdminAuth();
+            if (!currentUser) return;
+
             // 驗證當前密碼
-            if (currentPassword !== 'Ddpeacemisb@') {
+            let isCurrentPasswordValid = false;
+            
+            if (isSuperAdmin()) {
+                // 超級管理員：檢查硬編碼密碼或動態密碼
+                const dynamicPassword = localStorage.getItem('super_admin_password');
+                const superAdminPassword = dynamicPassword || 'Ddpeacemisb@';
+                isCurrentPasswordValid = (currentPassword === superAdminPassword);
+            } else {
+                // 普通管理員：檢查自己的密碼
+                const systemAdmins = JSON.parse(localStorage.getItem('system_admins') || '[]');
+                const admin = systemAdmins.find(a => a.email === currentUser.email);
+                isCurrentPasswordValid = admin && (currentPassword === admin.password);
+            }
+
+            if (!isCurrentPasswordValid) {
                 showMessage('當前密碼錯誤', 'error');
                 return;
             }
 
-            // 驗證新密碼
-            if (newPassword.length < 8) {
-                showMessage('新密碼至少需要8個字符', 'error');
+            // 驗證新密碼強度
+            const passwordValidation = validatePassword(newPassword);
+            if (!passwordValidation.isValid) {
+                showMessage(`密碼不符合要求：\n${passwordValidation.errors.join('\n')}`, 'error');
                 return;
             }
 
+            // 驗證密碼確認
             if (newPassword !== confirmPassword) {
                 showMessage('兩次輸入的新密碼不一致', 'error');
                 return;
             }
 
-            // 儲存新密碼到 localStorage
-            localStorage.setItem('super_admin_password', newPassword);
-            
-            // 更新 admin-login.html 中的密碼（動態方式）
-            const currentUser = checkSuperAdminAuth();
-            if (currentUser) {
+            // 更新密碼
+            if (isSuperAdmin()) {
+                // 超級管理員：更新 localStorage 中的密碼
+                localStorage.setItem('super_admin_password', newPassword);
                 currentUser.password = newPassword;
                 sessionStorage.setItem('adminUser', JSON.stringify(currentUser));
+            } else {
+                // 普通管理員：更新系統管理員列表中的密碼
+                const systemAdmins = JSON.parse(localStorage.getItem('system_admins') || '[]');
+                const admin = systemAdmins.find(a => a.email === currentUser.email);
+                if (admin) {
+                    admin.password = newPassword;
+                    admin.updatedAt = new Date().toISOString();
+                    localStorage.setItem('system_admins', JSON.stringify(systemAdmins));
+                }
             }
 
-            showMessage(`✅ 密碼更新成功！\n\n🔑 新密碼：${newPassword}\n\n⚠️ 請記住新密碼，下次登入時使用。`);
+            // 記錄密碼修改歷史
+            const passwordHistory = JSON.parse(localStorage.getItem('password_history') || '[]');
+            passwordHistory.push({
+                email: currentUser.email,
+                role: currentUser.role,
+                changedAt: new Date().toISOString(),
+                changedBy: currentUser.email
+            });
+            localStorage.setItem('password_history', JSON.stringify(passwordHistory));
+
+            showMessage(`✅ 密碼更新成功！\n\n🔑 新密碼已設定\n\n⚠️ 請記住新密碼，下次登入時使用。`);
 
             // 清空表單
             this.reset();
         });
 
-        // 重置系統
+        // 重置系統（僅超級管理員）
         function resetSystem() {
+            if (!isSuperAdmin()) {
+                showMessage('只有超級管理員可以重置系統', 'error');
+                return;
+            }
+
             if (!confirm('⚠️ 確定要重置系統嗎？\n\n這將清除所有管理員帳號並恢復預設設定。\n\n此操作無法撤銷！')) {
                 return;
             }
 
             // 清除所有管理員資料
             localStorage.removeItem('system_admins');
+            localStorage.removeItem('password_history');
             sessionStorage.removeItem('adminUser');
             sessionStorage.removeItem('loginTime');
 
