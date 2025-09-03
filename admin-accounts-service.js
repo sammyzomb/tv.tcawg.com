@@ -8,7 +8,7 @@ class AdminAccountsService {
     this.accountsData = null;
     this.lastFetch = null;
     this.cacheTimeout = 5 * 60 * 1000; // 5分鐘快取
-    this.accountsUrl = 'https://raw.githubusercontent.com/your-username/your-repo/main/admin-accounts.json';
+    this.accountsUrl = 'https://raw.githubusercontent.com/sammyzomb/tv.tcawg.com/main/admin-accounts.json';
   }
 
   /**
