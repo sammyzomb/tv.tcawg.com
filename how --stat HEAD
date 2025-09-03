@@ -1,0 +1,10 @@
+[33m45e1ab6[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Merge pull request #3 from sammyzomb/feature/v1.1.0-enhanced-admin
+[33m8b75e64[m[33m ([m[1;31morigin/feature/v1.1.0-enhanced-admin[m[33m)[m 202509011845
+[33m9313e31[m Merge pull request #2 from sammyzomb/feature/v1.1.0-enhanced-admin
+[33mfea7ab2[m 更新 探索
+[33m40274c1[m Merge pull request #1 from sammyzomb/feature/v1.1.0-enhanced-admin
+[33maa49898[m 20250901更新hero影片等
+[33m37b3729[m 修復：移除郵件驗證依賴，更新版本歷史
+[33m4f3a25b[m v1.1.0: 後台管理系統增強版 - 新增超級管理員、節目上傳、API整合等功能
+[33m101b701[m[33m ([m[1;33mtag: [m[1;33mv1.0.0[m[33m)[m 安全性修復：移除硬編碼敏感資訊，改用環境變數
+[33m8d50ba6[m 測試：公司電腦修改 README.md

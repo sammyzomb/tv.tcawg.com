@@ -7,6 +7,7 @@
   <script src="https://cdn.jsdelivr.net/npm/contentful@latest/dist/contentful.browser.min.js"></script>
   <script src="browser-config.js"></script>
   <script src="admin-accounts-service.js"></script>
+  <script src="admin-login-audit.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { 
@@ -18,29 +19,29 @@
       justify-content: center;
     }
     
-    .login-container {
-      background: white;
-      border-radius: 20px;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-      padding: 50px;
-      width: 90%;
-      max-width: 500px;
-      text-align: center;
-    }
+         .login-container {
+       background: white;
+       border-radius: 20px;
+       box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+       padding: 40px;
+       width: 90%;
+       max-width: 450px;
+       text-align: center;
+     }
     
-            .logo {
-          width: 120px;
-          height: 120px;
-          background: linear-gradient(135deg, #2b71d2, #1e5bb8);
-          border-radius: 25px;
-          margin: 0 auto 30px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          position: relative;
-          box-shadow: 0 8px 25px rgba(43, 113, 210, 0.3);
-          overflow: hidden;
-        }
+                         .logo {
+           width: 100px;
+           height: 100px;
+           background: linear-gradient(135deg, #2b71d2, #1e5bb8);
+           border-radius: 20px;
+           margin: 0 auto 25px;
+           display: flex;
+           align-items: center;
+           justify-content: center;
+           position: relative;
+           box-shadow: 0 8px 25px rgba(43, 113, 210, 0.3);
+           overflow: hidden;
+         }
 
         .logo::before {
           content: '';
@@ -58,12 +59,12 @@
           100% { transform: translateX(100%); }
         }
 
-        .logo-icon {
-          width: 60px;
-          height: 60px;
-          position: relative;
-          z-index: 2;
-        }
+                 .logo-icon {
+           width: 50px;
+           height: 50px;
+           position: relative;
+           z-index: 2;
+         }
 
         .logo-icon svg {
           width: 100%;
@@ -75,23 +76,23 @@
           stroke-linejoin: round;
         }
     
-    .login-title {
-      color: #333;
-      margin-bottom: 15px;
-      font-size: 1.8rem;
-      font-weight: 600;
-    }
+         .login-title {
+       color: #333;
+       margin-bottom: 12px;
+       font-size: 1.6rem;
+       font-weight: 600;
+     }
+     
+     .login-subtitle {
+       color: #666;
+       margin-bottom: 30px;
+       font-size: 0.95rem;
+     }
     
-    .login-subtitle {
-      color: #666;
-      margin-bottom: 40px;
-      font-size: 1rem;
-    }
-    
-    .form-group {
-      margin-bottom: 25px;
-      text-align: left;
-    }
+         .form-group {
+       margin-bottom: 20px;
+       text-align: left;
+     }
     
     .form-group label {
       display: flex;
@@ -159,14 +160,14 @@
       opacity: 0.7;
     }
     
-    .form-group input {
-      width: 100%;
-      padding: 15px 18px;
-      border: 2px solid #e1e5e9;
-      border-radius: 12px;
-      font-size: 1.1rem;
-      transition: all 0.3s ease;
-    }
+         .form-group input {
+       width: 100%;
+       padding: 12px 15px;
+       border: 2px solid #e1e5e9;
+       border-radius: 10px;
+       font-size: 1rem;
+       transition: all 0.3s ease;
+     }
     
     .form-group input:focus {
       outline: none;
@@ -174,19 +175,19 @@
       box-shadow: 0 0 0 3px rgba(43, 113, 210, 0.1);
     }
     
-    .login-btn {
-      width: 100%;
-      background: linear-gradient(135deg, #2b71d2, #1e5bb8);
-      color: white;
-      border: none;
-      padding: 18px;
-      border-radius: 12px;
-      font-size: 1.1rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      margin-bottom: 30px;
-    }
+         .login-btn {
+       width: 100%;
+       background: linear-gradient(135deg, #2b71d2, #1e5bb8);
+       color: white;
+       border: none;
+       padding: 15px;
+       border-radius: 10px;
+       font-size: 1rem;
+       font-weight: 600;
+       cursor: pointer;
+       transition: all 0.3s ease;
+       margin-bottom: 25px;
+     }
     
     .login-btn:hover {
       transform: translateY(-2px);
@@ -244,13 +245,13 @@
       to { transform: rotate(360deg); }
     }
     
-    .footer {
-      margin-top: 40px;
-      padding-top: 25px;
-      border-top: 1px solid #eee;
-      color: #999;
-      font-size: 0.9rem;
-    }
+         .footer {
+       margin-top: 30px;
+       padding-top: 20px;
+       border-top: 1px solid #eee;
+       color: #999;
+       font-size: 0.85rem;
+     }
     
     .contentful-info {
       background: #f8f9fa;
@@ -371,10 +372,9 @@
     
 
     
-    <div class="footer">
-      <p>© 2024 航向世界旅遊頻道</p>
-      <p>硬編碼管理員系統</p>
-    </div>
+         <div class="footer">
+       <p>© 2025 航向世界旅遊頻道</p>
+     </div>
   </div>
 
   <script>
@@ -405,32 +405,28 @@
           return;
         }
         
-        // 防止暴力破解：檢查登入嘗試次數
-        const loginAttempts = parseInt(sessionStorage.getItem('loginAttempts') || '0');
-        const lastAttemptTime = sessionStorage.getItem('lastAttemptTime');
-        const now = new Date().getTime();
+        // 獲取用戶 IP 和用戶代理
+        const ipAddress = await window.loginAuditSystem.getClientIP();
+        const userAgent = window.loginAuditSystem.getUserAgent();
         
-        // 如果超過5次失敗嘗試，鎖定15分鐘
-        if (loginAttempts >= 5 && lastAttemptTime) {
-          const lockTime = 15 * 60 * 1000; // 15分鐘
-          if (now - parseInt(lastAttemptTime) < lockTime) {
-            const remainingTime = Math.ceil((lockTime - (now - parseInt(lastAttemptTime))) / 1000 / 60);
-            showError(`登入已被鎖定，請 ${remainingTime} 分鐘後再試`);
-            return;
-          } else {
-            // 鎖定時間已過，重置計數器
-            sessionStorage.removeItem('loginAttempts');
-            sessionStorage.removeItem('lastAttemptTime');
-          }
+        // 檢查 IP 是否被封鎖
+        const blockedIP = window.loginAuditSystem.isIPBlocked(ipAddress);
+        if (blockedIP) {
+          const blockTime = new Date(blockedIP.blockedAt);
+          const remainingTime = Math.ceil((15 * 60 * 1000 - (Date.now() - blockTime.getTime())) / 1000 / 60);
+          showError(`此 IP 已被封鎖，請 ${remainingTime} 分鐘後再試`);
+          showLoading(false);
+          return;
         }
         
         // 驗證用戶
         const user = await authenticateUser(email, password);
         
         if (user) {
-          // 登入成功，重置失敗計數器
-          sessionStorage.removeItem('loginAttempts');
-          sessionStorage.removeItem('lastAttemptTime');
+          // 登入成功
+          await window.loginAuditSystem.logLoginAttempt(
+            email, password, ipAddress, userAgent, true, '登入成功'
+          );
           
           showSuccess('登入成功！正在跳轉到管理系統...');
           
@@ -444,20 +440,24 @@
           }, 1500);
           
         } else {
-          // 登入失敗，增加失敗計數器
-          const currentAttempts = parseInt(sessionStorage.getItem('loginAttempts') || '0') + 1;
-          sessionStorage.setItem('loginAttempts', currentAttempts.toString());
-          sessionStorage.setItem('lastAttemptTime', new Date().getTime().toString());
+          // 登入失敗
+          await window.loginAuditSystem.logLoginAttempt(
+            email, password, ipAddress, userAgent, false, '帳號或密碼錯誤'
+          );
           
-          if (currentAttempts >= 5) {
-            showError('登入失敗：帳號或密碼錯誤。系統已被鎖定15分鐘，請稍後再試。');
-          } else {
-            showError(`登入失敗：帳號或密碼錯誤。還剩 ${5 - currentAttempts} 次嘗試機會。`);
-          }
+          showError('登入失敗：帳號或密碼錯誤');
         }
         
       } catch (error) {
         console.error('登入錯誤:', error);
+        
+        // 記錄錯誤
+        const ipAddress = await window.loginAuditSystem.getClientIP();
+        const userAgent = window.loginAuditSystem.getUserAgent();
+        await window.loginAuditSystem.logLoginAttempt(
+          email, password, ipAddress, userAgent, false, '系統錯誤'
+        );
+        
         showError('登入失敗：系統錯誤，請稍後再試');
       } finally {
         showLoading(false);
