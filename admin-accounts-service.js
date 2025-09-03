@@ -9,6 +9,7 @@ class AdminAccountsService {
     this.lastFetch = null;
     this.cacheTimeout = 5 * 60 * 1000; // 5分鐘快取
     this.accountsUrl = 'https://raw.githubusercontent.com/sammyzomb/tv.tcawg.com/main/admin-accounts.json';
+    this.githubToken = localStorage.getItem('github_token') || '';
   }
 
   /**
@@ -229,6 +230,66 @@ class AdminAccountsService {
     this.accountsData = null;
     return await this.fetchAccountsData();
   }
+
+  /**
+   * 更新 GitHub 上的帳號資料
+   */
+  async updateGitHubAccounts(accountsData) {
+    try {
+      console.log('正在更新 GitHub 帳號資料...');
+      
+      // 使用 GitHub API 更新檔案
+      const response = await fetch(`https://api.github.com/repos/sammyzomb/tv.tcawg.com/contents/admin-accounts.json`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `token ${this.githubToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: '更新管理員帳號資料',
+          content: btoa(JSON.stringify(accountsData, null, 2)),
+          sha: await this.getFileSHA()
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`GitHub API 錯誤: ${response.status}`);
+      }
+
+      console.log('GitHub 帳號資料更新成功');
+      return true;
+
+    } catch (error) {
+      console.error('更新 GitHub 帳號資料失敗:', error);
+      return false;
+    }
+  }
+
+  /**
+   * 獲取檔案的 SHA 值
+   */
+  async getFileSHA() {
+    try {
+      const response = await fetch(`https://api.github.com/repos/sammyzomb/tv.tcawg.com/contents/admin-accounts.json`, {
+        headers: {
+          'Authorization': `token ${this.githubToken}`,
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        return data.sha;
+      }
+      return null;
+    } catch (error) {
+      console.error('獲取檔案 SHA 失敗:', error);
+      return null;
+    }
+  }
+}
+
+// 創建全域實例
+window.adminAccountsService = new AdminAccountsService();
 }
 
 // 創建全域實例

@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub Token 設定 - TV.TCAWG.COM</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            max-width: 500px;
+            width: 100%;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
+        }
+        
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        
+        input[type="text"]:focus {
+            border-color: #667eea;
+            outline: none;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+        }
+        
+        .btn:hover {
+            opacity: 0.9;
+        }
+        
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔑 GitHub Token 設定</h1>
+        
+        <div class="form-group">
+            <label for="githubToken">GitHub Personal Access Token:</label>
+            <input type="text" id="githubToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
+        </div>
+        
+        <button class="btn" onclick="saveToken()">💾 保存 Token</button>
+        
+        <div id="status" class="status" style="display: none;"></div>
+        
+        <div class="info" style="margin-top: 20px; padding: 15px; border-radius: 8px;">
+            <strong>📋 說明：</strong><br>
+            1. 請輸入您的 GitHub Personal Access Token<br>
+            2. Token 將安全地儲存在瀏覽器中<br>
+            3. 不會被提交到 Git 儲存庫<br>
+            4. 用於自動更新 GitHub 上的帳號資料
+        </div>
+    </div>
+
+    <script>
+        // 檢查是否已有 Token
+        window.onload = function() {
+            const existingToken = localStorage.getItem('github_token');
+            if (existingToken) {
+                document.getElementById('githubToken').value = existingToken;
+                showStatus('✅ 已載入現有的 Token', 'success');
+            }
+        };
+
+        function saveToken() {
+            const token = document.getElementById('githubToken').value.trim();
+            
+            if (!token) {
+                showStatus('❌ 請輸入 Token', 'error');
+                return;
+            }
+            
+            if (!token.startsWith('ghp_')) {
+                showStatus('❌ Token 格式不正確，應該以 ghp_ 開頭', 'error');
+                return;
+            }
+            
+            // 保存 Token
+            localStorage.setItem('github_token', token);
+            showStatus('✅ Token 保存成功！現在可以關閉此頁面', 'success');
+            
+            // 測試 Token 是否有效
+            testToken(token);
+        }
+        
+        function testToken(token) {
+            fetch('https://api.github.com/user', {
+                headers: {
+                    'Authorization': `token ${token}`
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                }
+                throw new Error('Token 無效');
+            })
+            .then(user => {
+                showStatus(`✅ Token 驗證成功！歡迎 ${user.login}`, 'success');
+            })
+            .catch(error => {
+                showStatus('⚠️ Token 可能無效，請檢查後重試', 'error');
+            });
+        }
+        
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+            statusDiv.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
