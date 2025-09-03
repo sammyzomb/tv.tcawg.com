@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>帳號管理 - 航向世界旅遊頻道</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <script src="admin-accounts-service.js"></script>
+  <style>
+    .accounts-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      padding: 20px;
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      border-radius: 15px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    
+    .header-title {
+      font-size: 28px;
+      font-weight: 700;
+      color: #2b71d2;
+      margin: 0;
+    }
+    
+    .add-account-btn {
+      background: #28a745;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    .add-account-btn:hover {
+      background: #218838;
+      transform: translateY(-2px);
+    }
+    
+    .accounts-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    
+    .account-card {
+      background: white;
+      border: 1px solid #e9ecef;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      transition: all 0.3s ease;
+    }
+    
+    .account-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+    
+    .account-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+    
+    .account-name {
+      font-size: 18px;
+      font-weight: 600;
+      color: #333;
+      margin: 0;
+    }
+    
+    .account-status {
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    
+    .status-active {
+      background: #d4edda;
+      color: #155724;
+    }
+    
+    .status-inactive {
+      background: #f8d7da;
+      color: #721c24;
+    }
+    
+    .account-email {
+      color: #666;
+      margin-bottom: 10px;
+    }
+    
+    .account-role {
+      background: #e3f2fd;
+      color: #1976d2;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 10px;
+      display: inline-block;
+    }
+    
+    .account-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 15px;
+      padding-top: 15px;
+      border-top: 1px solid #e9ecef;
+    }
+    
+    .last-login {
+      font-size: 12px;
+      color: #999;
+    }
+    
+    .account-actions {
+      display: flex;
+      gap: 8px;
+    }
+    
+    .action-btn {
+      padding: 6px 12px;
+      border: none;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    .edit-btn {
+      background: #ffc107;
+      color: #212529;
+    }
+    
+    .edit-btn:hover {
+      background: #e0a800;
+    }
+    
+    .delete-btn {
+      background: #dc3545;
+      color: white;
+    }
+    
+    .delete-btn:hover {
+      background: #c82333;
+    }
+    
+    .toggle-btn {
+      background: #6c757d;
+      color: white;
+    }
+    
+    .toggle-btn:hover {
+      background: #5a6268;
+    }
+    
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+    }
+    
+    .modal-content {
+      background-color: white;
+      margin: 5% auto;
+      padding: 30px;
+      border-radius: 15px;
+      width: 90%;
+      max-width: 500px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+    }
+    
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    
+    .modal-title {
+      font-size: 24px;
+      font-weight: 600;
+      color: #333;
+      margin: 0;
+    }
+    
+    .close {
+      font-size: 28px;
+      font-weight: bold;
+      color: #aaa;
+      cursor: pointer;
+    }
+    
+    .close:hover {
+      color: #333;
+    }
+    
+    .form-group {
+      margin-bottom: 20px;
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #333;
+    }
+    
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+    
+    .form-group input:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: #2b71d2;
+      box-shadow: 0 0 0 3px rgba(43, 113, 210, 0.1);
+    }
+    
+    .form-actions {
+      display: flex;
+      gap: 15px;
+      justify-content: flex-end;
+      margin-top: 30px;
+    }
+    
+    .btn {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    .btn-primary {
+      background: #2b71d2;
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      background: #1e5bb8;
+    }
+    
+    .btn-secondary {
+      background: #6c757d;
+      color: white;
+    }
+    
+    .btn-secondary:hover {
+      background: #5a6268;
+    }
+    
+    .btn-danger {
+      background: #dc3545;
+      color: white;
+    }
+    
+    .btn-danger:hover {
+      background: #c82333;
+    }
+    
+    .alert {
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      display: none;
+    }
+    
+    .alert-success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    
+    .alert-error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #666;
+    }
+    
+    .refresh-btn {
+      background: #17a2b8;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 14px;
+      cursor: pointer;
+      margin-left: 15px;
+    }
+    
+    .refresh-btn:hover {
+      background: #138496;
+    }
+  </style>
+</head>
+<body>
+  <div class="accounts-container">
+    <!-- 頁面標題 -->
+    <div class="page-header">
+      <div>
+        <h1 class="header-title">管理員帳號管理</h1>
+        <p style="margin: 5px 0 0 0; color: #666;">管理所有管理員帳號，支援跨設備同步</p>
+      </div>
+      <div>
+        <button class="refresh-btn" onclick="refreshAccounts()">🔄 刷新</button>
+        <button class="add-account-btn" onclick="openAddAccountModal()">➕ 新增帳號</button>
+      </div>
+    </div>
+
+    <!-- 提示訊息 -->
+    <div id="alertMessage" class="alert"></div>
+
+    <!-- 帳號列表 -->
+    <div id="accountsGrid" class="accounts-grid">
+      <div class="loading">載入帳號資料中...</div>
+    </div>
+  </div>
+
+  <!-- 新增/編輯帳號模態框 -->
+  <div id="accountModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="modalTitle" class="modal-title">新增帳號</h2>
+        <span class="close" onclick="closeModal()">&times;</span>
+      </div>
+      
+      <form id="accountForm">
+        <div class="form-group">
+          <label for="accountEmail">Email 地址 *</label>
+          <input type="email" id="accountEmail" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="accountName">姓名 *</label>
+          <input type="text" id="accountName" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="accountRole">角色 *</label>
+          <select id="accountRole" required>
+            <option value="">請選擇角色</option>
+            <option value="admin">管理員</option>
+            <option value="super_admin">超級管理員</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label for="accountPassword">密碼 *</label>
+          <input type="password" id="accountPassword" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="accountStatus">狀態</label>
+          <select id="accountStatus">
+            <option value="active">啟用</option>
+            <option value="inactive">停用</option>
+          </select>
+        </div>
+        
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" onclick="closeModal()">取消</button>
+          <button type="submit" class="btn btn-primary">儲存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 確認刪除模態框 -->
+  <div id="deleteModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">確認刪除</h2>
+        <span class="close" onclick="closeDeleteModal()">&times;</span>
+      </div>
+      
+      <p>您確定要刪除帳號 <strong id="deleteAccountName"></strong> 嗎？</p>
+      <p style="color: #dc3545; font-size: 14px;">此操作無法撤銷！</p>
+      
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary" onclick="closeDeleteModal()">取消</button>
+        <button type="button" class="btn btn-danger" onclick="confirmDelete()">確認刪除</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentAccounts = [];
+    let editingAccountId = null;
+
+    // 頁面載入時初始化
+    document.addEventListener('DOMContentLoaded', function() {
+      loadAccounts();
+      setupEventListeners();
+    });
+
+    // 設置事件監聽器
+    function setupEventListeners() {
+      // 帳號表單提交
+      document.getElementById('accountForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        saveAccount();
+      });
+    }
+
+    // 載入帳號列表
+    async function loadAccounts() {
+      try {
+        const accounts = await window.adminAccountsService.getAllAccounts();
+        currentAccounts = accounts;
+        renderAccounts(accounts);
+      } catch (error) {
+        console.error('載入帳號失敗:', error);
+        showAlert('載入帳號失敗，請稍後再試', 'error');
+      }
+    }
+
+    // 渲染帳號列表
+    function renderAccounts(accounts) {
+      const grid = document.getElementById('accountsGrid');
+      
+      if (accounts.length === 0) {
+        grid.innerHTML = '<div class="loading">目前沒有管理員帳號</div>';
+        return;
+      }
+
+      grid.innerHTML = accounts.map(account => `
+        <div class="account-card">
+          <div class="account-header">
+            <h3 class="account-name">${account.name}</h3>
+            <span class="account-status status-${account.status}">
+              ${account.status === 'active' ? '啟用' : '停用'}
+            </span>
+          </div>
+          
+          <div class="account-email">📧 ${account.email}</div>
+          <div class="account-role">${getRoleDisplayName(account.role)}</div>
+          
+          <div class="account-meta">
+            <div class="last-login">
+              ${account.last_login ? `最後登入: ${formatDate(account.last_login)}` : '從未登入'}
+            </div>
+            
+            <div class="account-actions">
+              <button class="action-btn edit-btn" onclick="editAccount('${account.id}')">
+                ✏️ 編輯
+              </button>
+              <button class="action-btn toggle-btn" onclick="toggleAccountStatus('${account.id}')">
+                ${account.status === 'active' ? '⏸️ 停用' : '▶️ 啟用'}
+              </button>
+              <button class="action-btn delete-btn" onclick="deleteAccount('${account.id}', '${account.name}')">
+                🗑️ 刪除
+              </button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // 獲取角色顯示名稱
+    function getRoleDisplayName(role) {
+      const roleNames = {
+        'admin': '管理員',
+        'super_admin': '超級管理員'
+      };
+      return roleNames[role] || role;
+    }
+
+    // 格式化日期
+    function formatDate(dateString) {
+      if (!dateString) return '';
+      const date = new Date(dateString);
+      return date.toLocaleString('zh-TW');
+    }
+
+    // 刷新帳號資料
+    async function refreshAccounts() {
+      try {
+        await window.adminAccountsService.forceRefresh();
+        await loadAccounts();
+        showAlert('帳號資料已刷新', 'success');
+      } catch (error) {
+        console.error('刷新失敗:', error);
+        showAlert('刷新失敗，請稍後再試', 'error');
+      }
+    }
+
+    // 顯示提示訊息
+    function showAlert(message, type) {
+      const alertEl = document.getElementById('alertMessage');
+      alertEl.textContent = message;
+      alertEl.className = `alert alert-${type}`;
+      alertEl.style.display = 'block';
+      
+      setTimeout(() => {
+        alertEl.style.display = 'none';
+      }, 5000);
+    }
+
+    // 開啟新增帳號模態框
+    function openAddAccountModal() {
+      editingAccountId = null;
+      document.getElementById('modalTitle').textContent = '新增帳號';
+      document.getElementById('accountForm').reset();
+      document.getElementById('accountModal').style.display = 'block';
+    }
+
+    // 開啟編輯帳號模態框
+    function editAccount(accountId) {
+      const account = currentAccounts.find(acc => acc.id === accountId);
+      if (!account) return;
+
+      editingAccountId = accountId;
+      document.getElementById('modalTitle').textContent = '編輯帳號';
+      
+      // 填充表單資料
+      document.getElementById('accountEmail').value = account.email;
+      document.getElementById('accountName').value = account.name;
+      document.getElementById('accountRole').value = account.role;
+      document.getElementById('accountStatus').value = account.status;
+      document.getElementById('accountPassword').value = '';
+      document.getElementById('accountPassword').required = false;
+      
+      document.getElementById('accountModal').style.display = 'block';
+    }
+
+    // 儲存帳號
+    async function saveAccount() {
+      const formData = {
+        email: document.getElementById('accountEmail').value,
+        name: document.getElementById('accountName').value,
+        role: document.getElementById('accountRole').value,
+        password: document.getElementById('accountPassword').value,
+        status: document.getElementById('accountStatus').value
+      };
+
+      try {
+        if (editingAccountId) {
+          // 編輯現有帳號
+          await updateAccount(editingAccountId, formData);
+          showAlert('帳號更新成功', 'success');
+        } else {
+          // 新增帳號
+          await createAccount(formData);
+          showAlert('帳號新增成功', 'success');
+        }
+        
+        closeModal();
+        await loadAccounts();
+        
+      } catch (error) {
+        console.error('儲存帳號失敗:', error);
+        showAlert('儲存失敗，請稍後再試', 'error');
+      }
+    }
+
+    // 新增帳號
+    async function createAccount(formData) {
+      // 這裡應該調用 API 來新增帳號
+      // 目前先模擬成功
+      console.log('新增帳號:', formData);
+      return Promise.resolve();
+    }
+
+    // 更新帳號
+    async function updateAccount(accountId, formData) {
+      // 這裡應該調用 API 來更新帳號
+      // 目前先模擬成功
+      console.log('更新帳號:', accountId, formData);
+      return Promise.resolve();
+    }
+
+    // 切換帳號狀態
+    async function toggleAccountStatus(accountId) {
+      try {
+        const account = currentAccounts.find(acc => acc.id === accountId);
+        if (!account) return;
+
+        const newStatus = account.status === 'active' ? 'inactive' : 'active';
+        
+        // 這裡應該調用 API 來更新狀態
+        console.log('切換帳號狀態:', accountId, newStatus);
+        
+        await loadAccounts();
+        showAlert(`帳號已${newStatus === 'active' ? '啟用' : '停用'}`, 'success');
+        
+      } catch (error) {
+        console.error('切換狀態失敗:', error);
+        showAlert('操作失敗，請稍後再試', 'error');
+      }
+    }
+
+    // 刪除帳號
+    function deleteAccount(accountId, accountName) {
+      document.getElementById('deleteAccountName').textContent = accountName;
+      document.getElementById('deleteModal').style.display = 'block';
+      editingAccountId = accountId;
+    }
+
+    // 確認刪除
+    async function confirmDelete() {
+      try {
+        // 這裡應該調用 API 來刪除帳號
+        console.log('刪除帳號:', editingAccountId);
+        
+        closeDeleteModal();
+        await loadAccounts();
+        showAlert('帳號已刪除', 'success');
+        
+      } catch (error) {
+        console.error('刪除失敗:', error);
+        showAlert('刪除失敗，請稍後再試', 'error');
+      }
+    }
+
+    // 關閉模態框
+    function closeModal() {
+      document.getElementById('accountModal').style.display = 'none';
+      editingAccountId = null;
+    }
+
+    // 關閉刪除確認模態框
+    function closeDeleteModal() {
+      document.getElementById('deleteModal').style.display = 'none';
+      editingAccountId = null;
+    }
+
+    // 點擊模態框外部關閉
+    window.onclick = function(event) {
+      const accountModal = document.getElementById('accountModal');
+      const deleteModal = document.getElementById('deleteModal');
+      
+      if (event.target === accountModal) {
+        closeModal();
+      }
+      if (event.target === deleteModal) {
+        closeDeleteModal();
+      }
+    }
+  </script>
+</body>
+</html>

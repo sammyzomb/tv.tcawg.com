@@ -6,6 +6,7 @@
   <title>管理員登入 - 航向世界旅遊頻道</title>
   <script src="https://cdn.jsdelivr.net/npm/contentful@latest/dist/contentful.browser.min.js"></script>
   <script src="browser-config.js"></script>
+  <script src="admin-accounts-service.js"></script>
   <script src="admin-login-audit.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -383,15 +384,8 @@
       accessToken: process.env.CONTENTFUL_DELIVERY_TOKEN || 'your-delivery-token-here'
     });
     
-    // 授權用戶列表 (實際應用中應該從 Contentful 獲取)
-    const authorizedUsers = [
-      {
-        email: 'sammyzomb@gmail.com',
-        name: '超級管理員',
-        role: 'super_admin',
-        permissions: ['read', 'write', 'delete', 'publish', 'admin', 'system']
-      }
-    ];
+    // 使用新的帳號管理服務，從 GitHub 獲取帳號資料
+    // 不再需要手動編輯 HTML 來新增/刪除帳號
     
     // 登入表單處理
     document.getElementById('loginForm').addEventListener('submit', async function(e) {
@@ -470,59 +464,27 @@
       }
     });
     
-    // 驗證用戶
+    // 驗證用戶 - 使用新的帳號管理服務
     async function authenticateUser(email, password) {
       console.log('=== 登入調試資訊 ===');
       console.log('輸入的 email:', email);
       console.log('輸入的 password:', password);
       
-      // 模擬 API 延遲
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // 首先檢查硬編碼的超級管理員
-      const superAdminUser = authorizedUsers.find(u => u.email === email);
-      console.log('超級管理員檢查結果:', superAdminUser);
-      
-      if (superAdminUser) {
-        // 優先使用動態設定的密碼，如果沒有則使用預設密碼
-        const dynamicPassword = localStorage.getItem('super_admin_password');
-        const superAdminPassword = dynamicPassword || 'Ddpeacemisb@';
-        console.log('超級管理員密碼比對:', password === superAdminPassword);
-        if (password === superAdminPassword) {
-          console.log('超級管理員登入成功');
-          return superAdminUser;
-        }
-      }
-      
-      // 檢查動態創建的管理員
-      const systemAdmins = JSON.parse(localStorage.getItem('system_admins') || '[]');
-      console.log('系統管理員列表:', systemAdmins);
-      
-      const dynamicAdmin = systemAdmins.find(admin => admin.email === email);
-      console.log('找到的動態管理員:', dynamicAdmin);
-      
-      if (dynamicAdmin) {
-        // 檢查帳號是否被停用
-        if (dynamicAdmin.status !== 'active') {
-          console.log('帳號已被停用');
+      try {
+        // 使用新的帳號管理服務驗證用戶
+        const user = await window.adminAccountsService.authenticateUser(email, password);
+        
+        if (user) {
+          console.log('登入成功:', user);
+          return user;
+        } else {
+          console.log('登入失敗：帳號或密碼錯誤');
           return null;
         }
-        
-        console.log('動態管理員密碼比對:', password === dynamicAdmin.password);
-        if (dynamicAdmin.password === password) {
-          console.log('動態管理員登入成功');
-          // 轉換為登入系統需要的格式
-          return {
-            email: dynamicAdmin.email,
-            name: dynamicAdmin.name,
-            role: dynamicAdmin.role,
-            permissions: dynamicAdmin.permissions
-          };
-        }
+      } catch (error) {
+        console.error('驗證用戶時發生錯誤:', error);
+        return null;
       }
-      
-      console.log('登入失敗：未找到匹配的用戶或密碼錯誤');
-      return null;
     }
     
     // 顯示載入狀態
