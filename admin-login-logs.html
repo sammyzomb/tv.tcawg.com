@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>登入日誌管理 - 航向世界旅遊頻道</title>
+  <script src="https://cdn.jsdelivr.net/npm/contentful@latest/dist/contentful.browser.min.js"></script>
+  <script src="browser-config.js"></script>
+  <script src="admin-login-audit.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+      background: #f5f7fa;
+      color: #333;
+    }
+    
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+    
+    .header h1 {
+      font-size: 2rem;
+      margin-bottom: 10px;
+    }
+    
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    
+    .stat-card {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    
+    .stat-number {
+      font-size: 2.5rem;
+      font-weight: bold;
+      color: #667eea;
+      margin-bottom: 10px;
+    }
+    
+    .stat-label {
+      color: #666;
+      font-size: 0.9rem;
+    }
+    
+    .controls {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+    
+    .search-form {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      align-items: end;
+    }
+    
+    .form-group {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .form-group label {
+      margin-bottom: 5px;
+      font-weight: 500;
+      color: #333;
+    }
+    
+    .form-group input, .form-group select {
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      font-size: 14px;
+    }
+    
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+    }
+    
+    .btn-primary {
+      background: #667eea;
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      background: #5a6fd8;
+    }
+    
+    .btn-danger {
+      background: #e74c3c;
+      color: white;
+    }
+    
+    .btn-danger:hover {
+      background: #c0392b;
+    }
+    
+    .btn-success {
+      background: #27ae60;
+      color: white;
+    }
+    
+    .btn-success:hover {
+      background: #229954;
+    }
+    
+    .logs-table {
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+    
+    .table-header {
+      background: #f8f9fa;
+      padding: 15px 20px;
+      border-bottom: 1px solid #eee;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .table-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+    }
+    
+    .table-actions {
+      display: flex;
+      gap: 10px;
+    }
+    
+    .logs-container {
+      max-height: 600px;
+      overflow-y: auto;
+    }
+    
+    .log-entry {
+      padding: 15px 20px;
+      border-bottom: 1px solid #eee;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1fr 100px 80px;
+      gap: 15px;
+      align-items: center;
+      font-size: 14px;
+    }
+    
+    .log-entry:hover {
+      background: #f8f9fa;
+    }
+    
+    .log-entry:last-child {
+      border-bottom: none;
+    }
+    
+    .log-timestamp {
+      color: #666;
+      font-size: 12px;
+    }
+    
+    .log-email {
+      font-weight: 500;
+    }
+    
+    .log-ip {
+      font-family: monospace;
+      color: #667eea;
+    }
+    
+    .log-password {
+      font-family: monospace;
+      color: #666;
+    }
+    
+    .log-success {
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 500;
+      text-align: center;
+    }
+    
+    .log-success.true {
+      background: #d4edda;
+      color: #155724;
+    }
+    
+    .log-success.false {
+      background: #f8d7da;
+      color: #721c24;
+    }
+    
+    .blocked-ips {
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      margin-top: 20px;
+    }
+    
+    .blocked-ip-entry {
+      padding: 15px 20px;
+      border-bottom: 1px solid #eee;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .blocked-ip-info {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    
+    .blocked-ip-address {
+      font-family: monospace;
+      font-weight: 500;
+      color: #e74c3c;
+    }
+    
+    .blocked-ip-details {
+      font-size: 12px;
+      color: #666;
+    }
+    
+    .pagination {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    
+    .pagination button {
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      background: white;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    
+    .pagination button.active {
+      background: #667eea;
+      color: white;
+      border-color: #667eea;
+    }
+    
+    .pagination button:hover:not(.active) {
+      background: #f8f9fa;
+    }
+    
+    .no-logs {
+      text-align: center;
+      padding: 40px;
+      color: #666;
+    }
+    
+    .export-section {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      margin-top: 20px;
+    }
+    
+    .export-actions {
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+    
+    @media (max-width: 768px) {
+      .log-entry {
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+      
+      .search-form {
+        grid-template-columns: 1fr;
+      }
+      
+      .table-actions {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🔐 登入日誌管理系統</h1>
+    <p>監控和管理所有管理員登入活動</p>
+    <div id="userInfo" style="margin-top: 10px; font-size: 0.9rem; opacity: 0.9;"></div>
+    <div style="margin-top: 15px;">
+      <a href="admin-dashboard.html" class="btn btn-primary" style="text-decoration: none; display: inline-flex; align-items: center; gap: 8px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 12H5"/>
+          <path d="M12 19l-7-7 7-7"/>
+        </svg>
+        返回主控台
+      </a>
+    </div>
+  </div>
+
+  <div class="container">
+    <!-- 統計資訊 -->
+    <div class="stats-grid" id="statsGrid">
+      <!-- 統計卡片將由 JavaScript 動態生成 -->
+    </div>
+
+    <!-- 搜尋和控制 -->
+    <div class="controls">
+      <form class="search-form" id="searchForm">
+        <div class="form-group">
+          <label for="searchEmail">電子郵件</label>
+          <input type="email" id="searchEmail" placeholder="搜尋特定郵件">
+        </div>
+        <div class="form-group">
+          <label for="searchIP">IP 地址</label>
+          <input type="text" id="searchIP" placeholder="搜尋特定 IP">
+        </div>
+        <div class="form-group">
+          <label for="searchStatus">狀態</label>
+          <select id="searchStatus">
+            <option value="">全部</option>
+            <option value="true">成功</option>
+            <option value="false">失敗</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="searchDateFrom">開始日期</label>
+          <input type="datetime-local" id="searchDateFrom">
+        </div>
+        <div class="form-group">
+          <label for="searchDateTo">結束日期</label>
+          <input type="datetime-local" id="searchDateTo">
+        </div>
+        <div class="form-group">
+          <button type="submit" class="btn btn-primary">搜尋</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- 登入日誌表格 -->
+    <div class="logs-table">
+      <div class="table-header">
+        <div class="table-title">登入日誌記錄</div>
+        <div class="table-actions">
+          <button class="btn btn-primary" onclick="refreshLogs()">重新整理</button>
+          <button class="btn btn-success" onclick="exportLogs()">匯出 CSV</button>
+          <button class="btn btn-danger" onclick="clearOldLogs()">清理舊日誌</button>
+        </div>
+      </div>
+      <div class="logs-container" id="logsContainer">
+        <!-- 日誌記錄將由 JavaScript 動態生成 -->
+      </div>
+    </div>
+
+    <!-- 分頁 -->
+    <div class="pagination" id="pagination">
+      <!-- 分頁按鈕將由 JavaScript 動態生成 -->
+    </div>
+
+    <!-- 被封鎖的 IP -->
+    <div class="blocked-ips">
+      <div class="table-header">
+        <div class="table-title">被封鎖的 IP 地址</div>
+        <div class="table-actions">
+          <button class="btn btn-primary" onclick="refreshBlockedIPs()">重新整理</button>
+        </div>
+      </div>
+      <div id="blockedIPsContainer">
+        <!-- 被封鎖的 IP 將由 JavaScript 動態生成 -->
+      </div>
+    </div>
+
+    <!-- 匯出選項 -->
+    <div class="export-section">
+      <h3>匯出選項</h3>
+      <div class="export-actions">
+        <button class="btn btn-success" onclick="exportAllLogs()">匯出所有日誌</button>
+        <button class="btn btn-success" onclick="exportFailedLogs()">匯出失敗日誌</button>
+        <button class="btn btn-success" onclick="exportBlockedIPs()">匯出封鎖清單</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentPage = 1;
+    let logsPerPage = 50;
+    let filteredLogs = [];
+
+    // 頁面載入時初始化
+    document.addEventListener('DOMContentLoaded', function() {
+      checkAdminAuth();
+      displayUserInfo();
+      loadStatistics();
+      loadLogs();
+      loadBlockedIPs();
+      setupEventListeners();
+    });
+
+    // 檢查管理員權限
+    function checkAdminAuth() {
+      const user = JSON.parse(sessionStorage.getItem('adminUser') || '{}');
+      if (!user.email || !user.role) {
+        alert('需要管理員權限才能訪問此頁面');
+        window.location.href = 'admin-login.html';
+        return;
+      }
+      
+      // 檢查是否有管理員權限（超級管理員或一般管理員）
+      const allowedRoles = ['super_admin', 'admin', 'manager'];
+      if (!allowedRoles.includes(user.role)) {
+        alert('權限不足，無法訪問此頁面');
+        window.location.href = 'admin-login.html';
+        return;
+      }
+      
+      // 儲存當前用戶資訊供後續使用
+      window.currentAdminUser = user;
+    }
+
+    // 顯示用戶資訊
+    function displayUserInfo() {
+      const user = window.currentAdminUser;
+      const userInfoDiv = document.getElementById('userInfo');
+      
+      if (user) {
+        const roleText = {
+          'super_admin': '超級管理員',
+          'admin': '管理員',
+          'manager': '經理'
+        }[user.role] || user.role;
+        
+        userInfoDiv.innerHTML = `
+          <span>👤 ${user.email} (${roleText})</span>
+          ${user.role === 'super_admin' ? '<span style="margin-left: 10px;">🔑 完整權限</span>' : '<span style="margin-left: 10px;">👁️ 唯讀權限</span>'}
+        `;
+      }
+    }
+
+    // 載入統計資訊
+    function loadStatistics() {
+      const stats = window.loginAuditSystem.getStatistics();
+      const statsGrid = document.getElementById('statsGrid');
+      
+      statsGrid.innerHTML = `
+        <div class="stat-card">
+          <div class="stat-number">${stats.totalAttempts}</div>
+          <div class="stat-label">總登入嘗試</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number">${stats.successfulLogins}</div>
+          <div class="stat-label">成功登入</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number">${stats.failedLogins}</div>
+          <div class="stat-label">失敗登入</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number">${stats.successRate}%</div>
+          <div class="stat-label">成功率</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number">${stats.blockedIPsCount}</div>
+          <div class="stat-label">被封鎖 IP</div>
+        </div>
+      `;
+    }
+
+    // 載入日誌
+    function loadLogs() {
+      const allLogs = window.loginAuditSystem.getAllLogs();
+      filteredLogs = allLogs;
+      displayLogs();
+    }
+
+    // 顯示日誌
+    function displayLogs() {
+      const container = document.getElementById('logsContainer');
+      const startIndex = (currentPage - 1) * logsPerPage;
+      const endIndex = startIndex + logsPerPage;
+      const pageLogs = filteredLogs.slice(startIndex, endIndex);
+
+      if (pageLogs.length === 0) {
+        container.innerHTML = '<div class="no-logs">沒有找到日誌記錄</div>';
+        return;
+      }
+
+      const logsHTML = pageLogs.map(log => `
+        <div class="log-entry">
+          <div class="log-timestamp">${formatDateTime(log.timestamp)}</div>
+          <div class="log-email">${log.email}</div>
+          <div class="log-ip">${log.ipAddress}</div>
+          <div class="log-password">${log.password}</div>
+          <div class="log-success ${log.success}">${log.success ? '成功' : '失敗'}</div>
+          <div class="log-reason">${log.reason || '-'}</div>
+        </div>
+      `).join('');
+
+      container.innerHTML = logsHTML;
+      updatePagination();
+    }
+
+    // 更新分頁
+    function updatePagination() {
+      const totalPages = Math.ceil(filteredLogs.length / logsPerPage);
+      const pagination = document.getElementById('pagination');
+      
+      if (totalPages <= 1) {
+        pagination.innerHTML = '';
+        return;
+      }
+
+      let paginationHTML = '';
+      
+      // 上一頁
+      if (currentPage > 1) {
+        paginationHTML += `<button onclick="changePage(${currentPage - 1})">上一頁</button>`;
+      }
+
+      // 頁碼
+      for (let i = 1; i <= totalPages; i++) {
+        if (i === currentPage) {
+          paginationHTML += `<button class="active">${i}</button>`;
+        } else {
+          paginationHTML += `<button onclick="changePage(${i})">${i}</button>`;
+        }
+      }
+
+      // 下一頁
+      if (currentPage < totalPages) {
+        paginationHTML += `<button onclick="changePage(${currentPage + 1})">下一頁</button>`;
+      }
+
+      pagination.innerHTML = paginationHTML;
+    }
+
+    // 切換頁面
+    function changePage(page) {
+      currentPage = page;
+      displayLogs();
+    }
+
+    // 載入被封鎖的 IP
+    function loadBlockedIPs() {
+      const blockedIPs = window.loginAuditSystem.blockedIPs;
+      const container = document.getElementById('blockedIPsContainer');
+
+      if (blockedIPs.length === 0) {
+        container.innerHTML = '<div class="no-logs">沒有被封鎖的 IP</div>';
+        return;
+      }
+
+             const user = window.currentAdminUser;
+       const isSuperAdmin = user && user.role === 'super_admin';
+       
+       const blockedHTML = blockedIPs.map(block => `
+         <div class="blocked-ip-entry">
+           <div class="blocked-ip-info">
+             <div class="blocked-ip-address">${block.ipAddress}</div>
+             <div class="blocked-ip-details">
+               封鎖時間: ${formatDateTime(block.blockedAt)} | 
+               嘗試次數: ${block.attempts} | 
+               原因: ${block.reason}
+             </div>
+           </div>
+           ${isSuperAdmin ? `<button class="btn btn-success" onclick="unblockIP('${block.ipAddress}')">解除封鎖</button>` : '<span style="color: #666; font-size: 0.9rem;">僅超級管理員可解除封鎖</span>'}
+         </div>
+       `).join('');
+
+      container.innerHTML = blockedHTML;
+    }
+
+    // 解除 IP 封鎖
+    function unblockIP(ipAddress) {
+      const user = window.currentAdminUser || JSON.parse(sessionStorage.getItem('adminUser') || '{}');
+      
+      // 只有超級管理員才能解除 IP 封鎖
+      if (user.role !== 'super_admin') {
+        alert('只有超級管理員才能解除 IP 封鎖');
+        return;
+      }
+      
+      if (confirm(`確定要解除 IP ${ipAddress} 的封鎖嗎？`)) {
+        const success = window.loginAuditSystem.unblockIP(ipAddress, user.email);
+        if (success) {
+          alert('IP 封鎖已解除');
+          loadBlockedIPs();
+          loadStatistics();
+        } else {
+          alert('解除封鎖失敗');
+        }
+      }
+    }
+
+    // 搜尋日誌
+    function searchLogs() {
+      const email = document.getElementById('searchEmail').value;
+      const ip = document.getElementById('searchIP').value;
+      const status = document.getElementById('searchStatus').value;
+      const dateFrom = document.getElementById('searchDateFrom').value;
+      const dateTo = document.getElementById('searchDateTo').value;
+
+      const criteria = {};
+      if (email) criteria.email = email;
+      if (ip) criteria.ipAddress = ip;
+      if (status !== '') criteria.success = status === 'true';
+      if (dateFrom) criteria.dateFrom = dateFrom;
+      if (dateTo) criteria.dateTo = dateTo;
+
+      filteredLogs = window.loginAuditSystem.searchLogs(criteria);
+      currentPage = 1;
+      displayLogs();
+    }
+
+    // 重新整理日誌
+    function refreshLogs() {
+      loadLogs();
+      loadStatistics();
+    }
+
+    // 重新整理被封鎖的 IP
+    function refreshBlockedIPs() {
+      loadBlockedIPs();
+    }
+
+    // 匯出日誌
+    function exportLogs() {
+      const csv = window.loginAuditSystem.exportLogsToCSV();
+      downloadCSV(csv, 'login_logs.csv');
+    }
+
+    // 匯出所有日誌
+    function exportAllLogs() {
+      const csv = window.loginAuditSystem.exportLogsToCSV();
+      downloadCSV(csv, 'all_login_logs.csv');
+    }
+
+    // 匯出失敗日誌
+    function exportFailedLogs() {
+      const failedLogs = window.loginAuditSystem.searchLogs({ success: false });
+      const csv = convertLogsToCSV(failedLogs);
+      downloadCSV(csv, 'failed_login_logs.csv');
+    }
+
+    // 匯出封鎖清單
+    function exportBlockedIPs() {
+      const blockedIPs = window.loginAuditSystem.blockedIPs;
+      const headers = ['IP地址', '電子郵件', '封鎖時間', '原因', '嘗試次數'];
+      const csvContent = [
+        headers.join(','),
+        ...blockedIPs.map(block => [
+          block.ipAddress,
+          block.email,
+          block.blockedAt,
+          block.reason,
+          block.attempts
+        ].join(','))
+      ].join('\n');
+      
+      downloadCSV(csvContent, 'blocked_ips.csv');
+    }
+
+    // 清理舊日誌
+    function clearOldLogs() {
+      if (confirm('確定要清理30天前的舊日誌嗎？此操作無法復原。')) {
+        const result = window.loginAuditSystem.cleanupOldLogs(30);
+        alert(`清理完成：移除了 ${result.removedCount} 條舊日誌`);
+        loadLogs();
+        loadStatistics();
+      }
+    }
+
+    // 設定事件監聽器
+    function setupEventListeners() {
+      document.getElementById('searchForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        searchLogs();
+      });
+    }
+
+    // 格式化日期時間
+    function formatDateTime(timestamp) {
+      const date = new Date(timestamp);
+      return date.toLocaleString('zh-TW');
+    }
+
+    // 轉換日誌為 CSV
+    function convertLogsToCSV(logs) {
+      const headers = ['時間', '電子郵件', '密碼', 'IP地址', '用戶代理', '成功', '原因', '會話ID'];
+      return [
+        headers.join(','),
+        ...logs.map(log => [
+          log.timestamp,
+          log.email,
+          log.password,
+          log.ipAddress,
+          `"${log.userAgent}"`,
+          log.success ? '是' : '否',
+          log.reason,
+          log.sessionId
+        ].join(','))
+      ].join('\n');
+    }
+
+    // 下載 CSV 檔案
+    function downloadCSV(csv, filename) {
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', filename);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  </script>
+</body>
+</html>
