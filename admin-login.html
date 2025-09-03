@@ -4,6 +4,53 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>管理員登入 - 航向世界旅遊頻道</title>
+  
+     <!-- Firebase SDK -->
+   <script type="module">
+     // Import the functions you need from the SDKs you need
+     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+     import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+     // 暫時禁用 Analytics 導入
+     // import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-analytics.js";
+    
+    // Your web app's Firebase configuration
+    // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+    const firebaseConfig = {
+      apiKey: "AIzaSyB5MLyG5H1sCflHFU7WeKQCmC0Ft5TlqjM",
+      authDomain: "tv-tcawg-com.firebaseapp.com",
+      projectId: "tv-tcawg-com",
+      storageBucket: "tv-tcawg-com.firebasestorage.app",
+      messagingSenderId: "313251141126",
+      appId: "1:313251141126:web:88ef97ce28798c0a2e9587",
+      measurementId: "G-83Z5VTRTZH"
+    };
+    
+         // Initialize Firebase
+     const app = initializeApp(firebaseConfig);
+     const auth = getAuth(app);
+     // 暫時禁用 Analytics 以避免初始化問題
+     // const analytics = getAnalytics(app);
+    
+    // 將 Firebase 認證實例和函數設為全域變數
+    window.firebaseAuth = auth;
+    window.signInWithEmailAndPassword = signInWithEmailAndPassword;
+    
+    // 監聽認證狀態變化
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        console.log('Firebase 用戶已登入:', user.email);
+        // 用戶已登入，可以重定向到管理後台
+        if (window.location.pathname.includes('admin-login.html')) {
+          setTimeout(() => {
+            window.location.href = 'admin-dashboard.html';
+          }, 1000);
+        }
+      } else {
+        console.log('Firebase 用戶未登入');
+      }
+    });
+  </script>
+  
   <script src="https://cdn.jsdelivr.net/npm/contentful@latest/dist/contentful.browser.min.js"></script>
   <script src="browser-config.js"></script>
   <script src="admin-accounts-service.js"></script>
@@ -419,46 +466,62 @@
           return;
         }
         
-        // 驗證用戶
-        const user = await authenticateUser(email, password);
+        // 使用 Firebase 認證
+        const userCredential = await window.signInWithEmailAndPassword(window.firebaseAuth, email, password);
+        const user = userCredential.user;
         
         if (user) {
-          // 登入成功
+          // Firebase 登入成功
           await window.loginAuditSystem.logLoginAttempt(
-            email, password, ipAddress, userAgent, true, '登入成功'
+            email, password, ipAddress, userAgent, true, 'Firebase 登入成功'
           );
           
           showSuccess('登入成功！正在跳轉到管理系統...');
           
           // 儲存用戶資訊到 sessionStorage
-          sessionStorage.setItem('adminUser', JSON.stringify(user));
+          sessionStorage.setItem('adminUser', JSON.stringify({
+            uid: user.uid,
+            email: user.email,
+            displayName: user.displayName || '管理員',
+            provider: 'firebase'
+          }));
           sessionStorage.setItem('loginTime', new Date().toISOString());
           
-          // 延遲跳轉
-          setTimeout(() => {
-            window.location.href = 'admin-dashboard.html';
-          }, 1500);
+          // Firebase 會自動處理重定向
+          console.log('Firebase 登入成功，用戶:', user.email);
           
         } else {
           // 登入失敗
           await window.loginAuditSystem.logLoginAttempt(
-            email, password, ipAddress, userAgent, false, '帳號或密碼錯誤'
+            email, password, ipAddress, userAgent, false, 'Firebase 認證失敗'
           );
           
           showError('登入失敗：帳號或密碼錯誤');
         }
         
       } catch (error) {
-        console.error('登入錯誤:', error);
+        console.error('Firebase 登入錯誤:', error);
         
         // 記錄錯誤
         const ipAddress = await window.loginAuditSystem.getClientIP();
         const userAgent = window.loginAuditSystem.getUserAgent();
         await window.loginAuditSystem.logLoginAttempt(
-          email, password, ipAddress, userAgent, false, '系統錯誤'
+          email, password, ipAddress, userAgent, false, `Firebase 錯誤: ${error.code}`
         );
         
-        showError('登入失敗：系統錯誤，請稍後再試');
+        // 根據 Firebase 錯誤代碼顯示適當的錯誤訊息
+        let errorMessage = '登入失敗：系統錯誤，請稍後再試';
+        if (error.code === 'auth/user-not-found') {
+          errorMessage = '登入失敗：找不到此電子郵件帳號';
+        } else if (error.code === 'auth/wrong-password') {
+          errorMessage = '登入失敗：密碼錯誤';
+        } else if (error.code === 'auth/invalid-email') {
+          errorMessage = '登入失敗：電子郵件格式不正確';
+        } else if (error.code === 'auth/too-many-requests') {
+          errorMessage = '登入失敗：嘗試次數過多，請稍後再試';
+        }
+        
+        showError(errorMessage);
       } finally {
         showLoading(false);
       }
@@ -526,6 +589,17 @@
     
     // 檢查是否已經登入
     function checkLoginStatus() {
+      // 檢查 Firebase 認證狀態
+      if (window.firebaseAuth) {
+        const currentUser = window.firebaseAuth.currentUser;
+        if (currentUser) {
+          console.log('Firebase 用戶已登入，重定向到管理後台');
+          window.location.href = 'admin-dashboard.html';
+          return;
+        }
+      }
+      
+      // 檢查 sessionStorage 中的登入狀態（向後兼容）
       const user = sessionStorage.getItem('adminUser');
       const loginTime = sessionStorage.getItem('loginTime');
       
@@ -583,6 +657,17 @@
           }
         });
       }
+      
+      // 等待 Firebase 初始化完成
+      const checkFirebaseReady = setInterval(() => {
+        if (window.firebaseAuth) {
+          clearInterval(checkFirebaseReady);
+          console.log('Firebase 已準備就緒');
+          
+          // 再次檢查登入狀態（Firebase 可能已經有緩存的認證狀態）
+          checkLoginStatus();
+        }
+      }, 100);
       
       console.log('Login page - 初始化完成');
     });

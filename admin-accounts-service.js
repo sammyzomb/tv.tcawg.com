@@ -290,7 +290,3 @@ class AdminAccountsService {
 
 // 創建全域實例
 window.adminAccountsService = new AdminAccountsService();
-}
-
-// 創建全域實例
-window.adminAccountsService = new AdminAccountsService();
