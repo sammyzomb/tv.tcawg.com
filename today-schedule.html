@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>今日節目表 - 航向世界旅遊頻道</title>
+  
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <style>
+    /* 今日節目表專用樣式 */
+    .today-schedule-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      font-family: 'Microsoft JhengHei', 'PingFang TC', sans-serif;
+    }
+
+    .schedule-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      padding: 20px;
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      border-radius: 15px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .calendar-icon {
+      width: 40px;
+      height: 40px;
+      background: #2b71d2;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 20px;
+    }
+
+    .header-title {
+      font-size: 28px;
+      font-weight: 700;
+      color: #2b71d2;
+      margin: 0;
+    }
+
+    .header-right {
+      text-align: right;
+      color: #6c757d;
+    }
+
+    .time-info {
+      font-size: 14px;
+      margin-bottom: 5px;
+    }
+
+    .current-time {
+      font-size: 18px;
+      font-weight: 600;
+      color: #2b71d2;
+    }
+
+    .schedule-content {
+      background: white;
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+      position: relative;
+    }
+
+    .schedule-carousel {
+      display: flex;
+      gap: 20px;
+      overflow-x: auto;
+      scroll-behavior: smooth;
+      padding: 10px 0;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+
+    .schedule-carousel::-webkit-scrollbar {
+      display: none;
+    }
+
+    .program-card {
+      min-width: 320px;
+      background: white;
+      border-radius: 15px;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      transition: all 0.3s ease;
+      position: relative;
+      border: 3px solid transparent;
+    }
+
+    .program-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+    }
+
+    .program-card.current {
+      border-color: #dc3545;
+      box-shadow: 0 0 20px rgba(220, 53, 69, 0.3);
+    }
+
+    .program-image {
+      position: relative;
+      height: 200px;
+      overflow: hidden;
+    }
+
+    .program-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.3s ease;
+    }
+
+    .program-card:hover .program-image img {
+      transform: scale(1.05);
+    }
+
+    .time-badge {
+      position: absolute;
+      top: 15px;
+      left: 15px;
+      background: rgba(0,0,0,0.7);
+      color: white;
+      padding: 8px 12px;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .status-badge {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      background: #dc3545;
+      color: white;
+      padding: 8px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      background: white;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.5; }
+      100% { opacity: 1; }
+    }
+
+    .program-info {
+      padding: 20px;
+    }
+
+    .program-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #2c3e50;
+      margin-bottom: 10px;
+      line-height: 1.4;
+    }
+
+    .program-description {
+      color: #6c757d;
+      font-size: 14px;
+      line-height: 1.5;
+      margin-bottom: 15px;
+    }
+
+    .program-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .category-tag {
+      background: #dc3545;
+      color: white;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .duration-info {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      color: #6c757d;
+      font-size: 12px;
+    }
+
+    .scroll-indicators {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 30px;
+    }
+
+    .indicator-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #dee2e6;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .indicator-dot.active {
+      background: #2b71d2;
+      transform: scale(1.2);
+    }
+
+    .scroll-arrows {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 40px;
+      height: 40px;
+      background: rgba(255,255,255,0.9);
+      border: none;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      transition: all 0.3s ease;
+      z-index: 10;
+    }
+
+    .scroll-arrows:hover {
+      background: white;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+
+    .scroll-left {
+      left: 20px;
+    }
+
+    .scroll-right {
+      right: 20px;
+    }
+
+    .scroll-arrows svg {
+      width: 20px;
+      height: 20px;
+      color: #6c757d;
+    }
+
+    /* 響應式設計 */
+    @media (max-width: 768px) {
+      .schedule-header {
+        flex-direction: column;
+        gap: 20px;
+        text-align: center;
+      }
+
+      .header-title {
+        font-size: 24px;
+      }
+
+      .program-card {
+        min-width: 280px;
+      }
+
+      .scroll-arrows {
+        display: none;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .today-schedule-container {
+        padding: 10px;
+      }
+
+      .schedule-content {
+        padding: 20px;
+      }
+
+      .program-card {
+        min-width: 250px;
+      }
+
+      .header-title {
+        font-size: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 導覽列 -->
+  <div class="navbar">
+    <a class="logo" href="index.html">
+      <img src="logo.png" alt="航向世界旅遊頻道 LOGO" />
+    </a>
+    
+    <nav class="desktop-nav">
+      <a href="index.html">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9L12 2L21 9V20a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        <span class="nav-text">首頁</span>
+      </a>
+      <a href="videos.html">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><path d="M8 21h8m-4-4v4"/></svg>
+        <span class="nav-text">所有節目</span>
+      </a>
+      <a href="schedule.html">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        <span class="nav-text">節目表</span>
+      </a>
+      <a href="topics.html">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <span class="nav-text">主題探索</span>
+      </a>
+    </nav>
+
+    <div class="nav-actions">
+      <a href="login.html" class="login-link">
+        <svg class="nav-icon" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="10" cy="7" r="4.5" stroke-width="2"/><ellipse cx="10" cy="15.2" rx="6.8" ry="3.2" stroke-width="2"/></svg>
+        <span class="nav-text">會員登入</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- 今日節目表主要內容 -->
+  <div class="today-schedule-container">
+    
+    <!-- 頁面標題區塊 -->
+    <div class="schedule-header">
+      <div class="header-left">
+        <div class="calendar-icon">
+          📅
+        </div>
+        <h1 class="header-title">今日節目表</h1>
+      </div>
+      
+      <div class="header-right">
+        <div class="time-info">台灣時間</div>
+        <div class="time-info" id="currentDate">9月2日 星期二</div>
+        <div class="time-info">現在時間 <span class="current-time" id="currentTime">12:46</span></div>
+      </div>
+    </div>
+
+    <!-- 節目表內容區塊 -->
+    <div class="schedule-content">
+      
+      <!-- 滾動箭頭 -->
+      <button class="scroll-arrows scroll-left" id="scrollLeft">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15,18 9,12 15,6"></polyline>
+        </svg>
+      </button>
+      
+      <button class="scroll-arrows scroll-right" id="scrollRight">
+        <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="9,18 15,12 9,6"></polyline>
+        </svg>
+      </button>
+
+      <!-- 節目輪播 -->
+      <div class="schedule-carousel" id="scheduleCarousel">
+        <!-- 節目卡片將由 JavaScript 動態生成 -->
+      </div>
+
+      <!-- 滾動指示器 -->
+      <div class="scroll-indicators" id="scrollIndicators">
+        <!-- 指示點將由 JavaScript 動態生成 -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 今日節目表 JavaScript
+    document.addEventListener('DOMContentLoaded', () => {
+      let currentProgramIndex = 0;
+      let programs = [];
+      
+      // 初始化
+      initTodaySchedule();
+      
+      // 初始化今日節目表
+      async function initTodaySchedule() {
+        await loadPrograms();
+        updateDateTime();
+        renderPrograms();
+        setupEventListeners();
+        
+        // 每分鐘更新時間
+        setInterval(updateDateTime, 60000);
+        
+        // 每30秒檢查節目狀態
+        setInterval(checkProgramStatus, 30000);
+      }
+      
+      // 載入節目數據
+      async function loadPrograms() {
+        try {
+          const response = await fetch('schedule.json');
+          const data = await response.json();
+          programs = data.today.schedule || [];
+        } catch (error) {
+          console.error('載入節目數據失敗:', error);
+          // 使用預設數據
+          programs = [
+            {
+              time: "12:00",
+              title: "午間精選 - 泰國清邁古城巡禮",
+              duration: "60",
+              category: "亞洲旅遊",
+              description: "漫步清邁古城，感受泰北蘭納王朝的歷史文化",
+              thumbnail: "https://images.unsplash.com/photo-1552733407-5d5c46c3bb3b?w=400&h=225&fit=crop"
+            },
+            {
+              time: "13:00",
+              title: "海島假期 - 馬爾地夫水上別墅",
+              duration: "45",
+              category: "海島旅遊",
+              description: "在馬爾地夫的透明海水中，體驗最奢華的水上別墅生活",
+              thumbnail: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=225&fit=crop"
+            },
+            {
+              time: "14:00",
+              title: "歷史探索 - 埃及金字塔之謎",
+              duration: "60",
+              category: "歷史旅遊",
+              description: "深入探索古埃及金字塔的建造之謎與法老文明",
+              thumbnail: "https://images.unsplash.com/photo-1503177119275-0aa32b3a9368?w=400&h=225&fit=crop"
+            },
+            {
+              time: "15:00",
+              title: "冒險之旅 - 秘魯馬丘比丘",
+              duration: "45",
+              category: "冒險旅遊",
+              description: "登上印加帝國的失落之城，感受安地斯山脈的神秘",
+              thumbnail: "https://images.unsplash.com/photo-1587595431973-160d0d94add1?w=400&h=225&fit=crop"
+            },
+            {
+              time: "16:00",
+              title: "藝術之旅 - 義大利佛羅倫斯文藝復興",
+              duration: "60",
+              category: "藝術旅遊",
+              description: "在文藝復興的發源地，欣賞米開朗基羅與達文西的傑作",
+              thumbnail: "https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=400&h=225&fit=crop"
+            }
+          ];
+        }
+      }
+      
+      // 更新日期和時間
+      function updateDateTime() {
+        const now = new Date();
+        const taiwanTime = new Date(now.getTime() + (8 * 60 * 60 * 1000)); // UTC+8
+        
+        const month = taiwanTime.getUTCMonth() + 1;
+        const date = taiwanTime.getUTCDate();
+        const day = ['日', '一', '二', '三', '四', '五', '六'][taiwanTime.getUTCDay()];
+        const hours = String(taiwanTime.getUTCHours()).padStart(2, '0');
+        const minutes = String(taiwanTime.getUTCMinutes()).padStart(2, '0');
+        
+        document.getElementById('currentDate').textContent = `${month}月${date}日 星期${day}`;
+        document.getElementById('currentTime').textContent = `${hours}:${minutes}`;
+      }
+      
+      // 渲染節目
+      function renderPrograms() {
+        const carousel = document.getElementById('scheduleCarousel');
+        const indicators = document.getElementById('scrollIndicators');
+        
+        if (!carousel || !indicators) return;
+        
+        // 渲染節目卡片
+        carousel.innerHTML = programs.map((program, index) => {
+          const isCurrent = isCurrentProgram(program);
+          return createProgramCard(program, index, isCurrent);
+        }).join('');
+        
+        // 渲染指示器
+        indicators.innerHTML = programs.map((_, index) => 
+          `<div class="indicator-dot ${index === 0 ? 'active' : ''}" data-index="${index}"></div>`
+        ).join('');
+        
+        // 更新當前節目索引
+        currentProgramIndex = programs.findIndex(p => isCurrentProgram(p));
+        if (currentProgramIndex === -1) currentProgramIndex = 0;
+        
+        updateActiveIndicator();
+      }
+      
+      // 創建節目卡片
+      function createProgramCard(program, index, isCurrent) {
+        return `
+          <div class="program-card ${isCurrent ? 'current' : ''}" data-index="${index}">
+            <div class="program-image">
+              <img src="${program.thumbnail}" alt="${program.title}" onerror="this.src='https://via.placeholder.com/320x200/000000/ffffff?text=節目圖片'">
+              <div class="time-badge">${program.time}</div>
+              ${isCurrent ? '<div class="status-badge"><span class="status-dot"></span>現正播出</div>' : ''}
+            </div>
+            <div class="program-info">
+              <div class="program-title">${program.title}</div>
+              <div class="program-description">${program.description}</div>
+              <div class="program-meta">
+                <span class="category-tag">${program.category}</span>
+                <div class="duration-info">
+                  <span>⏱</span>
+                  <span>${program.duration}分鐘</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+      
+      // 檢查節目狀態
+      function checkProgramStatus() {
+        programs.forEach((program, index) => {
+          const card = document.querySelector(`[data-index="${index}"]`);
+          if (card) {
+            const isCurrent = isCurrentProgram(program);
+            card.classList.toggle('current', isCurrent);
+            
+            // 更新狀態徽章
+            const statusBadge = card.querySelector('.status-badge');
+            if (isCurrent && !statusBadge) {
+              const imageContainer = card.querySelector('.program-image');
+              imageContainer.insertAdjacentHTML('beforeend', 
+                '<div class="status-badge"><span class="status-dot"></span>現正播出</div>'
+              );
+            } else if (!isCurrent && statusBadge) {
+              statusBadge.remove();
+            }
+          }
+        });
+        
+        // 更新當前節目索引
+        currentProgramIndex = programs.findIndex(p => isCurrentProgram(p));
+        if (currentProgramIndex === -1) currentProgramIndex = 0;
+        
+        updateActiveIndicator();
+      }
+      
+      // 判斷是否為當前節目
+      function isCurrentProgram(program) {
+        const now = new Date();
+        const taiwanTime = new Date(now.getTime() + (8 * 60 * 60 * 1000));
+        const currentTime = taiwanTime.getUTCHours() * 60 + taiwanTime.getUTCMinutes();
+        
+        const [programHour, programMinute] = program.time.split(':').map(Number);
+        const programStartTime = programHour * 60 + programMinute;
+        const programEndTime = programStartTime + parseInt(program.duration);
+        
+        return currentTime >= programStartTime && currentTime < programEndTime;
+      }
+      
+      // 設置事件監聽器
+      function setupEventListeners() {
+        // 滾動箭頭
+        document.getElementById('scrollLeft')?.addEventListener('click', () => {
+          scrollToProgram(currentProgramIndex - 1);
+        });
+        
+        document.getElementById('scrollRight')?.addEventListener('click', () => {
+          scrollToProgram(currentProgramIndex + 1);
+        });
+        
+        // 指示器點擊
+        document.getElementById('scrollIndicators')?.addEventListener('click', (e) => {
+          if (e.target.classList.contains('indicator-dot')) {
+            const index = parseInt(e.target.dataset.index);
+            scrollToProgram(index);
+          }
+        });
+        
+        // 節目卡片點擊
+        document.getElementById('scheduleCarousel')?.addEventListener('click', (e) => {
+          const card = e.target.closest('.program-card');
+          if (card) {
+            const index = parseInt(card.dataset.index);
+            const program = programs[index];
+            console.log('點擊節目:', program.title);
+            // 這裡可以添加播放節目的邏輯
+          }
+        });
+      }
+      
+      // 滾動到指定節目
+      function scrollToProgram(index) {
+        if (index < 0) index = programs.length - 1;
+        if (index >= programs.length) index = 0;
+        
+        const carousel = document.getElementById('scheduleCarousel');
+        const card = carousel.querySelector(`[data-index="${index}"]`);
+        
+        if (card) {
+          card.scrollIntoView({
+            behavior: 'smooth',
+            block: 'nearest',
+            inline: 'center'
+          });
+          
+          currentProgramIndex = index;
+          updateActiveIndicator();
+        }
+      }
+      
+      // 更新活動指示器
+      function updateActiveIndicator() {
+        document.querySelectorAll('.indicator-dot').forEach((dot, index) => {
+          dot.classList.toggle('active', index === currentProgramIndex);
+        });
+      }
+    });
+  </script>
+</body>
+</html>
