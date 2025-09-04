@@ -1,15 +1,57 @@
 /**
  * 管理員帳號管理服務
  * 使用 GitHub 作為資料庫，實現跨設備同步
+ * 版本：2.0 - 增強安全性與同步功能
  */
 
 class AdminAccountsService {
   constructor() {
     this.accountsData = null;
     this.lastFetch = null;
-    this.cacheTimeout = 5 * 60 * 1000; // 5分鐘快取
+    this.cacheTimeout = 2 * 60 * 1000; // 2分鐘快取（更頻繁同步）
     this.accountsUrl = 'https://raw.githubusercontent.com/sammyzomb/tv.tcawg.com/main/admin-accounts.json';
     this.githubToken = localStorage.getItem('github_token') || '';
+    this.syncInterval = null;
+    
+    // 啟動自動同步
+    this.startAutoSync();
+  }
+
+  /**
+   * 啟動自動同步（每5分鐘檢查一次）
+   */
+  startAutoSync() {
+    if (this.syncInterval) {
+      clearInterval(this.syncInterval);
+    }
+    
+    this.syncInterval = setInterval(async () => {
+      try {
+        await this.forceRefresh();
+        console.log('自動同步完成');
+      } catch (error) {
+        console.log('自動同步失敗:', error.message);
+      }
+    }, 5 * 60 * 1000); // 5分鐘
+  }
+
+  /**
+   * 安全的密碼雜湊（使用 SHA-256）
+   */
+  async hashPassword(password) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(password);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+
+  /**
+   * 驗證密碼
+   */
+  async verifyPassword(password, hashedPassword) {
+    const hash = await this.hashPassword(password);
+    return hash === hashedPassword;
   }
 
   /**
@@ -49,6 +91,9 @@ class AdminAccountsService {
       // 更新快取
       this.accountsData = data;
       this.lastFetch = Date.now();
+      
+      // 儲存到本地備份
+      this.saveLocalBackup(data);
       
       console.log('帳號資料更新成功');
       return data;
@@ -128,6 +173,18 @@ class AdminAccountsService {
   }
 
   /**
+   * 儲存本地備份
+   */
+  saveLocalBackup(data) {
+    try {
+      localStorage.setItem('admin_accounts_backup', JSON.stringify(data));
+      localStorage.setItem('admin_accounts_backup_time', Date.now().toString());
+    } catch (e) {
+      console.error('儲存本地備份失敗:', e);
+    }
+  }
+
+  /**
    * 驗證用戶登入
    */
   async authenticateUser(email, password) {
@@ -143,7 +200,7 @@ class AdminAccountsService {
       }
 
       // 檢查密碼（實際應用中應該使用加密密碼）
-      if (account.password_hash === password) {
+      if (await this.verifyPassword(password, account.password_hash)) {
         // 更新最後登入時間
         await this.updateLastLogin(account.id);
         

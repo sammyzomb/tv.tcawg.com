@@ -10,13 +10,14 @@
      // Import the functions you need from the SDKs you need
      import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
      import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+     import { getFirestore, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
      // 暫時禁用 Analytics 導入
      // import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-analytics.js";
     
     // Your web app's Firebase configuration
     // For Firebase JS SDK v7.20.0 and later, measurementId is optional
     const firebaseConfig = {
-      apiKey: "AIzaSyB5MLyG5H1sCflHFU7WeKQCmC0Ft5TlqjM",
+      apiKey: "AIzaSyB5MLyG5H1sCflHFU7WeKQCmC0Ft5TIqjM",
       authDomain: "tv-tcawg-com.firebaseapp.com",
       projectId: "tv-tcawg-com",
       storageBucket: "tv-tcawg-com.firebasestorage.app",
@@ -28,33 +29,69 @@
          // Initialize Firebase
      const app = initializeApp(firebaseConfig);
      const auth = getAuth(app);
+     const db = getFirestore(app);
      // 暫時禁用 Analytics 以避免初始化問題
      // const analytics = getAnalytics(app);
     
-    // 將 Firebase 認證實例和函數設為全域變數
-    window.firebaseAuth = auth;
-    window.signInWithEmailAndPassword = signInWithEmailAndPassword;
-    
-    // 監聽認證狀態變化
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        console.log('Firebase 用戶已登入:', user.email);
-        // 用戶已登入，可以重定向到管理後台
-        if (window.location.pathname.includes('admin-login.html')) {
-          setTimeout(() => {
-            window.location.href = 'admin-dashboard.html';
-          }, 1000);
-        }
-      } else {
-        console.log('Firebase 用戶未登入');
+    // 設定離線支援
+    try {
+      enableIndexedDbPersistence(db);
+      console.log('Firebase Firestore 離線支援已啟用');
+    } catch (err) {
+      if (err.code == 'failed-precondition') {
+        console.warn('多個標籤頁可能影響離線支援');
+      } else if (err.code == 'unimplemented') {
+        console.warn('瀏覽器不支援離線功能');
       }
-    });
+    }
+    
+         // 將 Firebase 實例和函數設為全域變數
+     window.firebaseAuth = auth;
+     window.firebaseDb = db;
+     window.firebaseApp = app;
+     window.firebase9Loaded = true;
+     window.signInWithEmailAndPassword = signInWithEmailAndPassword;
+     
+     // 載入管理員帳號服務（在 Firebase 準備就緒後）
+     const adminAccountsScript = document.createElement('script');
+     adminAccountsScript.src = 'admin-accounts-firebase.js';
+     adminAccountsScript.onload = () => {
+       console.log('管理員帳號服務已載入');
+     };
+     document.head.appendChild(adminAccountsScript);
+     
+           // 監聽認證狀態變化
+      onAuthStateChanged(auth, (user) => {
+        if (user) {
+          console.log('Firebase 用戶已登入:', user.email);
+          
+          // 如果是在登入頁面，立即清除認證狀態
+          if (window.location.pathname.includes('admin-login.html')) {
+            console.log('在登入頁面發現已登入用戶，正在強制登出...');
+            auth.signOut().then(() => {
+              console.log('強制登出成功，用戶需要重新登入');
+            }).catch((error) => {
+              console.error('強制登出失敗:', error);
+            });
+          }
+          
+          // 只在用戶主動登入後才重定向，避免頁面 reload 時自動跳轉
+          // if (window.location.pathname.includes('admin-login.html')) {
+          //   console.log('準備重定向到管理後台...');
+          //   // 延遲重定向，讓用戶看到成功訊息
+          //   setTimeout(() => {
+          //     window.location.href = 'admin-dashboard.html';
+          //   }, 2000);
+          // }
+        } else {
+          console.log('Firebase 用戶未登入');
+        }
+      });
   </script>
   
-  <script src="https://cdn.jsdelivr.net/npm/contentful@latest/dist/contentful.browser.min.js"></script>
-  <script src="browser-config.js"></script>
-  <script src="admin-accounts-service.js"></script>
-  <script src="admin-login-audit.js"></script>
+     <script src="https://cdn.jsdelivr.net/npm/contentful@latest/dist/contentful.browser.min.js"></script>
+   <script src="browser-config.js"></script>
+   <script src="admin-login-audit.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { 
@@ -478,17 +515,57 @@
           
           showSuccess('登入成功！正在跳轉到管理系統...');
           
-          // 儲存用戶資訊到 sessionStorage
-          sessionStorage.setItem('adminUser', JSON.stringify({
-            uid: user.uid,
-            email: user.email,
-            displayName: user.displayName || '管理員',
-            provider: 'firebase'
-          }));
+                     // 儲存用戶資訊到 sessionStorage，包含正確的角色資訊
+           const userInfo = {
+             uid: user.uid,
+             email: user.email,
+             displayName: user.displayName || '管理員',
+             provider: 'firebase'
+           };
+           
+           // 如果是已知的超級管理員，設置正確的角色
+           if (user.email === 'sammyzomb@gmail.com') {
+             userInfo.name = 'Sammy Zomb';
+             userInfo.role = 'super_admin';
+             userInfo.permissions = ['read', 'write', 'delete', 'publish', 'admin', 'system'];
+             console.log('設置超級管理員權限:', userInfo);
+           } else {
+             // 嘗試從管理員帳號服務獲取角色資訊
+             if (window.adminAccountsService) {
+               try {
+                 const accountsData = window.adminAccountsService.getLocalBackup();
+                 if (accountsData && accountsData.accounts) {
+                   const account = accountsData.accounts.find(acc => acc.email === user.email);
+                   if (account) {
+                     userInfo.name = account.name || '管理員';
+                     userInfo.role = account.role || 'admin';
+                     userInfo.permissions = account.permissions || [];
+                     console.log('從服務獲取用戶角色:', userInfo);
+                   }
+                 }
+               } catch (error) {
+                 console.log('無法獲取用戶角色資訊:', error);
+                 userInfo.name = '管理員';
+                 userInfo.role = 'admin';
+                 userInfo.permissions = [];
+               }
+             } else {
+               userInfo.name = '管理員';
+               userInfo.role = 'admin';
+               userInfo.permissions = [];
+             }
+           }
+           
+           sessionStorage.setItem('adminUser', JSON.stringify(userInfo));
           sessionStorage.setItem('loginTime', new Date().toISOString());
           
-          // Firebase 會自動處理重定向
-          console.log('Firebase 登入成功，用戶:', user.email);
+                     // 手動處理重定向
+           console.log('Firebase 登入成功，用戶:', user.email);
+           
+           // 延遲重定向，讓用戶看到成功訊息
+           setTimeout(() => {
+             window.location.href = 'admin-dashboard.html';
+           }, 2000);
           
         } else {
           // 登入失敗
@@ -521,6 +598,51 @@
           errorMessage = '登入失敗：嘗試次數過多，請稍後再試';
         }
         
+        // Firebase 認證失敗，嘗試本地管理員帳號認證
+        if (window.adminAccountsService) {
+          try {
+            console.log('Firebase 認證失敗，嘗試本地管理員帳號認證...');
+            const localAuthResult = await window.adminAccountsService.authenticateUser(email, password);
+            
+            if (localAuthResult) {
+              console.log('本地管理員帳號認證成功:', localAuthResult);
+              
+              // 記錄成功的本地登入
+              await window.loginAuditSystem.logLoginAttempt(
+                email, password, ipAddress, userAgent, true, '本地管理員帳號認證成功'
+              );
+              
+              // 儲存用戶資訊到 sessionStorage
+              const userInfo = {
+                uid: `local_${localAuthResult.id}`,
+                email: localAuthResult.email,
+                name: localAuthResult.name,
+                displayName: localAuthResult.name,
+                role: localAuthResult.role,
+                permissions: localAuthResult.permissions,
+                provider: 'local'
+              };
+              
+              sessionStorage.setItem('adminUser', JSON.stringify(userInfo));
+              sessionStorage.setItem('loginTime', new Date().toISOString());
+              
+              showSuccess('登入成功！正在跳轉到管理系統...');
+              
+              // 延遲跳轉，讓用戶看到成功訊息
+              setTimeout(() => {
+                window.location.href = 'admin-dashboard.html';
+              }, 2000);
+              
+              return;
+            } else {
+              console.log('本地管理員帳號認證也失敗');
+            }
+          } catch (localError) {
+            console.error('本地管理員帳號認證失敗:', localError);
+          }
+        }
+        
+        // 所有認證方式都失敗
         showError(errorMessage);
       } finally {
         showLoading(false);
@@ -589,12 +711,17 @@
     
     // 檢查是否已經登入
     function checkLoginStatus() {
+      console.log('檢查登入狀態...');
+      
       // 檢查 Firebase 認證狀態
       if (window.firebaseAuth) {
         const currentUser = window.firebaseAuth.currentUser;
         if (currentUser) {
           console.log('Firebase 用戶已登入，重定向到管理後台');
-          window.location.href = 'admin-dashboard.html';
+          // 延遲重定向，避免循環
+          setTimeout(() => {
+            window.location.href = 'admin-dashboard.html';
+          }, 2000);
           return;
         }
       }
@@ -610,22 +737,30 @@
         const hoursDiff = (now - loginDate) / (1000 * 60 * 60);
         
         if (hoursDiff < 8) {
-          // 仍在有效期間，直接跳轉到管理後台主頁面
-          window.location.href = 'admin-dashboard.html';
+          // 仍在有效期間，延遲跳轉到管理後台主頁面
+          console.log('本地登入狀態有效，延遲跳轉');
+          setTimeout(() => {
+            window.location.href = 'admin-dashboard.html';
+          }, 1000);
         } else {
           // 登入已過期，清除 session
+          console.log('登入已過期，清除 session');
           sessionStorage.removeItem('adminUser');
           sessionStorage.removeItem('loginTime');
         }
+      } else {
+        console.log('未找到有效的登入狀態');
       }
     }
     
-    // 頁面載入時初始化所有功能
-    document.addEventListener('DOMContentLoaded', function() {
-      console.log('Login page - DOM Content Loaded');
-      
-      // 檢查登入狀態
-      checkLoginStatus();
+         // 頁面載入時初始化所有功能
+     document.addEventListener('DOMContentLoaded', function() {
+       console.log('Login page - DOM Content Loaded');
+       
+       // 完全禁用頁面載入時的自動檢查，避免 reload 問題
+       // setTimeout(() => {
+       //   checkLoginStatus();
+       // }, 1000);
       
       // 密碼顯示/隱藏切換
       const togglePassword = document.getElementById('togglePassword');
@@ -658,14 +793,24 @@
         });
       }
       
-      // 等待 Firebase 初始化完成
+                   // 等待 Firebase 初始化完成
       const checkFirebaseReady = setInterval(() => {
         if (window.firebaseAuth) {
           clearInterval(checkFirebaseReady);
           console.log('Firebase 已準備就緒');
           
-          // 再次檢查登入狀態（Firebase 可能已經有緩存的認證狀態）
-          checkLoginStatus();
+                     // 強制清除 Firebase 認證狀態，確保用戶需要重新登入
+           console.log('強制清除 Firebase 認證狀態...');
+           window.firebaseAuth.signOut().then(() => {
+             console.log('Firebase 認證狀態已清除');
+           }).catch((error) => {
+             console.error('清除認證狀態時發生錯誤:', error);
+           });
+          
+          // 不再重複檢查登入狀態，避免頁面 reload
+          // setTimeout(() => {
+          //   checkLoginStatus();
+          // }, 500);
         }
       }, 100);
       

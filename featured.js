@@ -1,5 +1,57 @@
 // featured.js：精選節目（每頁 8 個，導到 videos.html）
 (function(){
+  // 備用精選節目資料（當 Contentful 無法連接時使用）
+  const fallbackFeaturedVideos = [
+    {
+      title: "雅加達 千島群島 浮潛",
+      desc: "潛入海洋，探索繽紛的熱帶生態",
+      ytid: "3GZCJfIOg_k",
+      tags: ["印尼", "浮潛", "海洋"]
+    },
+    {
+      title: "雅加達 火山",
+      desc: "走訪壯觀的活火山與地熱奇景",
+      ytid: "LcdGhVwS3gw",
+      tags: ["印尼", "火山", "地熱"]
+    },
+    {
+      title: "俄羅斯 莫斯科 紅場",
+      desc: "走進俄羅斯歷史心臟，宏偉紅場",
+      ytid: "25Fmx1G-C3k",
+      tags: ["俄羅斯", "莫斯科", "歷史"]
+    },
+    {
+      title: "極光",
+      desc: "追尋極地夜空中最美的奇幻光芒",
+      ytid: "u4XvG8jkToY",
+      tags: ["極光", "北極", "自然奇觀"]
+    },
+    {
+      title: "挪威峽灣郵輪",
+      desc: "郵輪穿越冰河峽灣，壯闊如畫",
+      ytid: "jLNBKAFgtNU",
+      tags: ["挪威", "峽灣", "郵輪"]
+    },
+    {
+      title: "祕魯 馬丘比丘",
+      desc: "攀上神秘古城，領略印加文明",
+      ytid: "QoHTSSS3DwQ",
+      tags: ["祕魯", "馬丘比丘", "古文明"]
+    },
+    {
+      title: "阿根廷 伊瓜蘇瀑布",
+      desc: "感受壯闊奔騰的南美大瀑布",
+      ytid: "BDnpjQmGRqY",
+      tags: ["阿根廷", "瀑布", "自然奇觀"]
+    },
+    {
+      title: "非洲 獵豹",
+      desc: "非洲原野，見證速度與野性",
+      ytid: "8YFLi5hZ2lc",
+      tags: ["非洲", "野生動物", "獵豹"]
+    }
+  ];
+
   // 初始化 Contentful client
   const contentfulClient = contentful.createClient({
     space: 'os5wf90ljenp',
@@ -31,7 +83,7 @@
         limit: 100
       });
 
-      const allItems = (entries.items || []).map(it => {
+      let allItems = (entries.items || []).map(it => {
         const f = it.fields || {};
         const title = pick(f, ['影片標題','title']);
         const desc  = pick(f, ['精選推薦影片說明文字','description']);
@@ -44,6 +96,15 @@
         else if (ytid) thumb = `https://i.ytimg.com/vi/${ytid}/hqdefault.jpg`;
         return { title, desc, ytid, mp4, tags, thumb };
       });
+
+      // 如果 Contentful 沒有資料，使用備用資料
+      if (!allItems.length) {
+        console.log('Contentful 中沒有精選節目，使用備用資料');
+        allItems = fallbackFeaturedVideos.map(v => ({
+          ...v,
+          thumb: `https://i.ytimg.com/vi/${v.ytid}/hqdefault.jpg`
+        }));
+      }
 
       const PAGE_SIZE = 8;
       let rendered = 0;
