@@ -505,13 +505,131 @@
           </svg>
           登入日誌
         </a>
+        
+        <!-- 同步狀態顯示 -->
+        <div class="sync-status" id="syncStatus">
+          <div class="sync-info">
+            <span class="sync-icon" id="syncIcon">🔄</span>
+            <span class="sync-text" id="syncText">同步中...</span>
+          </div>
+          <button class="sync-btn" id="manualSyncBtn" onclick="manualSync()">
+            <svg class="sync-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 2l-2 2m-2 2l-2-2m-2 2l2 2m2-2l2-2"/>
+              <path d="M3 22l2-2m2-2l-2 2m-2-2l-2-2m2 2l2 2"/>
+              <path d="M21 16v-3a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v3"/>
+              <path d="M7 10h10"/>
+              <path d="M7 14h10"/>
+            </svg>
+            手動同步
+          </button>
+        </div>
       </div>
     </div>
   </div>
 
+  <!-- Firebase SDK -->
+  <script type="module">
+    // Firebase 9 模組化導入
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
+    import { getAuth } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
+    import { getFirestore, enableIndexedDbPersistence } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
+
+    // Firebase 配置
+    const firebaseConfig = {
+      apiKey: "AIzaSyB5MLyG5H1sCflHFU7WeKQCmC0Ft5TIqjM",
+      authDomain: "tv-tcawg-com.firebaseapp.com",
+      projectId: "tv-tcawg-com",
+      storageBucket: "tv-tcawg-com.firebasestorage.app",
+      messagingSenderId: "313251141126",
+      appId: "1:313251141126:web:88ef97ce28798c0a2e9587",
+      measurementId: "G-83Z5VTRTZH"
+    };
+
+    // 初始化 Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // 啟用 Firestore 離線支援
+    enableIndexedDbPersistence(db).catch((err) => {
+      if (err.code === 'failed-precondition') {
+        console.log('多個標籤頁可能影響離線支援');
+      } else if (err.code === 'unimplemented') {
+        console.log('瀏覽器不支援離線支援');
+      }
+    });
+
+    // 設定全域變數
+    window.firebaseAuth = auth;
+    window.firebaseDb = db;
+    window.firebaseApp = app;
+    window.firebase9Loaded = true;
+
+    console.log('Firebase 已初始化');
+  </script>
+
+  <!-- 管理員帳號服務 -->
+  <script src="admin-accounts-firebase.js"></script>
+
   <script>
     // 登入驗證檢查
     function checkAuth() {
+      // 優先檢查 Firebase 認證狀態
+      if (window.firebaseAuth && window.firebaseAuth.currentUser) {
+        const firebaseUser = window.firebaseAuth.currentUser;
+        console.log('Firebase 用戶已登入:', firebaseUser.email);
+        
+        // 檢查是否為已知的超級管理員（優先檢查）
+        if (firebaseUser.email === 'sammyzomb@gmail.com') {
+          console.log('識別為超級管理員 (sammyzomb@gmail.com)');
+          return {
+            uid: firebaseUser.uid,
+            email: firebaseUser.email,
+            displayName: 'Sammy Zomb',
+            name: 'Sammy Zomb',
+            role: 'super_admin',
+            permissions: ['read', 'write', 'delete', 'publish', 'admin', 'system'],
+            provider: 'firebase'
+          };
+        }
+        
+        // 嘗試從管理員帳號服務獲取用戶資訊
+        if (window.adminAccountsService) {
+          try {
+            // 根據電子郵件查找用戶帳號資訊
+            const accountsData = window.adminAccountsService.getLocalBackup();
+            if (accountsData && accountsData.accounts) {
+              const account = accountsData.accounts.find(acc => acc.email === firebaseUser.email);
+              if (account) {
+                console.log('找到用戶帳號資訊:', account);
+                return {
+                  uid: firebaseUser.uid,
+                  email: firebaseUser.email,
+                  displayName: account.name || '管理員',
+                  name: account.name || '管理員',
+                  role: account.role || 'admin',
+                  permissions: account.permissions || [],
+                  provider: 'firebase'
+                };
+              }
+            }
+          } catch (error) {
+            console.log('無法從管理員帳號服務獲取資訊:', error);
+          }
+        }
+        
+        // 預設返回管理員角色
+        return {
+          uid: firebaseUser.uid,
+          email: firebaseUser.email,
+          displayName: firebaseUser.displayName || '管理員',
+          name: firebaseUser.displayName || firebaseUser.email || '管理員',
+          role: 'admin',
+          provider: 'firebase'
+        };
+      }
+      
+      // 檢查本地 sessionStorage
       const user = sessionStorage.getItem('adminUser');
       const loginTime = sessionStorage.getItem('loginTime');
       
@@ -539,9 +657,23 @@
     
     // 登出功能
     function logout() {
+      // 清除本地存儲
       sessionStorage.removeItem('adminUser');
       sessionStorage.removeItem('loginTime');
-      window.location.href = 'admin-login.html';
+      
+      // 清除 Firebase 認證狀態
+      if (window.firebaseAuth) {
+        window.firebaseAuth.signOut().then(() => {
+          console.log('Firebase 用戶已登出');
+          window.location.href = 'admin-login.html';
+        }).catch((error) => {
+          console.error('Firebase 登出錯誤:', error);
+          window.location.href = 'admin-login.html';
+        });
+      } else {
+        // 如果 Firebase 未載入，直接跳轉
+        window.location.href = 'admin-login.html';
+      }
     }
     
     // 更新用戶資訊顯示
@@ -552,20 +684,43 @@
       
       if (currentUser) {
         userInfo.style.display = 'flex';
+        
+        // 安全地獲取用戶資訊，避免 undefined
+        const userName = currentUser.name || currentUser.displayName || currentUser.email || '管理員';
+        const userRole = currentUser.role || '管理員';
+        const loginTime = sessionStorage.getItem('loginTime');
+        const loginTimeStr = loginTime ? new Date(loginTime).toLocaleString() : '未知';
+        
         userDetails.innerHTML = `
           <svg class="user-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
             <circle cx="12" cy="7" r="4"/>
           </svg>
           <span class="status-indicator status-online"></span>
-          歡迎，${currentUser.name} (${currentUser.role}) | 
-          登入時間：${new Date(sessionStorage.getItem('loginTime')).toLocaleString()} | 
+          歡迎，${userName} (${userRole}) | 
+          登入時間：${loginTimeStr} | 
           <span style="color: #2b71d2; font-weight: 600;">版本：v1.2.0 (2025/08/28 18:30:00)</span>
         `;
         
-        // 只有最高管理者才能看到創建管理員按鈕
-        if (currentUser.role === 'super_admin') {
+        // 檢查用戶是否有管理其他管理員的權限
+        console.log('檢查用戶權限:', {
+          email: currentUser.email,
+          role: userRole,
+          permissions: currentUser.permissions
+        });
+        
+        // 優先檢查是否為已知的超級管理員
+        const isKnownSuperAdmin = currentUser.email === 'sammyzomb@gmail.com';
+        const hasAdminPermission = isKnownSuperAdmin || 
+                                 userRole === 'super_admin' || 
+                                 (currentUser.permissions && currentUser.permissions.includes('admin'));
+        
+        if (hasAdminPermission) {
+          console.log('用戶具有管理員管理權限，顯示創建管理員按鈕');
           createAdminBtn.style.display = 'inline-flex';
+        } else {
+          console.log('用戶不具有管理員管理權限，隱藏創建管理員按鈕');
+          createAdminBtn.style.display = 'none';
         }
       }
     }
@@ -610,20 +765,36 @@
     let currentUser = null;
     
     // 頁面載入時檢查登入狀態
-    document.addEventListener('DOMContentLoaded', function() {
-      // 檢查用戶登入狀態
-      currentUser = checkAuth();
-      if (!currentUser) return;
-      
-      // 更新用戶資訊顯示
-      updateUserInfo();
-      
-      // 添加頁面載入動畫
-      document.body.style.opacity = '0';
-      setTimeout(() => {
-        document.body.style.transition = 'opacity 0.5s ease';
-        document.body.style.opacity = '1';
+    document.addEventListener('DOMContentLoaded', async function() {
+      // 等待 Firebase 和管理員帳號服務載入
+      const waitForServices = setInterval(async () => {
+        if (window.firebaseAuth && window.adminAccountsService) {
+          clearInterval(waitForServices);
+          console.log('Firebase 和管理員帳號服務已載入');
+          
+          // 檢查用戶登入狀態
+          currentUser = checkAuth();
+          if (!currentUser) return;
+          
+          // 更新用戶資訊顯示
+          updateUserInfo();
+          
+          // 添加頁面載入動畫
+          document.body.style.opacity = '0';
+          setTimeout(() => {
+            document.body.style.transition = 'opacity 0.5s ease';
+            document.body.style.opacity = '1';
+          }, 100);
+        }
       }, 100);
+      
+      // 如果 10 秒後服務仍未載入，顯示錯誤
+      setTimeout(() => {
+        if (!window.firebaseAuth || !window.adminAccountsService) {
+          console.error('系統服務載入超時');
+          alert('❌ 系統服務載入超時\n\n請重新整理頁面。');
+        }
+      }, 10000);
     });
   </script>
 </body>

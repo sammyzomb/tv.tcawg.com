@@ -176,6 +176,16 @@
             </ul>
         </div>
 
+        <div class="info-box" style="background: #fff3cd; border-left-color: #ffc107;">
+            <h3>🔐 密碼安全說明</h3>
+            <ul>
+                <li><strong>密碼安全</strong>：所有密碼都使用 SHA-256 雜湊加密儲存</li>
+                <li><strong>跨裝置同步</strong>：新管理員帳號會立即同步到 Firebase 雲端</li>
+                <li><strong>即時可用</strong>：其他裝置（手機、平板、不同地區電腦）可立即登入</li>
+                <li><strong>資料保護</strong>：原始密碼不會以明文形式儲存，確保安全性</li>
+            </ul>
+        </div>
+
         <div class="message" id="message"></div>
 
         <form id="createAdminForm">
@@ -215,23 +225,91 @@
         </button>
     </div>
 
+    <!-- Firebase SDK -->
+    <script type="module">
+        // Firebase 9 模組化導入
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
+        import { getAuth } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
+        import { getFirestore, enableIndexedDbPersistence } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
+
+        // Firebase 配置
+        const firebaseConfig = {
+            apiKey: "AIzaSyB5MLyG5H1sCflHFU7WeKQCmC0Ft5TIqjM",
+            authDomain: "tv-tcawg-com.firebaseapp.com",
+            projectId: "tv-tcawg-com",
+            storageBucket: "tv-tcawg-com.firebasestorage.app",
+            messagingSenderId: "313251141126",
+            appId: "1:313251141126:web:88ef97ce28798c0a2e9587",
+            measurementId: "G-83Z5VTRTZH"
+        };
+
+        // 初始化 Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // 啟用 Firestore 離線支援
+        enableIndexedDbPersistence(db).catch((err) => {
+            if (err.code === 'failed-precondition') {
+                console.log('多個標籤頁可能影響離線支援');
+            } else if (err.code === 'unimplemented') {
+                console.log('瀏覽器不支援離線支援');
+            }
+        });
+
+        // 設定全域變數
+        window.firebaseAuth = auth;
+        window.firebaseDb = db;
+        window.firebaseApp = app;
+        window.firebase9Loaded = true;
+
+        console.log('Firebase 已初始化');
+    </script>
+
+    <!-- 管理員帳號服務 -->
+    <script src="admin-accounts-firebase.js"></script>
+
     <script>
         // 檢查權限
         function checkSuperAdminAuth() {
+            console.log('開始檢查超級管理員權限...');
+            
+            // 優先檢查 sessionStorage 中的用戶資訊（從登入頁面傳遞過來的）
             const user = JSON.parse(sessionStorage.getItem('adminUser') || 'null');
-            
-            if (!user) {
-                window.location.href = 'admin-login.html';
-                return false;
+            if (user) {
+                console.log('從 sessionStorage 獲取用戶資訊:', user);
+                
+                // 檢查是否為已知的超級管理員
+                if (user.email === 'sammyzomb@gmail.com') {
+                    console.log('識別為超級管理員 (sammyzomb@gmail.com)');
+                    return true;
+                }
+                
+                // 檢查角色和權限
+                if (user.role === 'super_admin' || 
+                    (user.permissions && user.permissions.includes('admin'))) {
+                    console.log('用戶具有超級管理員權限');
+                    return true;
+                }
             }
             
-            if (user.role !== 'super_admin') {
-                alert('⚠️ 權限不足\n\n只有超級管理員才能創建其他管理員。');
-                window.location.href = 'admin-dashboard.html';
-                return false;
+            // 檢查 Firebase 認證狀態
+            if (window.firebaseAuth && window.firebaseAuth.currentUser) {
+                const firebaseUser = window.firebaseAuth.currentUser;
+                console.log('Firebase 用戶已登入:', firebaseUser.email);
+                
+                // 檢查是否為已知的超級管理員
+                if (firebaseUser.email === 'sammyzomb@gmail.com') {
+                    console.log('識別為超級管理員 (sammyzomb@gmail.com)');
+                    return true;
+                }
             }
             
-            return true;
+            // 權限不足
+            console.log('用戶不具有超級管理員權限');
+            alert('⚠️ 權限不足\n\n只有超級管理員才能創建其他管理員。');
+            window.location.href = 'admin-dashboard.html';
+            return false;
         }
 
         // 顯示訊息
@@ -249,8 +327,14 @@
         }
 
         // 創建管理員
-        document.getElementById('createAdminForm').addEventListener('submit', function(e) {
+        document.getElementById('createAdminForm').addEventListener('submit', async function(e) {
             e.preventDefault();
+            
+            // 檢查權限
+            if (!checkSuperAdminAuth()) {
+                showMessage('❌ 權限不足，無法創建管理員', 'error');
+                return;
+            }
             
             const formData = new FormData(this);
             const adminData = {
@@ -260,7 +344,7 @@
                 role: formData.get('adminRole'),
                 permissions: ['read', 'write', 'delete', 'publish'],
                 createdAt: new Date().toISOString(),
-                createdBy: JSON.parse(sessionStorage.getItem('adminUser')).email,
+                createdBy: 'sammyzomb@gmail.com', // 直接使用已知的超級管理員 email
                 status: 'active'
             };
 
@@ -270,31 +354,58 @@
                 return;
             }
 
-            // 檢查是否已存在相同email的管理員
-            const existingAdmins = JSON.parse(localStorage.getItem('system_admins') || '[]');
-            if (existingAdmins.some(admin => admin.email === adminData.email)) {
-                showMessage('該電子郵件已被使用，請選擇其他郵件地址', 'error');
-                return;
+            try {
+                // 使用 Firebase 服務創建管理員
+                if (window.adminAccountsService) {
+                    const result = await window.adminAccountsService.addAdminAccount(
+                        adminData.email,
+                        adminData.name,
+                        adminData.password,
+                        adminData.role,
+                        adminData.permissions
+                    );
+                    
+                    if (result) {
+                        // 顯示成功訊息
+                        showMessage(`✅ 管理員創建成功！\n\n📧 帳號：${adminData.email}\n👤 姓名：${adminData.name}\n🔑 角色：${adminData.role === 'admin' ? '普通管理員' : '超級管理員'}`);
+                        
+                        // 重置表單
+                        this.reset();
+                        
+                        console.log('新管理員已創建:', adminData);
+                    } else {
+                        showMessage('❌ 創建管理員失敗，請檢查系統狀態', 'error');
+                    }
+                } else {
+                    showMessage('❌ 管理員帳號服務未載入', 'error');
+                }
+            } catch (error) {
+                console.error('創建管理員時發生錯誤:', error);
+                showMessage(`❌ 創建管理員失敗：${error.message}`, 'error');
             }
-
-            // 儲存新管理員
-            existingAdmins.push(adminData);
-            localStorage.setItem('system_admins', JSON.stringify(existingAdmins));
-
-            // 顯示成功訊息
-            showMessage(`✅ 管理員創建成功！\n\n📧 帳號：${adminData.email}\n👤 姓名：${adminData.name}\n🔑 角色：${adminData.role === 'admin' ? '普通管理員' : '超級管理員'}`);
-
-            // 重置表單
-            this.reset();
-
-            console.log('新管理員已創建:', adminData);
         });
 
         // 頁面載入時檢查權限
-        document.addEventListener('DOMContentLoaded', function() {
-            if (!checkSuperAdminAuth()) {
-                return;
-            }
+        document.addEventListener('DOMContentLoaded', async function() {
+            // 等待 Firebase 和管理員帳號服務載入
+            const waitForServices = setInterval(async () => {
+                if (window.firebaseAuth && window.adminAccountsService) {
+                    clearInterval(waitForServices);
+                    console.log('Firebase 和管理員帳號服務已載入');
+                    
+                    if (!checkSuperAdminAuth()) {
+                        return;
+                    }
+                }
+            }, 100);
+            
+            // 如果 10 秒後服務仍未載入，顯示錯誤
+            setTimeout(() => {
+                if (!window.firebaseAuth || !window.adminAccountsService) {
+                    alert('❌ 系統服務載入超時\n\n請重新整理頁面。');
+                    window.location.href = 'admin-dashboard.html';
+                }
+            }, 10000);
         });
     </script>
 </body>
