@@ -1,0 +1,10 @@
+[33mcbf2e21[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Merge branch 'main' of https://github.com/sammyzomb/tv.tcawg.com
+[33m7c6b169[m 20250904 家裡電腦更新
+[33m99cb071[m Create FIREBASE_ADMIN_SYSTEM_UPDATE.md
+[33m8c3cfd2[m 更新超級管理員問題
+[33m6a91840[m chore: remove setup check file
+[33m9996110[m Merge pull request #11 from sammyzomb/chore/setup-check
+[33m24ed7fb[m chore: setup check from new PC
+[33mbd2b305[m 新增明天同步 GitHub 的完整說明文件 - 包含詳細的同步步驟和測試流程 - 提供技術配置和故障排除指南 - 為明天到公司繼續工作做完整準備
+[33m0bd728a[m 新增今日進度總結 - Firebase 整合完成狀態和明天待辦事項 - 記錄 API Key 修正和版本降級 - 包含明天測試步驟和技術細節 - 為明天到公司電腦繼續工作做準備
+[33m6e8ad19[m 整合 Firebase 認證系統 - 完成基本設定和錯誤修正 - 修正 API Key 格式問題 - 禁用 Analytics 模組以避免初始化問題 - 降級到 Firebase 9.23.0 版本以提高兼容性 - 準備測試 Firebase 登入功能
