@@ -1428,6 +1428,64 @@
       }, 3000);
     }
 
+    // 更新今日節目表顯示
+    function updateCurrentScheduleForToday(programData) {
+      const today = new Date();
+      const todayString = today.getFullYear() + '-' +
+                         String(today.getMonth() + 1).padStart(2, '0') + '-' +
+                         String(today.getDate()).padStart(2, '0');
+      
+      // 獲取現有的今日節目表
+      let currentSchedule = JSON.parse(localStorage.getItem('currentSchedule') || '{}');
+      
+      if (!currentSchedule.today) {
+        currentSchedule.today = {
+          date: todayString,
+          dayOfWeek: getDayOfWeek(today),
+          month: `${today.getMonth() + 1}月`,
+          day: `${today.getDate()}日`,
+          schedule: []
+        };
+      }
+      
+      // 轉換節目資料格式
+      const scheduleItem = {
+        time: programData.airTime,
+        title: programData.title,
+        duration: programData.duration.toString(),
+        category: programData.category,
+        description: programData.description,
+        thumbnail: programData.youtubeId ? 
+          `https://img.youtube.com/vi/${programData.youtubeId}/maxresdefault.jpg` : 
+          'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop',
+        youtubeId: programData.youtubeId || '',
+        status: programData.status,
+        tags: []
+      };
+      
+      // 移除同時間的舊節目（如果有的話）
+      currentSchedule.today.schedule = currentSchedule.today.schedule.filter(
+        item => item.time !== programData.airTime
+      );
+      
+      // 添加新節目
+      currentSchedule.today.schedule.push(scheduleItem);
+      
+      // 按時間排序
+      currentSchedule.today.schedule.sort((a, b) => a.time.localeCompare(b.time));
+      
+      // 儲存到 localStorage
+      localStorage.setItem('currentSchedule', JSON.stringify(currentSchedule));
+      
+      console.log('已更新今日節目表，新增節目:', scheduleItem);
+    }
+
+    // 獲取星期幾的輔助函數
+    function getDayOfWeek(date) {
+      const days = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+      return days[date.getDay()];
+    }
+
     async function publishToContentful() {
       const date = document.getElementById('editDate').value;
       const time = document.getElementById('airTime').value;
@@ -1483,6 +1541,9 @@
           contentfulId: result.sys.id
         });
         localStorage.setItem('published_programs', JSON.stringify(publishedPrograms));
+
+        // 同步到今日節目表顯示系統
+        updateCurrentScheduleForToday(programData);
 
         showStatus('✅ 節目已成功上架到 Contentful！', 'success');
 

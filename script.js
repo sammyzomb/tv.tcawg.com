@@ -402,7 +402,7 @@ document.addEventListener('DOMContentLoaded', () => {
           content_type: 'scheduleItem',
           'fields.airDate[gte]': today,
           'fields.airDate[lt]': new Date(taiwanTime.getFullYear(), taiwanTime.getMonth() + 1, 1).toISOString().split('T')[0],
-          order: 'fields.airDate,fields.airTime',
+          order: 'fields.airDate,fields.slotIndex',
           include: 2
         });
         
@@ -410,19 +410,32 @@ document.addEventListener('DOMContentLoaded', () => {
           // 過濾今天的節目
           const todayPrograms = response.items.filter(item => 
             item.fields.airDate === today
-          ).map(item => ({
-            time: item.fields.airTime || '00:00',
-            title: item.fields.title || item.fields.節目標題 || '未命名節目',
-            duration: (item.fields.duration || item.fields.節目時長 || 60).toString(),
-            category: item.fields.category || item.fields.節目分類 || '旅遊節目',
-            description: item.fields.description || item.fields.節目描述 || '',
-            thumbnail: item.fields.thumbnail?.fields?.file?.url || 
-                      item.fields.節目縮圖?.fields?.file?.url || 
-                      'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop',
-            youtubeId: item.fields.youtubeId || item.fields.YouTubeID || '',
-            status: item.fields.status || item.fields.節目狀態 || '',
-            tags: item.fields.tags || []
-          }));
+          ).map(item => {
+            // 根據 slotIndex 計算時間 (0-11 對應 12:00-17:30，每30分鐘一個時段)
+            const slotIndex = item.fields.slotIndex || 0;
+            const hour = 12 + Math.floor(slotIndex / 2);
+            const minute = (slotIndex % 2) * 30;
+            const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+            
+            // 從 video 欄位獲取影片資訊
+            const video = item.fields.video?.fields || {};
+            
+            return {
+              time: timeString,
+              title: item.fields.title || '未命名節目',
+              duration: '30', // 預設30分鐘
+              category: video.category || '旅遊',
+              description: video.description || '',
+              thumbnail: video.thumbnail?.fields?.file?.url ? 
+                (video.thumbnail.fields.file.url.startsWith('http') ? 
+                  video.thumbnail.fields.file.url : 
+                  `https:${video.thumbnail.fields.file.url}`) :
+                'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop',
+              youtubeId: video.youtubeId || '',
+              status: item.fields.isPremiere ? '首播' : '重播',
+              tags: []
+            };
+          });
           
           scheduleData = {
             today: {
@@ -493,49 +506,49 @@ document.addEventListener('DOMContentLoaded', () => {
     if (dayOfWeek === 0 || dayOfWeek === 6) {
       return [
         {
-          time: "06:00",
+          time: "12:00",
           title: "週末特輯 - 日本京都楓葉季",
-          duration: "60",
+          duration: "30",
           category: "亞洲旅遊",
           description: "在京都的楓葉季節，體驗日本傳統文化的優雅與寧靜",
           thumbnail: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=400&h=225&fit=crop"
         },
         {
-          time: "07:00",
+          time: "12:30",
           title: "週末美食 - 法國巴黎米其林餐廳",
-          duration: "45",
+          duration: "30",
           category: "美食旅遊",
           description: "探索巴黎最頂級的米其林餐廳，品嚐法式美食的精髓",
           thumbnail: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=400&h=225&fit=crop"
         },
         {
-          time: "08:00",
+          time: "13:00",
           title: "週末探險 - 冰島極光攝影之旅",
-          duration: "60",
+          duration: "30",
           category: "極地旅遊",
           description: "在冰島追尋北極光的神秘蹤跡，捕捉最美麗的極光瞬間",
           thumbnail: "https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=400&h=225&fit=crop"
         },
         {
-          time: "09:00",
+          time: "13:30",
           title: "週末文化 - 義大利佛羅倫斯文藝復興",
-          duration: "45",
+          duration: "30",
           category: "歐洲旅遊",
           description: "在文藝復興的發源地，欣賞米開朗基羅與達文西的傑作",
           thumbnail: "https://images.unsplash.com/photo-1502602898534-47d1c0c0b131?w=400&h=225&fit=crop"
         },
-                {
-          time: "10:00",
+        {
+          time: "14:00",
           title: "週末自然 - 澳洲大堡礁海底世界",
-          duration: "60",
+          duration: "30",
           category: "自然旅遊",
           description: "潛入大堡礁的海底世界，探索珊瑚礁的生態奧秘",
           thumbnail: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=225&fit=crop"
         },
         {
-          time: "11:00",
+          time: "14:30",
           title: "週末冒險 - 秘魯馬丘比丘印加文明",
-          duration: "45",
+          duration: "30",
           category: "文化旅遊",
           description: "登上印加帝國的失落之城，感受安地斯山脈的神秘",
           thumbnail: "https://images.unsplash.com/photo-1526392060635-9d6019884377?w=400&h=225&fit=crop"
@@ -570,33 +583,33 @@ document.addEventListener('DOMContentLoaded', () => {
         thumbnail: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=400&h=225&fit=crop"
       },
       {
-        time: "08:00",
+        time: "13:00",
         title: "極地探險 - 加拿大黃刀鎮極光之旅",
-        duration: "60",
+        duration: "30",
         category: "極地旅遊",
         description: "在零下40度的黃刀鎮，追尋北極光的神秘蹤跡",
         thumbnail: "https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=400&h=225&fit=crop"
       },
       {
-        time: "09:00",
+        time: "13:30",
         title: "城市漫步 - 巴黎塞納河畔的浪漫",
-        duration: "45",
+        duration: "30",
         category: "歐洲旅遊",
         description: "沿著塞納河漫步，感受花都巴黎的浪漫情懷",
         thumbnail: "https://images.unsplash.com/photo-1502602898534-47d1c0c0b131?w=400&h=225&fit=crop"
       },
       {
-        time: "10:00",
+        time: "14:00",
         title: "自然奇觀 - 紐西蘭米佛峽灣",
-        duration: "60",
+        duration: "30",
         category: "自然旅遊",
         description: "探索世界第八大奇觀，米佛峽灣的壯麗景色",
         thumbnail: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=225&fit=crop"
       },
       {
-        time: "11:00",
+        time: "14:30",
         title: "文化之旅 - 摩洛哥馬拉喀什市集",
-        duration: "45",
+        duration: "30",
         category: "文化旅遊",
         description: "穿梭在馬拉喀什的傳統市集中，體驗摩洛哥的異國風情",
         thumbnail: "https://images.unsplash.com/photo-1552733407-5d5c46c3bb3b?w=400&h=225&fit=crop"
@@ -755,8 +768,11 @@ document.addEventListener('DOMContentLoaded', () => {
                  onerror="this.src='https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=400&h=225&fit=crop';">
             <div class="schedule-time">${program.time}</div>
             
+            ${isCurrent ? '<div class="now-playing-badge">🔴 現正播放</div>' : ''}
             ${program.isPremiere ? '<div class="premiere-badge">首播</div>' : ''}
             ${program.isSpecial ? '<div class="special-badge">特別節目</div>' : ''}
+            
+            ${program.youtubeId ? '<div class="play-button">▶️</div>' : ''}
           </div>
           <div class="schedule-content">
             <div class="program-title">${escapeHtml(program.title)}</div>
@@ -1057,7 +1073,63 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 1000);
   }
 
+  // 添加節目表樣式
+  function addScheduleStyles() {
+    const style = document.createElement('style');
+    style.textContent = `
+      .now-playing-badge {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        background: #ff4444;
+        color: white;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: bold;
+        z-index: 10;
+        animation: pulse 2s infinite;
+      }
+      
+      .play-button {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(0, 0, 0, 0.7);
+        color: white;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        z-index: 10;
+      }
+      
+      .schedule-item:hover .play-button {
+        opacity: 1;
+      }
+      
+      .schedule-item.current {
+        border: 2px solid #ff4444;
+        box-shadow: 0 0 20px rgba(255, 68, 68, 0.3);
+      }
+      
+      @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.7; }
+        100% { opacity: 1; }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
   // 頁面載入時初始化節目時間表
+  addScheduleStyles();
   loadScheduleData();
 
   // 頁面卸載時清理定時器

@@ -540,7 +540,63 @@
         </div>
     </div>
 
+    <!-- Firebase SDK -->
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyB5MLyG5H1sCflHFU7WeKQCmC0Ft5TIqjM",
+            authDomain: "tv-tcawg-com.firebaseapp.com",
+            projectId: "tv-tcawg-com",
+            storageBucket: "tv-tcawg-com.firebasestorage.app",
+            messagingSenderId: "313251141126",
+            appId: "1:313251141126:web:88ef97ce28798c0a2e9587",
+            measurementId: "G-83Z5VTRTZH"
+        };
+        
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        
+        // 設定全域變數
+        window.firebaseAuth = auth;
+        window.firebaseDb = db;
+        window.firebaseApp = app;
+        window.firebase9Loaded = true;
+        
+        console.log('Firebase 已初始化');
+    </script>
+
+    <!-- 管理員帳號服務 -->
+    <script src="admin-accounts-firebase.js"></script>
+
     <script>
+        // 等待 Firebase 初始化完成後再初始化管理員服務
+        document.addEventListener('DOMContentLoaded', function() {
+            // 等待 Firebase 模組載入完成
+            const initAdminService = () => {
+                if (window.firebaseAuth && window.firebaseDb && window.firebase9Loaded) {
+                    if (window.AdminAccountsFirebaseService && !window.adminAccountsService) {
+                        window.adminAccountsService = new AdminAccountsFirebaseService();
+                        console.log('管理員帳號服務已延遲初始化');
+                        // 載入管理員數據
+                        loadAllAdmins();
+                    }
+                } else {
+                    // 如果 Firebase 還沒初始化，等待一下再試
+                    setTimeout(initAdminService, 500);
+                }
+            };
+            
+            // 開始初始化
+            initAdminService();
+        });
+
         // 檢查超級管理員權限
         function checkSuperAdminAuth() {
             const user = JSON.parse(sessionStorage.getItem('adminUser') || 'null');
@@ -574,11 +630,33 @@
         }
 
         // 載入所有管理員
-        function loadAllAdmins() {
+        async function loadAllAdmins() {
             const currentUser = checkSuperAdminAuth();
             if (!currentUser) return;
 
-            // 載入動態創建的管理員
+            try {
+                // 嘗試從 Firebase 載入管理員數據
+                if (window.adminAccountsService) {
+                    console.log('從 Firebase 載入管理員數據...');
+                    const accountsData = await window.adminAccountsService.fetchAccountsData();
+                    const allAdmins = accountsData.accounts || [];
+                    
+                    // 過濾掉有問題的帳號
+                    const validAdmins = allAdmins.filter(admin => admin.email && admin.email !== 'undefined' && admin.email.trim() !== '');
+                    console.log('過濾前帳號數量:', allAdmins.length, '過濾後帳號數量:', validAdmins.length);
+                    
+                    // 更新統計
+                    updateStats(validAdmins);
+                    
+                    // 渲染管理員列表
+                    renderAdminList(validAdmins);
+                    return;
+                }
+            } catch (error) {
+                console.warn('從 Firebase 載入失敗，使用本地數據:', error);
+            }
+
+            // 備用方案：載入本地數據
             const systemAdmins = JSON.parse(localStorage.getItem('system_admins') || '[]');
             
             // 添加超級管理員（硬編碼）
@@ -595,11 +673,14 @@
                 ...systemAdmins
             ];
 
+            // 過濾掉有問題的帳號
+            const validAdmins = allAdmins.filter(admin => admin.email && admin.email !== 'undefined' && admin.email.trim() !== '');
+            
             // 更新統計
-            updateStats(allAdmins);
+            updateStats(validAdmins);
 
             // 渲染管理員列表
-            renderAdminList(allAdmins);
+            renderAdminList(validAdmins);
         }
 
         // 更新統計資訊
@@ -630,7 +711,8 @@
             }
 
             adminListDiv.innerHTML = admins.map(admin => {
-                const initials = admin.name ? admin.name.charAt(0).toUpperCase() : admin.email.charAt(0).toUpperCase();
+                const initials = (admin.name && admin.name.charAt) ? admin.name.charAt(0).toUpperCase() : 
+                                (admin.email && admin.email.charAt) ? admin.email.charAt(0).toUpperCase() : '?';
                 const roleText = admin.role === 'super_admin' ? '超級管理員' : '普通管理員';
                 const roleClass = admin.role === 'super_admin' ? 'role-super' : 'role-admin';
                 const statusText = admin.status === 'active' ? '啟用' : '停用';
@@ -875,7 +957,23 @@
         }
 
         // 切換管理員狀態
-        function toggleAdminStatus(email) {
+        async function toggleAdminStatus(email) {
+            try {
+                // 嘗試從 Firebase 更新狀態
+                if (window.adminAccountsService) {
+                    console.log('從 Firebase 更新管理員狀態:', email);
+                    const result = await window.adminAccountsService.updateAdminStatus(email);
+                    if (result) {
+                        showMessage(`✅ 管理員 ${email} 狀態已更新`);
+                        loadAllAdmins(); // 重新載入列表
+                        return;
+                    }
+                }
+            } catch (error) {
+                console.warn('從 Firebase 更新狀態失敗，使用本地更新:', error);
+            }
+
+            // 備用方案：本地更新
             const systemAdmins = JSON.parse(localStorage.getItem('system_admins') || '[]');
             const admin = systemAdmins.find(a => a.email === email);
             
@@ -901,11 +999,27 @@
         }
 
         // 刪除管理員
-        function deleteAdmin(email) {
+        async function deleteAdmin(email) {
             if (!confirm(`⚠️ 確定要刪除管理員 ${email} 嗎？\n\n此操作無法撤銷！`)) {
                 return;
             }
 
+            try {
+                // 嘗試從 Firebase 刪除
+                if (window.adminAccountsService) {
+                    console.log('從 Firebase 刪除管理員:', email);
+                    const result = await window.adminAccountsService.deleteAdminAccount(email);
+                    if (result) {
+                        showMessage(`✅ 管理員 ${email} 已從 Firebase 刪除`);
+                        loadAllAdmins(); // 重新載入列表
+                        return;
+                    }
+                }
+            } catch (error) {
+                console.warn('從 Firebase 刪除失敗，使用本地刪除:', error);
+            }
+
+            // 備用方案：本地刪除
             let systemAdmins = JSON.parse(localStorage.getItem('system_admins') || '[]');
             const originalLength = systemAdmins.length;
             
@@ -918,7 +1032,7 @@
 
             localStorage.setItem('system_admins', JSON.stringify(systemAdmins));
             
-            showMessage(`✅ 管理員 ${email} 已刪除`);
+            showMessage(`✅ 管理員 ${email} 已從本地刪除`);
             loadAllAdmins(); // 重新載入列表
         }
 

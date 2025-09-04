@@ -412,6 +412,93 @@ class AdminAccountsFirebaseService {
   }
 
   /**
+   * 刪除管理員帳號
+   */
+  async deleteAdminAccount(email) {
+    try {
+      const accountsData = await this.fetchAccountsData();
+      
+      // 找到要刪除的帳號
+      const accountIndex = accountsData.accounts.findIndex(account => account.email === email);
+      
+      if (accountIndex === -1) {
+        console.log('找不到要刪除的帳號:', email);
+        return false;
+      }
+      
+      // 從陣列中移除
+      accountsData.accounts.splice(accountIndex, 1);
+      accountsData.last_updated = new Date().toISOString();
+
+      // 儲存本地
+      this.saveLocalBackup(accountsData);
+
+      // 立即同步到 Firebase
+      if (this.db) {
+        console.log('立即同步刪除操作到 Firebase...');
+        const syncResult = await this.syncToFirebase();
+        if (syncResult) {
+          console.log('管理員刪除已同步到 Firebase');
+        } else {
+          console.warn('管理員刪除同步到 Firebase 失敗，將在下一次自動同步時重試');
+        }
+      }
+
+      console.log('刪除管理員帳號成功:', email);
+      return true;
+
+    } catch (error) {
+      console.error('刪除管理員帳號失敗:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 更新管理員狀態
+   */
+  async updateAdminStatus(email) {
+    try {
+      const accountsData = await this.fetchAccountsData();
+      
+      // 找到要更新的帳號
+      const account = accountsData.accounts.find(acc => acc.email === email);
+      
+      if (!account) {
+        console.log('找不到要更新的帳號:', email);
+        return false;
+      }
+      
+      // 切換狀態
+      const newStatus = account.status === 'active' ? 'inactive' : 'active';
+      account.status = newStatus;
+      account.updatedAt = new Date().toISOString();
+      
+      accountsData.last_updated = new Date().toISOString();
+
+      // 儲存本地
+      this.saveLocalBackup(accountsData);
+
+      // 立即同步到 Firebase
+      if (this.db) {
+        console.log('立即同步狀態更新到 Firebase...');
+        const syncResult = await this.syncToFirebase();
+        if (syncResult) {
+          console.log('管理員狀態更新已同步到 Firebase');
+        } else {
+          console.warn('管理員狀態更新同步到 Firebase 失敗，將在下一次自動同步時重試');
+        }
+      }
+
+      console.log('更新管理員狀態成功:', email, '新狀態:', newStatus);
+      return true;
+
+    } catch (error) {
+      console.error('更新管理員狀態失敗:', error);
+      throw error;
+    }
+  }
+
+  /**
    * 測試連接
    */
   async testConnection() {

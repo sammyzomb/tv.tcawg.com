@@ -208,6 +208,12 @@
             </div>
 
             <div class="form-group">
+                <label for="adminPasswordConfirm">密碼確認 *</label>
+                <input type="password" id="adminPasswordConfirm" name="adminPasswordConfirm" required 
+                       placeholder="請再次輸入密碼">
+            </div>
+
+            <div class="form-group">
                 <label for="adminRole">管理員等級</label>
                 <select id="adminRole" name="adminRole">
                     <option value="admin">普通管理員</option>
@@ -264,12 +270,37 @@
         window.firebase9Loaded = true;
 
         console.log('Firebase 已初始化');
+        
+        // 初始化管理員帳號服務
+        if (window.AdminAccountsFirebaseService) {
+            window.adminAccountsService = new AdminAccountsFirebaseService();
+            console.log('管理員帳號服務已初始化');
+        }
     </script>
 
     <!-- 管理員帳號服務 -->
     <script src="admin-accounts-firebase.js"></script>
 
     <script>
+        // 等待 Firebase 初始化完成後再初始化管理員服務
+        document.addEventListener('DOMContentLoaded', function() {
+            // 檢查 Firebase 是否已初始化
+            if (window.firebaseAuth && window.firebaseDb && window.firebase9Loaded) {
+                if (window.AdminAccountsFirebaseService && !window.adminAccountsService) {
+                    window.adminAccountsService = new AdminAccountsFirebaseService();
+                    console.log('管理員帳號服務已延遲初始化');
+                }
+            } else {
+                // 如果 Firebase 還沒初始化，等待一下再試
+                setTimeout(() => {
+                    if (window.AdminAccountsFirebaseService && !window.adminAccountsService) {
+                        window.adminAccountsService = new AdminAccountsFirebaseService();
+                        console.log('管理員帳號服務已延遲初始化（重試）');
+                    }
+                }, 1000);
+            }
+        });
+
         // 檢查權限
         function checkSuperAdminAuth() {
             console.log('開始檢查超級管理員權限...');
@@ -341,6 +372,7 @@
                 email: formData.get('adminEmail'),
                 name: formData.get('adminName'),
                 password: formData.get('adminPassword'),
+                passwordConfirm: formData.get('adminPasswordConfirm'),
                 role: formData.get('adminRole'),
                 permissions: ['read', 'write', 'delete', 'publish'],
                 createdAt: new Date().toISOString(),
@@ -354,16 +386,16 @@
                 return;
             }
 
+            // 驗證密碼確認
+            if (adminData.password !== adminData.passwordConfirm) {
+                showMessage('❌ 密碼確認不一致，請重新輸入', 'error');
+                return;
+            }
+
             try {
                 // 使用 Firebase 服務創建管理員
                 if (window.adminAccountsService) {
-                    const result = await window.adminAccountsService.addAdminAccount(
-                        adminData.email,
-                        adminData.name,
-                        adminData.password,
-                        adminData.role,
-                        adminData.permissions
-                    );
+                    const result = await window.adminAccountsService.addAdminAccount(adminData);
                     
                     if (result) {
                         // 顯示成功訊息
@@ -406,6 +438,22 @@
                     window.location.href = 'admin-dashboard.html';
                 }
             }, 10000);
+        });
+
+        // 初始化管理員帳號服務
+        document.addEventListener('DOMContentLoaded', function() {
+            // 等待 Firebase 載入後初始化服務
+            const initService = setInterval(() => {
+                if (window.firebaseAuth && window.firebaseDb) {
+                    clearInterval(initService);
+                    
+                    // 創建管理員帳號服務實例
+                    if (!window.adminAccountsService) {
+                        window.adminAccountsService = new AdminAccountsFirebaseService();
+                        console.log('管理員帳號服務已初始化');
+                    }
+                }
+            }, 100);
         });
     </script>
 </body>

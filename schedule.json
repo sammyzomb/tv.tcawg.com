@@ -6,41 +6,41 @@
     "day": "",
     "schedule": [
       {
-        "time": "06:00",
+        "time": "12:00",
         "title": "早安世界 - 日本東京晨間漫步",
-        "duration": "60",
+        "duration": "30",
         "category": "亞洲旅遊",
         "description": "跟著我們一起探索東京的早晨，從築地市場到淺草寺的寧靜時光",
         "thumbnail": "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=400&h=225&fit=crop"
       },
       {
-        "time": "07:00",
+        "time": "12:30",
         "title": "世界廚房 - 義大利托斯卡尼美食之旅",
-        "duration": "45",
+        "duration": "30",
         "category": "美食旅遊",
         "description": "深入托斯卡尼鄉村，品嚐最道地的義大利美食與美酒",
         "thumbnail": "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=400&h=225&fit=crop"
       },
       {
-        "time": "08:00",
+        "time": "13:00",
         "title": "極地探險 - 加拿大黃刀鎮極光之旅",
-        "duration": "60",
+        "duration": "30",
         "category": "極地旅遊",
         "description": "在零下40度的黃刀鎮，追尋北極光的神秘蹤跡",
         "thumbnail": "https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=400&h=225&fit=crop"
       },
       {
-        "time": "09:00",
+        "time": "13:30",
         "title": "城市漫步 - 巴黎塞納河畔的浪漫",
-        "duration": "45",
+        "duration": "30",
         "category": "歐洲旅遊",
         "description": "沿著塞納河漫步，感受花都巴黎的浪漫情懷",
         "thumbnail": "https://images.unsplash.com/photo-1502602898534-47d1c0c0b131?w=400&h=225&fit=crop"
       },
       {
-        "time": "10:00",
+        "time": "14:00",
         "title": "自然奇觀 - 紐西蘭米佛峽灣",
-        "duration": "60",
+        "duration": "30",
         "category": "自然旅遊",
         "description": "探索世界第八大奇觀，米佛峽灣的壯麗景色",
         "thumbnail": "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=225&fit=crop"

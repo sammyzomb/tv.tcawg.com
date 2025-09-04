@@ -54,6 +54,24 @@
       border-radius: 10px;
     }
     
+    .form-group {
+      margin-bottom: 15px;
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 600;
+    }
+    
+    .form-group input {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      font-size: 14px;
+    }
+    
     .test-button {
       background: #007bff;
       color: white;
@@ -107,7 +125,38 @@
       <button id="checkAuthState" class="test-button">檢查認證狀態</button>
       <button id="getCurrentUser" class="test-button">獲取當前用戶</button>
     </div>
-    
+
+    <div class="test-section">
+      <h3>Firebase 登入測試</h3>
+      <div class="form-group">
+        <label for="loginEmail">電子郵件</label>
+        <input type="email" id="loginEmail" placeholder="sammyzomb@gmail.com" value="sammyzomb@gmail.com">
+      </div>
+      <div class="form-group">
+        <label for="loginPassword">密碼</label>
+        <input type="password" id="loginPassword" placeholder="輸入密碼">
+      </div>
+      <button id="loginBtn" class="test-button">登入 Firebase</button>
+      <button id="logoutBtn" class="test-button">登出</button>
+    </div>
+
+    <div class="test-section">
+      <h3>管理員創建測試</h3>
+      <div class="form-group">
+        <label for="adminEmail">管理員電子郵件</label>
+        <input type="email" id="adminEmail" placeholder="samchang@tcawg.com" value="samchang@tcawg.com">
+      </div>
+      <div class="form-group">
+        <label for="adminPassword">管理員密碼</label>
+        <input type="password" id="adminPassword" placeholder="輸入密碼">
+      </div>
+      <div class="form-group">
+        <label for="adminPasswordConfirm">確認密碼</label>
+        <input type="password" id="adminPasswordConfirm" placeholder="再次輸入密碼">
+      </div>
+      <button id="testCreateAdmin" class="test-button">測試創建管理員</button>
+    </div>
+
     <div class="test-section">
       <h3>測試日誌</h3>
       <div id="testLog" class="log"></div>
@@ -124,7 +173,7 @@
     
     // Your web app's Firebase configuration
     const firebaseConfig = {
-      apiKey: "AIzaSyB5MLyG5H1sCf1HFU7WeKQCmC0Ft5TIqjM",
+      apiKey: "AIzaSyB5MLyG5H1sCflHFU7WeKQCmC0Ft5TIqjM",
       authDomain: "tv-tcawg-com.firebaseapp.com",
       projectId: "tv-tcawg-com",
       storageBucket: "tv-tcawg-com.firebasestorage.app",
@@ -259,6 +308,126 @@
         log(`❌ 獲取用戶資訊錯誤: ${error.message}`, 'error');
       }
     }
+
+    // Firebase 登入
+    async function loginToFirebase() {
+      try {
+        const email = document.getElementById('loginEmail').value;
+        const password = document.getElementById('loginPassword').value;
+        
+        if (!email || !password) {
+          log('❌ 請輸入電子郵件和密碼', 'error');
+          return;
+        }
+        
+        log(`嘗試登入: ${email}...`);
+        
+        if (window.firebaseAuth) {
+          const { signInWithEmailAndPassword } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js');
+          
+          const userCredential = await signInWithEmailAndPassword(window.firebaseAuth, email, password);
+          const user = userCredential.user;
+          
+          log(`✅ 登入成功！用戶: ${user.email}`);
+          log(`用戶 UID: ${user.uid}`);
+          
+          // 更新狀態顯示
+          updateStatus(`已登入: ${user.email}`, 'success');
+          
+        } else {
+          log('❌ Firebase 認證模組不可用', 'error');
+        }
+        
+      } catch (error) {
+        log(`❌ 登入失敗: ${error.message}`, 'error');
+        
+        // 分析錯誤類型
+        if (error.code === 'auth/user-not-found') {
+          log('🔍 用戶不存在，請檢查電子郵件地址');
+        } else if (error.code === 'auth/wrong-password') {
+          log('🔐 密碼錯誤，請重新輸入');
+        } else if (error.code === 'auth/invalid-email') {
+          log('📧 電子郵件格式無效');
+        } else if (error.code === 'auth/too-many-requests') {
+          log('🚫 登入嘗試過多，請稍後再試');
+        }
+      }
+    }
+
+    // Firebase 登出
+    async function logoutFromFirebase() {
+      try {
+        if (window.firebaseAuth) {
+          const { signOut } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js');
+          
+          await signOut(window.firebaseAuth);
+          log('✅ 已成功登出');
+          
+          // 更新狀態顯示
+          updateStatus('用戶已登出', 'info');
+          
+        } else {
+          log('❌ Firebase 認證模組不可用', 'error');
+        }
+        
+      } catch (error) {
+        log(`❌ 登出失敗: ${error.message}`, 'error');
+      }
+    }
+
+    // 測試創建管理員
+    async function testCreateAdmin() {
+      try {
+        const email = document.getElementById('adminEmail').value;
+        const password = document.getElementById('adminPassword').value;
+        const passwordConfirm = document.getElementById('adminPasswordConfirm').value;
+        
+        if (!email || !password || !passwordConfirm) {
+          log('❌ 請填寫所有欄位', 'error');
+          return;
+        }
+        
+        if (password !== passwordConfirm) {
+          log('❌ 密碼確認不匹配', 'error');
+          return;
+        }
+        
+        log(`嘗試創建管理員帳號: ${email}...`);
+        
+        // 檢查是否已登入
+        if (!window.firebaseAuth.currentUser) {
+          log('❌ 請先登入 Firebase', 'error');
+          return;
+        }
+        
+        log(`✅ 當前登入用戶: ${window.firebaseAuth.currentUser.email}`);
+        
+        // 創建管理員帳號
+        const { createUserWithEmailAndPassword } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js');
+        
+        const userCredential = await createUserWithEmailAndPassword(window.firebaseAuth, email, password);
+        const user = userCredential.user;
+        
+        log(`✅ 管理員帳號創建成功！`);
+        log(`- UID: ${user.uid}`);
+        log(`- 電子郵件: ${user.email}`);
+        
+        // 更新狀態顯示
+        updateStatus(`管理員創建成功: ${user.email}`, 'success');
+        
+      } catch (error) {
+        log(`❌ 創建管理員失敗: ${error.message}`, 'error');
+        
+        // 分析錯誤類型
+        if (error.code === 'auth/email-already-in-use') {
+          log('🔍 此電子郵件已被使用');
+        } else if (error.code === 'auth/weak-password') {
+          log('🔐 密碼強度不足');
+        } else if (error.code === 'auth/invalid-email') {
+          log('📧 電子郵件格式無效');
+        }
+      }
+    }
     
     // 監聽認證狀態變化
     onAuthStateChanged(auth, (user) => {
@@ -279,6 +448,9 @@
       document.getElementById('testAnalytics').addEventListener('click', testAnalytics);
       document.getElementById('checkAuthState').addEventListener('click', checkAuthState);
       document.getElementById('getCurrentUser').addEventListener('click', getCurrentUser);
+      document.getElementById('loginBtn').addEventListener('click', loginToFirebase);
+      document.getElementById('logoutBtn').addEventListener('click', logoutFromFirebase);
+      document.getElementById('testCreateAdmin').addEventListener('click', testCreateAdmin);
       document.getElementById('clearLog').addEventListener('click', () => {
         document.getElementById('testLog').innerHTML = '';
         log('日誌已清除');

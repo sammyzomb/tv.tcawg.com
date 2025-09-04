@@ -81,41 +81,20 @@ window.contentfulSyncFixed = {
       }
 
       // 準備 Contentful 條目資料
+      // 根據 airTime 計算 slotIndex (12:00-17:30 對應 0-11)
+      const timeParts = programData.airTime.split(':');
+      const hour = parseInt(timeParts[0]);
+      const minute = parseInt(timeParts[1]);
+      const slotIndex = (hour - 12) * 2 + (minute / 30);
+      
       const entryData = {
         fields: {
-          title: {
-            'zh-Hant': programData.title
-          },
-          airDate: {
-            'zh-Hant': programData.airDate
-          },
-          airTime: {
-            'zh-Hant': programData.airTime
-          },
-          duration: {
-            'zh-Hant': programData.duration
-          },
-          category: {
-            'zh-Hant': programData.category
-          },
-          description: {
-            'zh-Hant': programData.description || ''
-          },
-          status: {
-            'zh-Hant': programData.status
-          },
-          videoType: {
-            'zh-Hant': programData.videoType || 'YouTube'
-          },
-          youtubeId: {
-            'zh-Hant': programData.youtubeId || ''
-          },
-          mp4File: {
-            'zh-Hant': programData.mp4File || ''
-          },
-          syncedAt: {
-            'zh-Hant': new Date().toISOString()
-          }
+          title: programData.title,
+          airDate: programData.airDate,
+          block: '12-18', // 固定為首播時段
+          slotIndex: Math.floor(slotIndex),
+          isPremiere: programData.status === '首播',
+          notes: `同步時間: ${new Date().toISOString()}`
         }
       };
 

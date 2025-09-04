@@ -1,27 +1,32 @@
 [
   {
-    "start": "08:00",
+    "start": "12:00",
     "title": "冰島環島極光 10 天",
-    "vid": "iceaurora"
+    "vid": "iceaurora",
+    "duration": "30"
   },
   {
-    "start": "08:20",
+    "start": "12:30",
     "title": "秘魯馬丘比丘雲端奇觀",
-    "vid": "machupicchu"
+    "vid": "machupicchu",
+    "duration": "30"
   },
   {
-    "start": "08:40",
+    "start": "13:00",
     "title": "亞馬遜叢林探險",
-    "vid": "amazon"
+    "vid": "amazon",
+    "duration": "30"
   },
   {
-    "start": "09:00",
+    "start": "13:30",
     "title": "北海道雪國紀行",
-    "vid": "hokkaido"
+    "vid": "hokkaido",
+    "duration": "30"
   },
   {
-    "start": "09:20",
+    "start": "14:00",
     "title": "北歐極光追蹤",
-    "vid": "nordic"
+    "vid": "nordic",
+    "duration": "30"
   }
 ]
