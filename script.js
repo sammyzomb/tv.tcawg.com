@@ -213,11 +213,17 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // 抓全部後在前端挑「未來的最近 3–4 筆」
-  cf.getEntries({ content_type:'scheduleItem', include:2, limit:1000, order:'fields.airDate' })
-    .then(res=>{
-      const items = res.items||[];
-      if (!items.length){ return showEmpty(); }
+  // 暫時停用 Contentful 載入，避免載入假節目資料
+  // cf.getEntries({ content_type:'scheduleItem', include:2, limit:1000, order:'fields.airDate' })
+  //   .then(res=>{
+  //     const items = res.items||[];
+  //     if (!items.length){ return showEmpty(); }
+  
+  // 直接顯示空狀態，避免載入假節目
+  showEmpty();
 
+  // 註解掉整個 Contentful 程式碼區塊，避免載入假節目資料
+  /*
       // 自動偵測欄位 ID
       const sample = items.find(x=>x?.fields) || items[0];
       const keys = Object.keys(sample.fields||{});
@@ -307,6 +313,7 @@ document.addEventListener('DOMContentLoaded', () => {
       `).join('');
     })
     .catch(err=>{ console.error('[upnext] load error', err); showEmpty(); });
+  */
 
   function showEmpty(){
     grid.innerHTML = `
