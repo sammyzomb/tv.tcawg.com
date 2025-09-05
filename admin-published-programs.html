@@ -455,6 +455,12 @@
         </div>
     </div>
 
+    <!-- 載入 Contentful SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/contentful@latest/dist/contentful.browser.min.js"></script>
+    <script src="contentful-api.js"></script>
+    <!-- 載入節目同步系統 -->
+    <script src="program-sync-system.js"></script>
+    
     <script>
         // 檢查管理員權限
         function checkAdminAuth() {
@@ -499,62 +505,43 @@
             }
         }
 
-        // 模擬節目數據
-        let allPrograms = [
-            {
-                id: 'prog_001',
-                title: '日本京都深度遊',
-                description: '探索京都的傳統文化與現代風貌',
-                status: 'published',
-                category: 'travel',
-                publishDate: '2024-01-15',
-                views: 15420,
-                duration: '25:30',
-                thumbnail: 'kyoto.jpg'
-            },
-            {
-                id: 'prog_002',
-                title: '台灣夜市美食巡禮',
-                description: '品嚐台灣各地夜市特色美食',
-                status: 'published',
-                category: 'food',
-                publishDate: '2024-01-20',
-                views: 8930,
-                duration: '18:45',
-                thumbnail: 'nightmarket.jpg'
-            },
-            {
-                id: 'prog_003',
-                title: '泰國曼谷文化探索',
-                description: '深入了解曼谷的歷史文化',
-                status: 'scheduled',
-                category: 'culture',
-                publishDate: '2024-02-01',
-                views: 0,
-                duration: '22:15',
-                thumbnail: 'bangkok.jpg'
-            },
-            {
-                id: 'prog_004',
-                title: '紐西蘭南島冒險',
-                description: '挑戰紐西蘭南島的極限運動',
-                status: 'draft',
-                category: 'adventure',
-                publishDate: '',
-                views: 0,
-                duration: '30:00',
-                thumbnail: 'newzealand.jpg'
-            }
-        ];
-
-        let filteredPrograms = [...allPrograms];
+        // 使用節目同步系統
+        let allPrograms = [];
+        let filteredPrograms = [];
         let currentPage = 1;
         const itemsPerPage = 10;
 
         // 載入節目數據
-        function loadPrograms() {
+        async function loadPrograms() {
             const currentUser = checkAdminAuth();
             if (!currentUser) return;
+
+            // 顯示載入狀態
+            showMessage('正在載入節目資料...', 'info');
+
+            try {
+                // 從同步系統載入節目
+                if (window.ProgramSyncSystem) {
+                    // 等待同步系統載入完成
+                    await window.ProgramSyncSystem.loadPrograms();
+                    allPrograms = window.ProgramSyncSystem.programs || [];
+                    console.log(`載入 ${allPrograms.length} 個節目`);
+                    
+                    if (allPrograms.length === 0) {
+                        showMessage('沒有找到節目資料，請檢查 Contentful 設定', 'warning');
+                    } else {
+                        showMessage(`成功載入 ${allPrograms.length} 個節目`, 'success');
+                    }
+                } else {
+                    console.warn('節目同步系統未載入');
+                    allPrograms = [];
+                    showMessage('節目同步系統載入失敗', 'error');
+                }
+            } catch (error) {
+                console.error('載入節目失敗:', error);
+                showMessage('載入節目失敗: ' + error.message, 'error');
+                allPrograms = [];
+            }
 
             // 更新統計
             updateStats();

@@ -346,6 +346,7 @@
         <button class="today-btn" onclick="goToToday()">今天</button>
         <button class="btn" style="background: #6c757d; margin-left: 10px;" onclick="debugEvents()">🔍 調試節目</button>
         <button class="btn" style="background: #28a745; margin-left: 10px;" onclick="syncAllToContentful()">🔄 同步到 Contentful</button>
+        <button class="btn" style="background: #6f42c1; margin-left: 10px;" onclick="goToDashboard()">🏠 主控台</button>
       </div>
     </div>
 
@@ -1574,6 +1575,11 @@
         closeTimeSlotModal();
       }
     });
+
+    // 前往主控台
+    function goToDashboard() {
+      window.location.href = 'admin-dashboard.html';
+    }
   </script>
 </body>
 </html>

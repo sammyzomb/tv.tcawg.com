@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>管理員帳號診斷工具</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    
+    .container {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+      padding: 40px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    
+    .title {
+      color: #333;
+      text-align: center;
+      margin-bottom: 30px;
+      font-size: 1.8rem;
+    }
+    
+    .diagnostic-section {
+      margin-bottom: 30px;
+      padding: 20px;
+      border: 1px solid #e1e5e9;
+      border-radius: 10px;
+      background: #f8f9fa;
+    }
+    
+    .section-title {
+      color: #2b71d2;
+      font-size: 1.2rem;
+      margin-bottom: 15px;
+      font-weight: 600;
+    }
+    
+    .status {
+      padding: 10px;
+      border-radius: 8px;
+      margin: 10px 0;
+      font-family: monospace;
+      font-size: 0.9rem;
+    }
+    
+    .status.success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    
+    .status.error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    
+    .status.warning {
+      background: #fff3cd;
+      color: #856404;
+      border: 1px solid #ffeaa7;
+    }
+    
+    .status.info {
+      background: #d1ecf1;
+      color: #0c5460;
+      border: 1px solid #bee5eb;
+    }
+    
+    .btn {
+      background: linear-gradient(135deg, #2b71d2, #1e5bb8);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+      margin: 10px 5px;
+      transition: all 0.3s ease;
+    }
+    
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(43, 113, 210, 0.3);
+    }
+    
+    .btn:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+    
+    .account-list {
+      max-height: 300px;
+      overflow-y: auto;
+      border: 1px solid #e1e5e9;
+      border-radius: 8px;
+      padding: 15px;
+      background: white;
+    }
+    
+    .account-item {
+      padding: 10px;
+      border-bottom: 1px solid #f0f0f0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .account-item:last-child {
+      border-bottom: none;
+    }
+    
+    .account-email {
+      font-weight: 500;
+      color: #333;
+    }
+    
+    .account-status {
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+    
+    .status-active {
+      background: #d4edda;
+      color: #155724;
+    }
+    
+    .status-inactive {
+      background: #f8d7da;
+      color: #721c24;
+    }
+    
+    .loading {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(43, 113, 210, 0.3);
+      border-radius: 50%;
+      border-top-color: #2b71d2;
+      animation: spin 1s ease-in-out infinite;
+      margin-right: 10px;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    .test-section {
+      background: #fff;
+      border: 2px solid #e1e5e9;
+      border-radius: 10px;
+      padding: 20px;
+      margin-top: 20px;
+    }
+    
+    .form-group {
+      margin-bottom: 15px;
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 500;
+      color: #333;
+    }
+    
+    .form-group input {
+      width: 100%;
+      padding: 10px;
+      border: 2px solid #e1e5e9;
+      border-radius: 8px;
+      font-size: 1rem;
+    }
+    
+    .form-group input:focus {
+      outline: none;
+      border-color: #2b71d2;
+      box-shadow: 0 0 0 3px rgba(43, 113, 210, 0.1);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 class="title">管理員帳號診斷工具</h1>
+    
+    <div class="diagnostic-section">
+      <h2 class="section-title">系統狀態檢查</h2>
+      <div id="systemStatus">
+        <div class="status info">正在檢查系統狀態...</div>
+      </div>
+      <button class="btn" onclick="checkSystemStatus()">重新檢查</button>
+    </div>
+    
+    <div class="diagnostic-section">
+      <h2 class="section-title">帳號資料檢查</h2>
+      <div id="accountStatus">
+        <div class="status info">正在載入帳號資料...</div>
+      </div>
+      <button class="btn" onclick="checkAccountData()">重新載入</button>
+      <button class="btn" onclick="forceSync()">強制同步</button>
+    </div>
+    
+    <div class="diagnostic-section">
+      <h2 class="section-title">帳號列表</h2>
+      <div id="accountList" class="account-list">
+        <div class="status info">正在載入帳號列表...</div>
+      </div>
+    </div>
+    
+    <div class="test-section">
+      <h2 class="section-title">登入測試</h2>
+      <div class="form-group">
+        <label for="testEmail">電子郵件：</label>
+        <input type="email" id="testEmail" placeholder="請輸入要測試的電子郵件" value="joanna661229@yahoo.com.tw">
+      </div>
+      <div class="form-group">
+        <label for="testPassword">密碼：</label>
+        <input type="password" id="testPassword" placeholder="請輸入密碼">
+      </div>
+      <button class="btn" onclick="testLogin()">測試登入</button>
+      <div id="testResult" style="margin-top: 15px;"></div>
+    </div>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+    import { getAuth } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+    import { getFirestore } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+    
+    const firebaseConfig = {
+      apiKey: "AIzaSyB5MLyG5H1sCflHFU7WeKQCmC0Ft5TIqjM",
+      authDomain: "tv-tcawg-com.firebaseapp.com",
+      projectId: "tv-tcawg-com",
+      storageBucket: "tv-tcawg-com.firebasestorage.app",
+      messagingSenderId: "313251141126",
+      appId: "1:313251141126:web:88ef97ce28798c0a2e9587",
+      measurementId: "G-83Z5VTRTZH"
+    };
+    
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    
+    window.firebaseAuth = auth;
+    window.firebaseDb = db;
+    window.firebaseApp = app;
+    window.firebase9Loaded = true;
+    
+    // 載入管理員帳號服務
+    const adminAccountsScript = document.createElement('script');
+    adminAccountsScript.src = 'admin-accounts-firebase.js';
+    adminAccountsScript.onload = () => {
+      console.log('管理員帳號服務已載入');
+      // 頁面載入後自動檢查
+      setTimeout(() => {
+        checkSystemStatus();
+        checkAccountData();
+      }, 1000);
+    };
+    document.head.appendChild(adminAccountsScript);
+  </script>
+
+  <script>
+    // 檢查系統狀態
+    async function checkSystemStatus() {
+      const statusDiv = document.getElementById('systemStatus');
+      statusDiv.innerHTML = '<div class="status info">正在檢查系統狀態...</div>';
+      
+      try {
+        const results = [];
+        
+        // 檢查 Firebase 連接
+        if (window.firebaseAuth && window.firebaseDb) {
+          results.push('<div class="status success">✓ Firebase 連接正常</div>');
+        } else {
+          results.push('<div class="status error">✗ Firebase 連接失敗</div>');
+        }
+        
+        // 檢查管理員帳號服務
+        if (window.adminAccountsFirebaseService) {
+          results.push('<div class="status success">✓ 管理員帳號服務已載入</div>');
+          
+          // 測試連接
+          const connectionTest = await window.adminAccountsFirebaseService.testConnection();
+          if (connectionTest.success) {
+            results.push(`<div class="status success">✓ 服務連接正常 (模式: ${connectionTest.mode})</div>`);
+          } else {
+            results.push(`<div class="status error">✗ 服務連接失敗: ${connectionTest.error}</div>`);
+          }
+        } else {
+          results.push('<div class="status error">✗ 管理員帳號服務未載入</div>');
+        }
+        
+        // 檢查本地備份
+        const localBackup = localStorage.getItem('admin_accounts_backup');
+        if (localBackup) {
+          const backupTime = localStorage.getItem('admin_accounts_backup_time');
+          const timeAgo = backupTime ? Math.round((Date.now() - parseInt(backupTime)) / 1000 / 60) : '未知';
+          results.push(`<div class="status success">✓ 本地備份存在 (${timeAgo} 分鐘前)</div>`);
+        } else {
+          results.push('<div class="status warning">⚠ 本地備份不存在</div>');
+        }
+        
+        statusDiv.innerHTML = results.join('');
+        
+      } catch (error) {
+        statusDiv.innerHTML = `<div class="status error">✗ 系統檢查失敗: ${error.message}</div>`;
+      }
+    }
+    
+    // 檢查帳號資料
+    async function checkAccountData() {
+      const statusDiv = document.getElementById('accountStatus');
+      statusDiv.innerHTML = '<div class="status info">正在檢查帳號資料...</div>';
+      
+      try {
+        if (!window.adminAccountsFirebaseService) {
+          statusDiv.innerHTML = '<div class="status error">✗ 管理員帳號服務未載入</div>';
+          return;
+        }
+        
+        const accountsData = await window.adminAccountsFirebaseService.fetchAccountsData();
+        const results = [];
+        
+        results.push(`<div class="status success">✓ 帳號資料載入成功</div>`);
+        results.push(`<div class="status info">版本: ${accountsData.version}</div>`);
+        results.push(`<div class="status info">最後更新: ${new Date(accountsData.last_updated).toLocaleString()}</div>`);
+        results.push(`<div class="status info">帳號數量: ${accountsData.accounts.length}</div>`);
+        
+        // 檢查特定帳號
+        const targetAccount = accountsData.accounts.find(acc => acc.email === 'joanna661229@yahoo.com.tw');
+        if (targetAccount) {
+          results.push(`<div class="status success">✓ 找到目標帳號: ${targetAccount.name}</div>`);
+          results.push(`<div class="status info">狀態: ${targetAccount.status}</div>`);
+          results.push(`<div class="status info">角色: ${targetAccount.role}</div>`);
+          results.push(`<div class="status info">建立時間: ${new Date(targetAccount.created_at).toLocaleString()}</div>`);
+        } else {
+          results.push(`<div class="status error">✗ 找不到目標帳號: joanna661229@yahoo.com.tw</div>`);
+        }
+        
+        statusDiv.innerHTML = results.join('');
+        
+        // 更新帳號列表
+        updateAccountList(accountsData.accounts);
+        
+      } catch (error) {
+        statusDiv.innerHTML = `<div class="status error">✗ 帳號資料檢查失敗: ${error.message}</div>`;
+      }
+    }
+    
+    // 更新帳號列表
+    function updateAccountList(accounts) {
+      const listDiv = document.getElementById('accountList');
+      
+      if (accounts.length === 0) {
+        listDiv.innerHTML = '<div class="status warning">⚠ 沒有找到任何帳號</div>';
+        return;
+      }
+      
+      const accountItems = accounts.map(account => `
+        <div class="account-item">
+          <div>
+            <div class="account-email">${account.email}</div>
+            <div style="font-size: 0.8rem; color: #666;">${account.name} (${account.role})</div>
+          </div>
+          <div class="account-status status-${account.status}">${account.status === 'active' ? '啟用' : '停用'}</div>
+        </div>
+      `).join('');
+      
+      listDiv.innerHTML = accountItems;
+    }
+    
+    // 強制同步
+    async function forceSync() {
+      const statusDiv = document.getElementById('accountStatus');
+      statusDiv.innerHTML = '<div class="status info">正在強制同步...</div>';
+      
+      try {
+        if (!window.adminAccountsFirebaseService) {
+          statusDiv.innerHTML = '<div class="status error">✗ 管理員帳號服務未載入</div>';
+          return;
+        }
+        
+        const syncResult = await window.adminAccountsFirebaseService.manualSync();
+        
+        if (syncResult.success) {
+          statusDiv.innerHTML = `
+            <div class="status success">✓ 強制同步成功</div>
+            <div class="status info">${syncResult.message}</div>
+            <div class="status info">帳號數量: ${syncResult.accounts_count}</div>
+            <div class="status info">最後更新: ${new Date(syncResult.last_updated).toLocaleString()}</div>
+          `;
+          
+          // 重新載入帳號資料
+          setTimeout(() => {
+            checkAccountData();
+          }, 1000);
+        } else {
+          statusDiv.innerHTML = `<div class="status error">✗ 強制同步失敗: ${syncResult.message}</div>`;
+        }
+        
+      } catch (error) {
+        statusDiv.innerHTML = `<div class="status error">✗ 強制同步失敗: ${error.message}</div>`;
+      }
+    }
+    
+    // 測試登入
+    async function testLogin() {
+      const email = document.getElementById('testEmail').value;
+      const password = document.getElementById('testPassword').value;
+      const resultDiv = document.getElementById('testResult');
+      
+      if (!email || !password) {
+        resultDiv.innerHTML = '<div class="status error">請輸入完整的測試資訊</div>';
+        return;
+      }
+      
+      resultDiv.innerHTML = '<div class="status info">正在測試登入...</div>';
+      
+      try {
+        if (!window.adminAccountsFirebaseService) {
+          resultDiv.innerHTML = '<div class="status error">✗ 管理員帳號服務未載入</div>';
+          return;
+        }
+        
+        const authResult = await window.adminAccountsFirebaseService.authenticateUser(email, password);
+        
+        if (authResult) {
+          resultDiv.innerHTML = `
+            <div class="status success">✓ 登入測試成功</div>
+            <div class="status info">用戶 ID: ${authResult.id}</div>
+            <div class="status info">姓名: ${authResult.name}</div>
+            <div class="status info">角色: ${authResult.role}</div>
+            <div class="status info">權限: ${authResult.permissions.join(', ')}</div>
+          `;
+        } else {
+          resultDiv.innerHTML = '<div class="status error">✗ 登入測試失敗：帳號或密碼錯誤</div>';
+        }
+        
+      } catch (error) {
+        resultDiv.innerHTML = `<div class="status error">✗ 登入測試失敗: ${error.message}</div>`;
+      }
+    }
+  </script>
+</body>
+</html>

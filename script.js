@@ -370,8 +370,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const taiwanTime = getTaiwanTime();
       const currentMonth = taiwanTime.toISOString().slice(0, 7); // YYYY-MM 格式
       const today = taiwanTime.toISOString().split('T')[0]; // YYYY-MM-DD 格式
+      const currentHour = taiwanTime.getHours();
       
-      console.log('正在載入節目表，月份:', currentMonth, '日期:', today);
+      console.log('正在載入節目表，月份:', currentMonth, '日期:', today, '當前時間:', currentHour + ':' + taiwanTime.getMinutes());
       
       // 檢查是否需要重新載入（日期改變）
       if (scheduleData && scheduleData.today && scheduleData.today.date === today) {
@@ -406,11 +407,22 @@ document.addEventListener('DOMContentLoaded', () => {
           include: 2
         });
         
+        console.log('Contentful 回應:', response.items?.length || 0, '個項目');
+        
         if (response.items && response.items.length > 0) {
-          // 過濾今天的節目
-          const todayPrograms = response.items.filter(item => 
-            item.fields.airDate === today
-          ).map(item => {
+          // 過濾今天的節目，並排除推薦節目
+          const todayPrograms = response.items.filter(item => {
+            const fields = item.fields || {};
+            const title = fields.title || '';
+            
+            // 排除推薦節目（包含特定關鍵字的節目）
+            const isRecommendedProgram = title.includes('加拿大的寒冰生活') || 
+                                       title.includes('加拿大捕魚') || 
+                                       title.includes('加拿大的極光晚餐') ||
+                                       title.includes('2025-08-19'); // 舊日期
+            
+            return fields.airDate === today && !isRecommendedProgram;
+          }).map(item => {
             // 根據 slotIndex 計算時間 (0-11 對應 12:00-17:30，每30分鐘一個時段)
             const slotIndex = item.fields.slotIndex || 0;
             const hour = 12 + Math.floor(slotIndex / 2);
@@ -499,106 +511,45 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 預設節目表（當 Contentful 沒有資料時使用）
   function getDefaultSchedule(date) {
-    // 根據日期生成不同的節目表
-    const dayOfWeek = new Date(date).getDay(); // 0=週日, 1=週一, ..., 6=週六
+    // 當沒有真實節目時，顯示「目前暫無節目」的卡片，但保持時間邏輯
+    console.log('沒有找到真實節目資料，顯示暫無節目卡片');
     
-    // 週末也返回空時段
-    if (dayOfWeek === 0 || dayOfWeek === 6) {
-      return [
-        {
-          time: "12:00",
-          title: "暫無節目",
-          duration: "30",
-          category: "空檔",
-          description: "此時段暫無節目安排",
-          thumbnail: "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop",
-          youtubeId: "",
-          status: "空檔",
-          tags: []
-        },
-        {
-          time: "12:30",
-          title: "暫無節目",
-          duration: "30",
-          category: "空檔",
-          description: "此時段暫無節目安排",
-          thumbnail: "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop",
-          youtubeId: "",
-          status: "空檔",
-          tags: []
-        },
-        {
-          time: "13:00",
-          title: "暫無節目",
-          duration: "30",
-          category: "空檔",
-          description: "此時段暫無節目安排",
-          thumbnail: "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop",
-          youtubeId: "",
-          status: "空檔",
-          tags: []
-        },
-        {
-          time: "13:30",
-          title: "暫無節目",
-          duration: "30",
-          category: "空檔",
-          description: "此時段暫無節目安排",
-          thumbnail: "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop",
-          youtubeId: "",
-          status: "空檔",
-          tags: []
-        }
-      ];
+    const currentHour = new Date().getHours();
+    const startHour = Math.max(12, currentHour - 1); // 從當前時間前1小時開始，最少從12點開始
+    const endHour = startHour + 12; // 顯示12個小時
+    
+    const programs = [];
+    
+    for (let hour = startHour; hour < endHour; hour++) {
+      const time30 = `${hour.toString().padStart(2, '0')}:30`;
+      const time00 = `${hour.toString().padStart(2, '0')}:00`;
+      
+      programs.push({
+        time: time00,
+        title: "目前暫無節目",
+        duration: "30",
+        category: "空檔",
+        description: "此時段暫無節目安排",
+        thumbnail: "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop",
+        youtubeId: "",
+        status: "空檔",
+        tags: []
+      });
+      
+      programs.push({
+        time: time30,
+        title: "目前暫無節目",
+        duration: "30",
+        category: "空檔",
+        description: "此時段暫無節目安排",
+        thumbnail: "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop",
+        youtubeId: "",
+        status: "空檔",
+        tags: []
+      });
     }
     
-    // 返回四個空時段，讓用戶知道沒有節目安排
-    return [
-      {
-        time: "12:00",
-        title: "暫無節目",
-        duration: "30",
-        category: "空檔",
-        description: "此時段暫無節目安排",
-        thumbnail: "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop",
-        youtubeId: "",
-        status: "空檔",
-        tags: []
-      },
-      {
-        time: "12:30",
-        title: "暫無節目",
-        duration: "30",
-        category: "空檔",
-        description: "此時段暫無節目安排",
-        thumbnail: "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop",
-        youtubeId: "",
-        status: "空檔",
-        tags: []
-      },
-      {
-        time: "13:00",
-        title: "暫無節目",
-        duration: "30",
-        category: "空檔",
-        description: "此時段暫無節目安排",
-        thumbnail: "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop",
-        youtubeId: "",
-        status: "空檔",
-        tags: []
-      },
-      {
-        time: "13:30",
-        title: "暫無節目",
-        duration: "30",
-        category: "空檔",
-        description: "此時段暫無節目安排",
-        thumbnail: "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop",
-        youtubeId: "",
-        status: "空檔",
-        tags: []
-      }
-    ];
+    return programs;
   }
 
   // 更新節目時間表顯示
@@ -627,12 +578,23 @@ document.addEventListener('DOMContentLoaded', () => {
     if (scheduleListEl && today.schedule) {
       scheduleListEl.innerHTML = '';
       
-      // 過濾節目：只顯示當前和未來節目
+      // 過濾節目：只顯示當前和未來節目，限制為12個小時
       const visiblePrograms = today.schedule.filter(shouldShowProgram);
+      
+      // 限制顯示12個小時的節目（24個節目，每小時2個）
+      const limitedPrograms = visiblePrograms.slice(0, 24);
+      
       console.log('節目表數據:', today.schedule);
       console.log('可見節目:', visiblePrograms);
+      console.log('限制後節目:', limitedPrograms);
       
-      visiblePrograms.forEach((program, index) => {
+      // 如果沒有節目，應該不會發生，因為 getDefaultSchedule 會提供「目前暫無節目」卡片
+      if (limitedPrograms.length === 0) {
+        console.log('警告：沒有找到任何節目，包括暫無節目卡片');
+        return;
+      }
+      
+      limitedPrograms.forEach((program, index) => {
         const status = getProgramStatus(program);
         const isCurrent = status === 'now-playing';
         const isUpcoming = status === 'upcoming';
@@ -676,9 +638,31 @@ document.addEventListener('DOMContentLoaded', () => {
         scheduleListEl.appendChild(scheduleItem);
       });
       
-            // 更新滾動指示器和導航
-      addScrollIndicator(scheduleListEl, visiblePrograms.length);
-      initScheduleNavigation(scheduleListEl, visiblePrograms.length);
+      // 如果有更多節目，添加「更多」按鈕
+      if (visiblePrograms.length > 24) {
+        const moreButton = document.createElement('div');
+        moreButton.className = 'schedule-more-button';
+        moreButton.innerHTML = `
+          <div class="more-content">
+            <div class="more-icon">📺</div>
+            <div class="more-text">
+              <div class="more-title">查看更多節目</div>
+              <div class="more-subtitle">還有 ${visiblePrograms.length - 24} 個節目</div>
+            </div>
+            <div class="more-arrow">→</div>
+          </div>
+        `;
+        
+        moreButton.addEventListener('click', () => {
+          window.location.href = 'schedule.html';
+        });
+        
+        scheduleListEl.appendChild(moreButton);
+      }
+      
+      // 更新滾動指示器和導航
+      addScrollIndicator(scheduleListEl, limitedPrograms.length);
+      initScheduleNavigation(scheduleListEl, limitedPrograms.length);
     }
   }
 
@@ -957,6 +941,113 @@ document.addEventListener('DOMContentLoaded', () => {
   function addScheduleStyles() {
     const style = document.createElement('style');
     style.textContent = `
+      .schedule-more-button {
+        min-width: 280px;
+        height: 120px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 15px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 10px;
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        border: 2px solid transparent;
+      }
+      
+      .schedule-more-button:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 35px rgba(102, 126, 234, 0.4);
+        border-color: rgba(255, 255, 255, 0.3);
+      }
+      
+      .more-content {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        color: white;
+        text-align: center;
+      }
+      
+      .more-icon {
+        font-size: 32px;
+        opacity: 0.9;
+      }
+      
+      .more-text {
+        flex: 1;
+      }
+      
+      .more-title {
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 4px;
+      }
+      
+      .more-subtitle {
+        font-size: 12px;
+        opacity: 0.8;
+      }
+      
+      .more-arrow {
+        font-size: 20px;
+        font-weight: bold;
+        opacity: 0.8;
+      }
+      
+      .schedule-empty-state {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 200px;
+        width: 100%;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 15px;
+        margin: 20px 0;
+      }
+      
+      .empty-content {
+        text-align: center;
+        color: #6c757d;
+      }
+      
+      .empty-icon {
+        font-size: 48px;
+        margin-bottom: 16px;
+        opacity: 0.6;
+      }
+      
+      .empty-title {
+        font-size: 20px;
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: #495057;
+      }
+      
+      .empty-subtitle {
+        font-size: 14px;
+        margin-bottom: 20px;
+        opacity: 0.8;
+      }
+      
+      .empty-button {
+        display: inline-block;
+        background: #2b71d2;
+        color: white;
+        padding: 12px 24px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+      }
+      
+      .empty-button:hover {
+        background: #1e5bb8;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(43, 113, 210, 0.3);
+      }
+      
       .now-playing-badge {
         position: absolute;
         top: 8px;
@@ -970,6 +1061,7 @@ document.addEventListener('DOMContentLoaded', () => {
         z-index: 10;
         animation: pulse 2s infinite;
       }
+      
       
       .play-button {
         position: absolute;

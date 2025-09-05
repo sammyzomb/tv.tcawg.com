@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>修復 Joanna 帳號 - 管理員系統</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    
+    .container {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+      padding: 40px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    
+    .title {
+      color: #333;
+      text-align: center;
+      margin-bottom: 30px;
+      font-size: 1.8rem;
+    }
+    
+    .section {
+      margin-bottom: 30px;
+      padding: 20px;
+      border: 1px solid #e1e5e9;
+      border-radius: 10px;
+      background: #f8f9fa;
+    }
+    
+    .section-title {
+      color: #2b71d2;
+      font-size: 1.2rem;
+      margin-bottom: 15px;
+      font-weight: 600;
+    }
+    
+    .status {
+      padding: 10px;
+      border-radius: 8px;
+      margin: 10px 0;
+      font-family: monospace;
+      font-size: 0.9rem;
+    }
+    
+    .status.success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    
+    .status.error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    
+    .status.warning {
+      background: #fff3cd;
+      color: #856404;
+      border: 1px solid #ffeaa7;
+    }
+    
+    .status.info {
+      background: #d1ecf1;
+      color: #0c5460;
+      border: 1px solid #bee5eb;
+    }
+    
+    .btn {
+      background: linear-gradient(135deg, #2b71d2, #1e5bb8);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+      margin: 10px 5px;
+      transition: all 0.3s ease;
+    }
+    
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(43, 113, 210, 0.3);
+    }
+    
+    .btn:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+    
+    .form-group {
+      margin-bottom: 15px;
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 500;
+      color: #333;
+    }
+    
+    .form-group input {
+      width: 100%;
+      padding: 10px;
+      border: 2px solid #e1e5e9;
+      border-radius: 8px;
+      font-size: 1rem;
+    }
+    
+    .form-group input:focus {
+      outline: none;
+      border-color: #2b71d2;
+      box-shadow: 0 0 0 3px rgba(43, 113, 210, 0.1);
+    }
+    
+    .loading {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(43, 113, 210, 0.3);
+      border-radius: 50%;
+      border-top-color: #2b71d2;
+      animation: spin 1s ease-in-out infinite;
+      margin-right: 10px;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 class="title">🔧 修復 Joanna 帳號</h1>
+    
+    <div class="section">
+      <h2 class="section-title">帳號診斷</h2>
+      <div id="diagnosticStatus">
+        <div class="status info">正在診斷帳號問題...</div>
+      </div>
+      <button class="btn" onclick="diagnoseAccount()">重新診斷</button>
+    </div>
+    
+    <div class="section">
+      <h2 class="section-title">帳號修復</h2>
+      <div class="form-group">
+        <label for="accountEmail">電子郵件：</label>
+        <input type="email" id="accountEmail" value="joanna661229@yahoo.com.tw" readonly>
+      </div>
+      <div class="form-group">
+        <label for="accountName">姓名：</label>
+        <input type="text" id="accountName" value="翁宛萱">
+      </div>
+      <div class="form-group">
+        <label for="accountPassword">新密碼：</label>
+        <input type="password" id="accountPassword" placeholder="請輸入新密碼">
+      </div>
+      <div class="form-group">
+        <label for="confirmPassword">確認密碼：</label>
+        <input type="password" id="confirmPassword" placeholder="再次輸入密碼">
+      </div>
+      <button class="btn" onclick="fixAccount()">修復帳號</button>
+      <div id="fixStatus" style="margin-top: 15px;"></div>
+    </div>
+    
+    <div class="section">
+      <h2 class="section-title">測試登入</h2>
+      <button class="btn" onclick="testLogin()">測試登入</button>
+      <div id="testStatus" style="margin-top: 15px;"></div>
+    </div>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+    import { getAuth } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+    import { getFirestore } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+    
+    const firebaseConfig = {
+      apiKey: "AIzaSyB5MLyG5H1sCflHFU7WeKQCmC0Ft5TIqjM",
+      authDomain: "tv-tcawg-com.firebaseapp.com",
+      projectId: "tv-tcawg-com",
+      storageBucket: "tv-tcawg-com.firebasestorage.app",
+      messagingSenderId: "313251141126",
+      appId: "1:313251141126:web:88ef97ce28798c0a2e9587",
+      measurementId: "G-83Z5VTRTZH"
+    };
+    
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    
+    window.firebaseAuth = auth;
+    window.firebaseDb = db;
+    window.firebaseApp = app;
+    window.firebase9Loaded = true;
+    
+    // 載入管理員帳號服務
+    const adminAccountsScript = document.createElement('script');
+    adminAccountsScript.src = 'admin-accounts-firebase.js';
+    adminAccountsScript.onload = () => {
+      console.log('管理員帳號服務已載入');
+      // 頁面載入後自動診斷
+      setTimeout(() => {
+        diagnoseAccount();
+      }, 1000);
+    };
+    document.head.appendChild(adminAccountsScript);
+  </script>
+
+  <script>
+    // 診斷帳號問題
+    async function diagnoseAccount() {
+      const statusDiv = document.getElementById('diagnosticStatus');
+      statusDiv.innerHTML = '<div class="status info">正在診斷帳號問題...</div>';
+      
+      try {
+        const results = [];
+        const targetEmail = 'joanna661229@yahoo.com.tw';
+        
+        // 檢查 Firebase 連接
+        if (window.firebaseAuth && window.firebaseDb) {
+          results.push('<div class="status success">✓ Firebase 連接正常</div>');
+        } else {
+          results.push('<div class="status error">✗ Firebase 連接失敗</div>');
+        }
+        
+        // 檢查管理員帳號服務
+        if (window.adminAccountsService) {
+          results.push('<div class="status success">✓ 管理員帳號服務已載入</div>');
+          
+          // 檢查帳號是否存在
+          const accountsData = await window.adminAccountsService.fetchAccountsData();
+          const targetAccount = accountsData.accounts.find(acc => acc.email === targetEmail);
+          
+          if (targetAccount) {
+            results.push(`<div class="status success">✓ 找到目標帳號: ${targetAccount.name}</div>`);
+            results.push(`<div class="status info">狀態: ${targetAccount.status}</div>`);
+            results.push(`<div class="status info">角色: ${targetAccount.role}</div>`);
+            results.push(`<div class="status info">建立時間: ${new Date(targetAccount.created_at).toLocaleString()}</div>`);
+            
+            // 檢查密碼雜湊
+            if (targetAccount.password_hash) {
+              results.push(`<div class="status success">✓ 密碼雜湊存在 (${targetAccount.password_hash.length} 字符)</div>`);
+            } else {
+              results.push(`<div class="status error">✗ 密碼雜湊不存在</div>`);
+            }
+          } else {
+            results.push(`<div class="status error">✗ 找不到目標帳號: ${targetEmail}</div>`);
+          }
+        } else {
+          results.push('<div class="status error">✗ 管理員帳號服務未載入</div>');
+        }
+        
+        // 檢查本地備份
+        const localBackup = localStorage.getItem('admin_accounts_backup');
+        if (localBackup) {
+          const backupData = JSON.parse(localBackup);
+          const localAccount = backupData.accounts.find(acc => acc.email === targetEmail);
+          if (localAccount) {
+            results.push(`<div class="status success">✓ 本地備份中找到帳號</div>`);
+          } else {
+            results.push(`<div class="status warning">⚠ 本地備份中找不到帳號</div>`);
+          }
+        } else {
+          results.push('<div class="status warning">⚠ 本地備份不存在</div>');
+        }
+        
+        statusDiv.innerHTML = results.join('');
+        
+      } catch (error) {
+        statusDiv.innerHTML = `<div class="status error">✗ 診斷失敗: ${error.message}</div>`;
+      }
+    }
+    
+    // 修復帳號
+    async function fixAccount() {
+      const email = document.getElementById('accountEmail').value;
+      const name = document.getElementById('accountName').value;
+      const password = document.getElementById('accountPassword').value;
+      const confirmPassword = document.getElementById('confirmPassword').value;
+      const statusDiv = document.getElementById('fixStatus');
+      
+      // 驗證輸入
+      if (!email || !name || !password || !confirmPassword) {
+        statusDiv.innerHTML = '<div class="status error">請填寫所有欄位</div>';
+        return;
+      }
+      
+      if (password !== confirmPassword) {
+        statusDiv.innerHTML = '<div class="status error">兩次輸入的密碼不一致</div>';
+        return;
+      }
+      
+      if (password.length < 8) {
+        statusDiv.innerHTML = '<div class="status error">密碼至少需要8個字符</div>';
+        return;
+      }
+      
+      statusDiv.innerHTML = '<div class="status info">正在修復帳號...</div>';
+      
+      try {
+        if (!window.adminAccountsService) {
+          throw new Error('管理員帳號服務未載入');
+        }
+        
+        // 獲取現有帳號資料
+        const accountsData = await window.adminAccountsService.fetchAccountsData();
+        let targetAccount = accountsData.accounts.find(acc => acc.email === email);
+        
+        if (targetAccount) {
+          // 更新現有帳號
+          console.log('更新現有帳號:', targetAccount);
+          targetAccount.name = name;
+          targetAccount.password_hash = await window.adminAccountsService.hashPassword(password);
+          targetAccount.updatedAt = new Date().toISOString();
+          targetAccount.status = 'active';
+          
+          results.push(`<div class="status success">✓ 帳號已更新</div>`);
+        } else {
+          // 創建新帳號
+          console.log('創建新帳號');
+          const newAccount = {
+            id: `admin_${Date.now()}`,
+            email: email,
+            name: name,
+            role: 'admin',
+            permissions: ['read', 'write'],
+            status: 'active',
+            created_at: new Date().toISOString(),
+            last_login: null,
+            password_hash: await window.adminAccountsService.hashPassword(password)
+          };
+          
+          accountsData.accounts.push(newAccount);
+          results.push(`<div class="status success">✓ 新帳號已創建</div>`);
+        }
+        
+        // 更新資料
+        accountsData.last_updated = new Date().toISOString();
+        
+        // 儲存到本地備份
+        window.adminAccountsService.saveLocalBackup(accountsData);
+        
+        // 同步到 Firebase
+        const syncResult = await window.adminAccountsService.syncToFirebase();
+        if (syncResult) {
+          statusDiv.innerHTML = `
+            <div class="status success">✓ 帳號修復成功！已同步到 Firebase</div>
+            <div class="status info">帳號: ${email}</div>
+            <div class="status info">姓名: ${name}</div>
+            <div class="status info">狀態: 啟用</div>
+          `;
+        } else {
+          statusDiv.innerHTML = `
+            <div class="status warning">⚠ 帳號修復成功，但 Firebase 同步失敗</div>
+            <div class="status info">帳號: ${email}</div>
+            <div class="status info">姓名: ${name}</div>
+            <div class="status info">狀態: 啟用 (僅本地)</div>
+          `;
+        }
+        
+        // 清空密碼欄位
+        document.getElementById('accountPassword').value = '';
+        document.getElementById('confirmPassword').value = '';
+        
+      } catch (error) {
+        console.error('修復帳號失敗:', error);
+        statusDiv.innerHTML = `<div class="status error">✗ 修復失敗: ${error.message}</div>`;
+      }
+    }
+    
+    // 測試登入
+    async function testLogin() {
+      const email = document.getElementById('accountEmail').value;
+      const password = document.getElementById('accountPassword').value;
+      const statusDiv = document.getElementById('testStatus');
+      
+      if (!password) {
+        statusDiv.innerHTML = '<div class="status error">請先輸入密碼</div>';
+        return;
+      }
+      
+      statusDiv.innerHTML = '<div class="status info">正在測試登入...</div>';
+      
+      try {
+        if (!window.adminAccountsService) {
+          throw new Error('管理員帳號服務未載入');
+        }
+        
+        const authResult = await window.adminAccountsService.authenticateUser(email, password);
+        
+        if (authResult) {
+          statusDiv.innerHTML = `
+            <div class="status success">✓ 登入測試成功！</div>
+            <div class="status info">用戶 ID: ${authResult.id}</div>
+            <div class="status info">姓名: ${authResult.name}</div>
+            <div class="status info">角色: ${authResult.role}</div>
+            <div class="status info">權限: ${authResult.permissions.join(', ')}</div>
+          `;
+        } else {
+          statusDiv.innerHTML = '<div class="status error">✗ 登入測試失敗：帳號或密碼錯誤</div>';
+        }
+        
+      } catch (error) {
+        console.error('測試登入失敗:', error);
+        statusDiv.innerHTML = `<div class="status error">✗ 測試失敗: ${error.message}</div>`;
+      }
+    }
+  </script>
+</body>
+</html>

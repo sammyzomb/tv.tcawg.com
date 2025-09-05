@@ -543,9 +543,9 @@
     <!-- Firebase SDK -->
     <script type="module">
         // Import the functions you need from the SDKs you need
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getAuth } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+        import { getAuth } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+        import { getFirestore } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
         
         // Your web app's Firebase configuration
         const firebaseConfig = {
@@ -641,9 +641,16 @@
                     const accountsData = await window.adminAccountsService.fetchAccountsData();
                     const allAdmins = accountsData.accounts || [];
                     
-                    // 過濾掉有問題的帳號
-                    const validAdmins = allAdmins.filter(admin => admin.email && admin.email !== 'undefined' && admin.email.trim() !== '');
+                    // 過濾掉有問題的帳號，但保留更多調試資訊
+                    const validAdmins = allAdmins.filter(admin => {
+                        const isValid = admin.email && admin.email !== 'undefined' && admin.email.trim() !== '';
+                        if (!isValid) {
+                            console.warn('過濾掉無效帳號:', admin);
+                        }
+                        return isValid;
+                    });
                     console.log('過濾前帳號數量:', allAdmins.length, '過濾後帳號數量:', validAdmins.length);
+                    console.log('有效帳號列表:', validAdmins.map(admin => ({ email: admin.email, name: admin.name, status: admin.status })));
                     
                     // 更新統計
                     updateStats(validAdmins);
@@ -785,64 +792,99 @@
         }
 
         // 修改管理員密碼
-        function changeAdminPassword(email) {
-            const systemAdmins = JSON.parse(localStorage.getItem('system_admins') || '[]');
-            const admin = systemAdmins.find(a => a.email === email);
+        async function changeAdminPassword(email) {
+            console.log('修改密碼按鈕被點擊，目標帳號:', email);
             
-            if (!admin) {
-                showMessage('找不到該管理員', 'error');
-                return;
-            }
+            try {
+                // 首先嘗試從 Firebase 獲取管理員資料
+                let admin = null;
+                if (window.adminAccountsService) {
+                    console.log('嘗試從 Firebase 獲取管理員資料...');
+                    const accountsData = await window.adminAccountsService.fetchAccountsData();
+                    console.log('所有帳號資料:', accountsData.accounts);
+                    admin = accountsData.accounts.find(a => a.email === email);
+                    console.log('從 Firebase 找到的管理員:', admin);
+                }
+                
+                // 如果 Firebase 找不到，嘗試本地資料
+                if (!admin) {
+                    console.log('Firebase 找不到，嘗試本地資料...');
+                    const systemAdmins = JSON.parse(localStorage.getItem('system_admins') || '[]');
+                    console.log('本地管理員資料:', systemAdmins);
+                    admin = systemAdmins.find(a => a.email === email);
+                    console.log('從本地找到的管理員:', admin);
+                }
+                
+                // 如果還是找不到，嘗試從當前顯示的帳號列表中查找
+                if (!admin) {
+                    console.log('本地也找不到，嘗試從當前顯示的帳號列表中查找...');
+                    // 這裡我們需要從頁面上已經載入的帳號中查找
+                    const currentAdmins = JSON.parse(localStorage.getItem('admin_accounts_backup') || '{}');
+                    if (currentAdmins.accounts) {
+                        admin = currentAdmins.accounts.find(a => a.email === email);
+                        console.log('從備份中找到的管理員:', admin);
+                    }
+                }
+                
+                if (!admin) {
+                    showMessage('找不到該管理員', 'error');
+                    return;
+                }
 
-            // 創建密碼修改對話框
-            const passwordDialog = document.createElement('div');
-            passwordDialog.className = 'password-dialog';
-            passwordDialog.innerHTML = `
-                <div class="password-dialog-content">
-                    <h3>🔐 修改密碼 - ${admin.name}</h3>
-                    <p>為管理員 ${admin.email} 設定新密碼</p>
-                    
-                    <div class="form-group">
-                        <label for="newPassword">新密碼 *</label>
-                        <input type="password" id="newPassword" placeholder="至少8個字符" 
-                               oninput="checkPasswordStrength(this.value)">
-                        <div class="password-strength" id="passwordStrength" style="display: none;">
-                            <small>密碼強度：<span id="strengthText">弱</span></small>
-                            <div class="strength-bar">
-                                <div class="strength-fill" id="strengthFill"></div>
+                // 創建密碼修改對話框
+                const passwordDialog = document.createElement('div');
+                passwordDialog.className = 'password-dialog';
+                passwordDialog.innerHTML = `
+                    <div class="password-dialog-content">
+                        <h3>🔐 修改密碼 - ${admin.name || admin.email}</h3>
+                        <p>為管理員 ${admin.email} 設定新密碼</p>
+                        
+                        <div class="form-group">
+                            <label for="newPassword">新密碼 *</label>
+                            <input type="password" id="newPassword" placeholder="至少8個字符" 
+                                   oninput="checkPasswordStrength(this.value)">
+                            <div class="password-strength" id="passwordStrength" style="display: none;">
+                                <small>密碼強度：<span id="strengthText">弱</span></small>
+                                <div class="strength-bar">
+                                    <div class="strength-fill" id="strengthFill"></div>
+                                </div>
                             </div>
                         </div>
+                        
+                        <div class="form-group">
+                            <label for="confirmPassword">確認新密碼 *</label>
+                            <input type="password" id="confirmPassword" placeholder="再次輸入新密碼">
+                        </div>
+                        
+                        <div class="password-requirements">
+                            <h4>🔒 密碼要求</h4>
+                            <ul>
+                                <li>至少 8 個字符</li>
+                                <li>包含大寫字母 (A-Z)</li>
+                                <li>包含小寫字母 (a-z)</li>
+                                <li>包含數字 (0-9)</li>
+                                <li>包含特殊符號 (!@#$%^&*)</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="dialog-buttons">
+                            <button class="btn btn-secondary" onclick="closePasswordDialog()">取消</button>
+                            <button class="btn btn-primary" onclick="confirmPasswordChange('${email}')">確認修改</button>
+                        </div>
                     </div>
-                    
-                    <div class="form-group">
-                        <label for="confirmPassword">確認新密碼 *</label>
-                        <input type="password" id="confirmPassword" placeholder="再次輸入新密碼">
-                    </div>
-                    
-                    <div class="password-requirements">
-                        <h4>🔒 密碼要求</h4>
-                        <ul>
-                            <li>至少 8 個字符</li>
-                            <li>包含大寫字母 (A-Z)</li>
-                            <li>包含小寫字母 (a-z)</li>
-                            <li>包含數字 (0-9)</li>
-                            <li>包含特殊符號 (!@#$%^&*)</li>
-                        </ul>
-                    </div>
-                    
-                    <div class="dialog-buttons">
-                        <button class="btn btn-secondary" onclick="closePasswordDialog()">取消</button>
-                        <button class="btn btn-primary" onclick="confirmPasswordChange('${email}')">確認修改</button>
-                    </div>
-                </div>
-            `;
-            
-            document.body.appendChild(passwordDialog);
-            
-            // 顯示對話框
-            setTimeout(() => {
-                passwordDialog.style.display = 'flex';
-            }, 100);
+                `;
+                
+                document.body.appendChild(passwordDialog);
+                
+                // 顯示對話框
+                setTimeout(() => {
+                    passwordDialog.style.display = 'flex';
+                }, 100);
+                
+            } catch (error) {
+                console.error('修改密碼時發生錯誤:', error);
+                showMessage('修改密碼時發生錯誤: ' + error.message, 'error');
+            }
         }
 
         // 檢查密碼強度
@@ -896,7 +938,7 @@
         }
 
         // 確認密碼修改
-        function confirmPasswordChange(email) {
+        async function confirmPasswordChange(email) {
             const newPassword = document.getElementById('newPassword').value;
             const confirmPassword = document.getElementById('confirmPassword').value;
             
@@ -922,29 +964,75 @@
                 return;
             }
             
-            // 更新密碼
-            const systemAdmins = JSON.parse(localStorage.getItem('system_admins') || '[]');
-            const admin = systemAdmins.find(a => a.email === email);
-            
-            if (admin) {
-                admin.password = newPassword;
-                admin.updatedAt = new Date().toISOString();
-                localStorage.setItem('system_admins', JSON.stringify(systemAdmins));
+            try {
+                console.log('開始更新密碼:', email);
                 
-                // 記錄密碼修改歷史
-                const passwordHistory = JSON.parse(localStorage.getItem('password_history') || '[]');
-                const currentUser = JSON.parse(sessionStorage.getItem('adminUser') || '{}');
-                passwordHistory.push({
-                    email: admin.email,
-                    role: admin.role,
-                    changedAt: new Date().toISOString(),
-                    changedBy: currentUser.email || 'system'
-                });
-                localStorage.setItem('password_history', JSON.stringify(passwordHistory));
+                // 首先嘗試更新 Firebase
+                if (window.adminAccountsService) {
+                    console.log('嘗試更新 Firebase 密碼...');
+                    
+                    // 獲取帳號資料
+                    const accountsData = await window.adminAccountsService.fetchAccountsData();
+                    const admin = accountsData.accounts.find(a => a.email === email);
+                    
+                    if (admin) {
+                        // 雜湊新密碼
+                        const hashedPassword = await window.adminAccountsService.hashPassword(newPassword);
+                        
+                        // 更新密碼雜湊
+                        admin.password_hash = hashedPassword;
+                        admin.updatedAt = new Date().toISOString();
+                        
+                        // 儲存到本地備份
+                        window.adminAccountsService.saveLocalBackup(accountsData);
+                        
+                        // 同步到 Firebase
+                        const syncResult = await window.adminAccountsService.syncToFirebase();
+                        if (syncResult) {
+                            console.log('Firebase 密碼更新成功');
+                            showMessage(`✅ 管理員 ${email} 密碼修改成功 (已同步到 Firebase)`);
+                        } else {
+                            console.warn('Firebase 同步失敗，但本地已更新');
+                            showMessage(`✅ 管理員 ${email} 密碼修改成功 (本地更新)`);
+                        }
+                        
+                        closePasswordDialog();
+                        loadAllAdmins(); // 重新載入列表
+                        return;
+                    }
+                }
                 
-                showMessage(`✅ 管理員 ${admin.email} 密碼修改成功`);
-                closePasswordDialog();
-                loadAllAdmins(); // 重新載入列表
+                // 備用方案：更新本地資料
+                console.log('使用本地備用方案更新密碼...');
+                const systemAdmins = JSON.parse(localStorage.getItem('system_admins') || '[]');
+                const admin = systemAdmins.find(a => a.email === email);
+                
+                if (admin) {
+                    admin.password = newPassword;
+                    admin.updatedAt = new Date().toISOString();
+                    localStorage.setItem('system_admins', JSON.stringify(systemAdmins));
+                    
+                    // 記錄密碼修改歷史
+                    const passwordHistory = JSON.parse(localStorage.getItem('password_history') || '[]');
+                    const currentUser = JSON.parse(sessionStorage.getItem('adminUser') || '{}');
+                    passwordHistory.push({
+                        email: admin.email,
+                        role: admin.role,
+                        changedAt: new Date().toISOString(),
+                        changedBy: currentUser.email || 'system'
+                    });
+                    localStorage.setItem('password_history', JSON.stringify(passwordHistory));
+                    
+                    showMessage(`✅ 管理員 ${admin.email} 密碼修改成功 (本地更新)`);
+                    closePasswordDialog();
+                    loadAllAdmins(); // 重新載入列表
+                } else {
+                    showMessage('找不到該管理員', 'error');
+                }
+                
+            } catch (error) {
+                console.error('密碼修改失敗:', error);
+                showMessage('密碼修改失敗: ' + error.message, 'error');
             }
         }
 
