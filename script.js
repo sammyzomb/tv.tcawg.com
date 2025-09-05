@@ -509,9 +509,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // 預設節目表（當 Contentful 沒有資料時使用）
+  // 預設節目表（當沒有真實節目時使用）
   function getDefaultSchedule(date) {
-    // 當沒有真實節目時，顯示「目前暫無節目」的卡片，但保持時間邏輯
     console.log('沒有找到真實節目資料，顯示暫無節目卡片');
     
     const currentHour = new Date().getHours();
