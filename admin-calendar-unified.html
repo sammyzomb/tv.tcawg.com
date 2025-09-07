@@ -1746,15 +1746,15 @@
           mp4File: document.getElementById('videoType').value === 'MP4' ? (document.getElementById('mp4File').files[0] ? document.getElementById('mp4File').files[0].name : null) : null
         };
 
-        // 使用真實整合系統
-        const result = await window.contentfulRealIntegration.uploadProgram(programData);
+        // 使用簡化的上架功能
+        const result = await uploadProgramSimple(programData);
 
         if (result.success) {
           const publishedPrograms = JSON.parse(localStorage.getItem('published_programs') || '[]');
           publishedPrograms.push({
             ...programData,
             publishedAt: new Date().toISOString(),
-            contentfulId: result.entry.sys.id,
+            contentfulId: result.entryId,
             simulated: result.simulated || false
           });
           localStorage.setItem('published_programs', JSON.stringify(publishedPrograms));
@@ -1771,10 +1771,13 @@
           if (event) {
             event.published = true;
             event.publishedAt = new Date().toISOString();
-            event.contentfulId = result.entry.sys.id;
+            event.contentfulId = result.entryId;
             saveEvents();
             renderCurrentView();
           }
+
+          // 關閉模態框
+          closeModal();
         } else {
           throw new Error('上架失敗');
         }
@@ -2292,10 +2295,16 @@
             'block': { 'en-US': getTimeBlock(programData.airTime) },
             'slotIndex': { 'en-US': programData.slotNumber || 0 },
             'isPremiere': { 'en-US': programData.isFirstBroadcast || false },
-            'notes': { 'en-US': programData.description || '' },
-            'video': { 'en-US': { sys: { type: 'Link', linkType: 'Entry', id: 'default-video-id' } } }
+            'notes': { 'en-US': programData.description || '' }
           }
         };
+
+        // 如果有影片資料，添加 video 欄位
+        if (programData.youtubeId || programData.mp4File) {
+          // 先創建一個預設的影片 Entry 或使用現有的
+          // 暫時跳過 video 欄位，因為需要先有影片 Entry
+          console.log('跳過 video 欄位，因為需要先創建影片 Entry');
+        }
         
         console.log('準備上架的 Entry 資料:', entryData);
 
