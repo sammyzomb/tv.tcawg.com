@@ -1396,10 +1396,10 @@
           throw new Error('Contentful SDK 未載入');
         }
 
-        // 創建 Contentful 客戶端
+        // 創建 Contentful 客戶端 (使用 Delivery Token 讀取資料)
         const client = contentful.createClient({
           space: 'os5wf90ljenp',
-          accessToken: 'CFPAT-hNLOfw3XdP5Hf_C3eYjI8294agakAK0Yo5Ew1Mjnsqs'
+          accessToken: 'CFPAT-hNLOfw3XdP5Hf_C3eYjI8294agakAK0Yo5Ew1Mjnsqs' // 暫時使用 Management Token，需要改為 Delivery Token
         });
 
         // 獲取所有節目
@@ -1456,6 +1456,12 @@
         return true;
       } catch (error) {
         console.error('❌ 從 Contentful 載入節目失敗:', error);
+        console.error('錯誤詳情:', {
+          message: error.message,
+          status: error.status,
+          statusText: error.statusText,
+          details: error.details
+        });
         showStatus('⚠️ 從 Contentful 載入失敗，使用本地資料', 'warning');
         throw error;
       }
@@ -2028,12 +2034,53 @@
     async function reloadFromContentful() {
       try {
         showStatus('正在從 Contentful 重新載入節目...', 'info');
+        
+        // 先測試連線
+        await testContentfulConnection();
+        
         await loadEventsFromContentful();
         renderCurrentView();
         showStatus('✅ 已從 Contentful 重新載入節目', 'success');
       } catch (error) {
         console.error('重新載入失敗:', error);
         showStatus('❌ 重新載入失敗：' + error.message, 'error');
+      }
+    }
+
+    // 測試 Contentful 連線
+    async function testContentfulConnection() {
+      try {
+        console.log('🔍 測試 Contentful 連線...');
+        
+        if (typeof contentful === 'undefined') {
+          throw new Error('Contentful SDK 未載入');
+        }
+
+        const client = contentful.createClient({
+          space: 'os5wf90ljenp',
+          accessToken: 'CFPAT-hNLOfw3XdP5Hf_C3eYjI8294agakAK0Yo5Ew1Mjnsqs'
+        });
+
+        // 測試獲取空間資訊
+        const space = await client.getSpace();
+        console.log('✅ Contentful 連線成功，空間:', space.name);
+        
+        // 測試獲取內容類型
+        const contentTypes = await client.getContentTypes();
+        console.log('✅ 內容類型數量:', contentTypes.items.length);
+        
+        // 檢查是否有 scheduleItem 內容類型
+        const scheduleItemType = contentTypes.items.find(ct => ct.sys.id === 'scheduleItem');
+        if (scheduleItemType) {
+          console.log('✅ 找到 scheduleItem 內容類型');
+        } else {
+          console.log('⚠️ 未找到 scheduleItem 內容類型');
+        }
+        
+        return true;
+      } catch (error) {
+        console.error('❌ Contentful 連線測試失敗:', error);
+        throw error;
       }
     }
 
