@@ -486,6 +486,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/contentful@latest/dist/contentful.browser.min.js"></script>
+  <script src="config.js"></script>
   <script>
     // 強力載入 Management SDK
     function loadManagementSDK() {
@@ -1399,8 +1400,8 @@
 
         // 創建 Contentful 客戶端 (使用 Delivery Token 讀取資料)
         const client = contentful.createClient({
-          space: 'os5wf90ljenp',
-          accessToken: 'lODH-WLwHwVZv7O4rFdBWjSnrzaQWGD4koeOZ1Dypj0' // 使用正確的 Delivery Token
+          space: window.CONTENTFUL_CONFIG?.SPACE_ID || 'os5wf90ljenp',
+          accessToken: window.CONTENTFUL_CONFIG?.DELIVERY_TOKEN || 'lODH-WLwHwVZv7O4rFdBWjSnrzaQWGD4koeOZ1Dypj0'
         });
 
         // 獲取所有節目
@@ -2064,8 +2065,8 @@
         }
 
         const client = contentful.createClient({
-          space: 'os5wf90ljenp',
-          accessToken: 'lODH-WLwHwVZv7O4rFdBWjSnrzaQWGD4koeOZ1Dypj0' // 使用正確的 Delivery Token
+          space: window.CONTENTFUL_CONFIG?.SPACE_ID || 'os5wf90ljenp',
+          accessToken: window.CONTENTFUL_CONFIG?.DELIVERY_TOKEN || 'lODH-WLwHwVZv7O4rFdBWjSnrzaQWGD4koeOZ1Dypj0'
         });
 
         // 測試獲取空間資訊
@@ -2416,11 +2417,11 @@
 
         // 創建 Management 客戶端
         const managementClient = contentfulManagement.createClient({
-          accessToken: 'CFPAT-hNLOfw3XdP5Hf_C3eYjI8294agakAK0Yo5Ew1Mjnsqs'
+          accessToken: window.CONTENTFUL_CONFIG?.MANAGEMENT_TOKEN || window.CONTENTFUL_MANAGEMENT_TOKEN || 'CFPAT-hNLOfw3XdP5Hf_C3eYjI8294agakAK0Yo5Ew1Mjnsqs'
         });
 
         // 獲取 Space
-        const space = await managementClient.getSpace('os5wf90ljenp');
+        const space = await managementClient.getSpace(window.CONTENTFUL_CONFIG?.SPACE_ID || 'os5wf90ljenp');
         
         // 獲取 Environment
         const environment = await space.getEnvironment('master');
