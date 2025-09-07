@@ -1402,7 +1402,7 @@
         // 創建 Contentful 客戶端 (使用 Delivery Token 讀取資料)
         const client = contentful.createClient({
           space: window.CONTENTFUL_CONFIG?.SPACE_ID || 'os5wf90ljenp',
-          accessToken: window.CONTENTFUL_CONFIG?.DELIVERY_TOKEN || 'lODH-WLwHwVZv7O4rFdBWjSnrzaQWGD4koeOZ1Dypj0'
+          accessToken: window.CONTENTFUL_CONFIG?.DELIVERY_TOKEN
         });
 
         // 獲取所有節目
@@ -1420,22 +1420,29 @@
         response.items.forEach(item => {
           const fields = item.fields;
           const airDate = fields.airDate || new Date().toISOString().split('T')[0];
-          const airTime = fields.block || '12-18';
           
-          // 轉換時段為具體時間
-          const time = convertBlockToTime(airTime);
+          // 從備註中提取具體時間，格式為 [時間:XX:XX]
+          const notes = fields.notes || '';
+          const timeMatch = notes.match(/\[時間:(\d{2}:\d{2})\]/);
+          const airTime = timeMatch ? timeMatch[1] : convertBlockToTime(fields.block || '12-18');
+          
+          // 使用具體時間，如果沒有則轉換時段
+          const time = airTime;
           
           if (!events[airDate]) {
             events[airDate] = [];
           }
 
+          // 清理描述，移除時間標記
+          const cleanDescription = notes.replace(/\[時間:\d{2}:\d{2}\]/, '').trim();
+          
           events[airDate].push({
             id: item.sys.id,
             title: fields.title || '未命名節目',
             time: time,
             duration: 30,
             category: '旅遊節目',
-            description: fields.notes || '',
+            description: cleanDescription,
             videoType: 'youtube',
             videoId: '',
             status: 'published',
@@ -1474,9 +1481,9 @@
     function convertBlockToTime(block) {
       switch (block) {
         case '00-06': return '02:00';
-        case '06-12': return '08:00';
+        case '06-12': return '11:30'; // 修復：從 08:00 改為 11:30
         case '12-18': return '14:00';
-        case '18-24': return '20:00';
+        case '18-24': return '22:00';
         default: return '14:00';
       }
     }
@@ -1557,13 +1564,20 @@
         let successCount = 0;
         let failCount = 0;
 
+        let skipCount = 0;
+        
         for (const program of allPrograms) {
           try {
             console.log('正在上架節目:', program);
             const result = await uploadProgramSimple(program);
             if (result.success) {
-              successCount++;
-              console.log('✅ 節目上架成功:', program.title, result.entryId);
+              if (result.skipped) {
+                skipCount++;
+                console.log('⏭️ 節目已存在，跳過:', program.title, result.entryId);
+              } else {
+                successCount++;
+                console.log('✅ 節目上架成功:', program.title, result.entryId);
+              }
             } else {
               failCount++;
               console.error('❌ 同步節目失敗:', program.title, result.error);
@@ -1575,12 +1589,16 @@
         }
 
         if (failCount === 0) {
-          showStatus(`✅ 所有 ${successCount} 個節目同步成功到 Contentful！`, 'success');
+          if (skipCount > 0) {
+            showStatus(`✅ 同步完成：${successCount} 個新節目上架成功，${skipCount} 個重複節目已跳過`, 'success');
+          } else {
+            showStatus(`✅ 所有 ${successCount} 個節目同步成功到 Contentful！`, 'success');
+          }
         } else {
-          showStatus(`⚠️ 同步完成：${successCount} 成功，${failCount} 失敗`, 'warning');
+          showStatus(`⚠️ 同步完成：${successCount} 成功，${skipCount} 跳過，${failCount} 失敗`, 'warning');
         }
 
-        console.log('同步結果:', { successCount, failCount });
+        console.log('同步結果:', { successCount, skipCount, failCount });
 
       } catch (error) {
         console.error('批量同步失敗:', error);
@@ -2067,7 +2085,7 @@
 
         const client = contentful.createClient({
           space: window.CONTENTFUL_CONFIG?.SPACE_ID || 'os5wf90ljenp',
-          accessToken: window.CONTENTFUL_CONFIG?.DELIVERY_TOKEN || 'lODH-WLwHwVZv7O4rFdBWjSnrzaQWGD4koeOZ1Dypj0'
+          accessToken: window.CONTENTFUL_CONFIG?.DELIVERY_TOKEN
         });
 
         // 測試獲取空間資訊
@@ -2381,7 +2399,7 @@
 
         // 創建 Management 客戶端
         const managementClient = contentfulManagement.createClient({
-          accessToken: window.CONTENTFUL_CONFIG?.MANAGEMENT_TOKEN || window.CONTENTFUL_MANAGEMENT_TOKEN || 'CFPAT-hNLOfw3XdP5Hf_C3eYjI8294agakAK0Yo5Ew1Mjnsqs'
+          accessToken: window.CONTENTFUL_CONFIG?.MANAGEMENT_TOKEN || window.CONTENTFUL_MANAGEMENT_TOKEN
         });
 
         // 獲取 Space
@@ -2550,7 +2568,7 @@
 
         // 創建 Management 客戶端
         const managementClient = contentfulManagement.createClient({
-          accessToken: window.CONTENTFUL_CONFIG?.MANAGEMENT_TOKEN || window.CONTENTFUL_MANAGEMENT_TOKEN || 'CFPAT-hNLOfw3XdP5Hf_C3eYjI8294agakAK0Yo5Ew1Mjnsqs'
+          accessToken: window.CONTENTFUL_CONFIG?.MANAGEMENT_TOKEN || window.CONTENTFUL_MANAGEMENT_TOKEN
         });
 
         // 獲取 Space
@@ -2559,15 +2577,50 @@
         // 獲取 Environment
         const environment = await space.getEnvironment('master');
         
+        // 檢查是否已存在相同的節目
+        const airDate = programData.airDate || new Date().toISOString().split('T')[0];
+        const block = getTimeBlock(programData.airTime);
+        const slotIndex = programData.slotNumber || 0;
+        const airTime = programData.airTime; // 具體時間，如 "23:00"
+        
+        console.log('檢查重複節目（同一個具體時間段只能有一個節目）:', { title: programData.title, airDate, airTime, block, slotIndex });
+        
+        // 查詢是否已存在相同日期、具體時間的節目（同一個具體時間段只能有一個節目）
+        const existingEntries = await environment.getEntries({
+          content_type: 'scheduleItem',
+          'fields.airDate': airDate,
+          limit: 100 // 增加限制以檢查所有該日期的節目
+        });
+        
+        // 檢查是否有相同具體時間的節目
+        const duplicateProgram = existingEntries.items.find(entry => {
+          const entryNotes = entry.fields.notes?.['en-US'] || '';
+          // 從備註中提取時間，格式為 [時間:XX:XX]
+          const timeMatch = entryNotes.match(/\[時間:(\d{2}:\d{2})\]/);
+          const entryAirTime = timeMatch ? timeMatch[1] : null;
+          // 如果具體時間相同，則認為是重複
+          return entryAirTime === airTime;
+        });
+        
+        if (duplicateProgram) {
+          console.log('⚠️ 發現重複時間段節目，跳過上架:', duplicateProgram.sys.id, duplicateProgram.fields.title?.['en-US'], '時間:', airTime, '時段區塊:', block);
+          return {
+            success: true,
+            entryId: duplicateProgram.sys.id,
+            message: `該時間段 ${airTime} 已有節目，跳過重複上架`,
+            skipped: true
+          };
+        }
+        
         // 準備 Entry 數據
         const entryData = {
           fields: {
             'title': { 'en-US': programData.title || '未命名節目' },
-            'airDate': { 'en-US': programData.airDate || new Date().toISOString().split('T')[0] },
-            'block': { 'en-US': getTimeBlock(programData.airTime) },
-            'slotIndex': { 'en-US': programData.slotNumber || 0 },
+            'airDate': { 'en-US': airDate },
+            'block': { 'en-US': block },
+            'slotIndex': { 'en-US': slotIndex },
             'isPremiere': { 'en-US': programData.isFirstBroadcast || false },
-            'notes': { 'en-US': programData.description || '' }
+            'notes': { 'en-US': (programData.description || '') + ` [時間:${airTime}]` } // 將具體時間存儲在備註中
           }
         };
 

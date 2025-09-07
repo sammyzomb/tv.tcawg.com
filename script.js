@@ -11,7 +11,7 @@ function escapeHtml(s='') {
 // 初始化 Contentful client
 const contentfulClient = contentful.createClient({
   space: 'os5wf90ljenp',
-  accessToken: 'lODH-WLwHwVZv7O4rFdBWjSnrzaQWGD4koeOZ1Dypj0'
+  accessToken: window.CONTENTFUL_CONFIG?.DELIVERY_TOKEN || 'lODH-WLwHwVZv7O4rFdBWjSnrzaQWGD4koeOZ1Dypj0'
 });
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -388,12 +388,64 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       
       // 優先檢查管理後台添加的節目
-      const adminSchedule = localStorage.getItem('currentSchedule');
-      if (adminSchedule) {
+      const calendarEvents = localStorage.getItem('calendar_events');
+      if (calendarEvents) {
         try {
-          const adminData = JSON.parse(adminSchedule);
-          if (adminData.today && adminData.today.date === today && adminData.today.schedule.length > 0) {
-            scheduleData = adminData;
+          const eventsData = JSON.parse(calendarEvents);
+          const todayEvents = eventsData[today] || [];
+          
+          if (todayEvents.length > 0) {
+            // 將 localStorage 中的節目轉換為節目表格式
+            const schedulePrograms = todayEvents.map(event => {
+              let timeString;
+              
+              // 優先使用 time 欄位
+              if (event.time) {
+                timeString = event.time;
+              } else {
+                // 從備註中提取具體時間，格式為 [時間:XX:XX]
+                const notes = event.notes || '';
+                const timeMatch = notes.match(/\[時間:(\d{2}:\d{2})\]/);
+                
+                if (timeMatch) {
+                  // 使用備註中的具體時間
+                  timeString = timeMatch[1];
+                } else {
+                  // 如果沒有具體時間，使用時段轉換
+                  const block = event.block || '12-18';
+                  switch (block) {
+                    case '00-06': timeString = '02:00'; break;
+                    case '06-12': timeString = '11:30'; break;
+                    case '12-18': timeString = '14:00'; break;
+                    case '18-24': timeString = '22:00'; break;
+                    default: timeString = '14:00';
+                  }
+                }
+              }
+              
+              return {
+                time: timeString,
+                title: event.title || '未命名節目',
+                duration: event.duration || '30',
+                category: event.category || '旅遊',
+                description: event.description || '',
+                thumbnail: event.thumbnail || 'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop',
+                youtubeId: event.youtubeId || '',
+                status: event.isPremiere ? '首播' : '重播',
+                tags: event.tags || []
+              };
+            });
+            
+            scheduleData = {
+              today: {
+                date: today,
+                dayOfWeek: getDayOfWeek(taiwanTime),
+                month: `${taiwanTime.getMonth() + 1}月`,
+                day: `${taiwanTime.getDate()}日`,
+                schedule: schedulePrograms
+              }
+            };
+            
             console.log('使用管理後台添加的節目表，共', scheduleData.today.schedule.length, '個節目');
             updateScheduleDisplay();
             startTimeUpdates();
@@ -430,11 +482,25 @@ document.addEventListener('DOMContentLoaded', () => {
             
             return fields.airDate === today && !isRecommendedProgram;
           }).map(item => {
-            // 根據 slotIndex 計算時間 (0-11 對應 12:00-17:30，每30分鐘一個時段)
-            const slotIndex = item.fields.slotIndex || 0;
-            const hour = 12 + Math.floor(slotIndex / 2);
-            const minute = (slotIndex % 2) * 30;
-            const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+            // 從備註中提取具體時間，格式為 [時間:XX:XX]
+            const notes = item.fields.notes || '';
+            const timeMatch = notes.match(/\[時間:(\d{2}:\d{2})\]/);
+            let timeString;
+            
+            if (timeMatch) {
+              // 使用備註中的具體時間
+              timeString = timeMatch[1];
+            } else {
+              // 如果沒有具體時間，使用時段轉換
+              const block = item.fields.block || '12-18';
+              switch (block) {
+                case '00-06': timeString = '02:00'; break;
+                case '06-12': timeString = '11:30'; break;
+                case '12-18': timeString = '14:00'; break;
+                case '18-24': timeString = '22:00'; break;
+                default: timeString = '14:00';
+              }
+            }
             
             // 從 video 欄位獲取影片資訊
             const video = item.fields.video?.fields || {};
@@ -522,28 +588,17 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const currentHour = new Date().getHours();
     const startHour = Math.max(12, currentHour - 1); // 從當前時間前1小時開始，最少從12點開始
-    const endHour = startHour + 12; // 顯示12個小時
     
     const programs = [];
     
-    for (let hour = startHour; hour < endHour; hour++) {
-      const time30 = `${hour.toString().padStart(2, '0')}:30`;
-      const time00 = `${hour.toString().padStart(2, '0')}:00`;
+    // 生成12個小時的節目（24個時段，每小時2個）
+    for (let i = 0; i < 24; i++) {
+      const hour = (startHour + Math.floor(i / 2)) % 24; // 處理跨日情況
+      const minute = (i % 2) * 30; // 0或30分鐘
+      const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
       
       programs.push({
-        time: time00,
-        title: "目前暫無節目",
-        duration: "30",
-        category: "空檔",
-        description: "此時段暫無節目安排",
-        thumbnail: "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop",
-        youtubeId: "",
-        status: "空檔",
-        tags: []
-      });
-      
-      programs.push({
-        time: time30,
+        time: timeString,
         title: "目前暫無節目",
         duration: "30",
         category: "空檔",
@@ -584,11 +639,52 @@ document.addEventListener('DOMContentLoaded', () => {
     if (scheduleListEl && today.schedule) {
       scheduleListEl.innerHTML = '';
       
-      // 過濾節目：只顯示當前和未來節目，限制為12個小時
+      // 過濾節目：顯示當前和未來節目，以及跨日時段的節目
       const visiblePrograms = today.schedule.filter(shouldShowProgram);
       
-      // 限制顯示12個小時的節目（24個節目，每小時2個）
-      const limitedPrograms = visiblePrograms.slice(0, 24);
+      // 如果可見節目少於24個，補充「暫無節目」卡片以確保顯示完整的12個小時
+      let limitedPrograms = visiblePrograms.slice(0, 24);
+      
+      if (limitedPrograms.length < 24) {
+        // 生成完整的12個小時節目表（24個時段）
+        // 從當前時間開始顯示，確保第一個卡片是當前時段
+        const taiwanTime = getTaiwanTime();
+        const currentHour = taiwanTime.getHours();
+        const currentMinute = taiwanTime.getMinutes();
+        
+        // 計算當前時段（每30分鐘一個時段）
+        const currentTimeSlot = currentMinute < 30 ? 0 : 1;
+        const startHour = currentHour;
+        
+        const fullSchedule = [];
+        for (let i = 0; i < 24; i++) {
+          const hour = (startHour + Math.floor(i / 2)) % 24;
+          const minute = ((currentTimeSlot + i) % 2) * 30;
+          const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+          
+          // 檢查是否已有該時段的節目
+          const existingProgram = visiblePrograms.find(p => p.time === timeString);
+          
+          if (existingProgram) {
+            fullSchedule.push(existingProgram);
+          } else {
+            // 添加「暫無節目」卡片
+            fullSchedule.push({
+              time: timeString,
+              title: "目前暫無節目",
+              duration: "30",
+              category: "空檔",
+              description: "此時段暫無節目安排",
+              thumbnail: "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop",
+              youtubeId: "",
+              status: "空檔",
+              tags: []
+            });
+          }
+        }
+        
+        limitedPrograms = fullSchedule;
+      }
       
       console.log('節目表數據:', today.schedule);
       console.log('可見節目:', visiblePrograms);
@@ -885,10 +981,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const programStartTime = programHour * 60 + programMinute;
     const programEndTime = programStartTime + parseInt(program.duration);
     
+    // 處理跨日情況：如果節目時間小於當前時間，可能是隔天的節目
+    let adjustedProgramStartTime = programStartTime;
+    if (programStartTime < currentTime && programStartTime < 12 * 60) { // 如果節目時間是凌晨時段且小於當前時間
+      adjustedProgramStartTime += 24 * 60; // 加24小時，視為隔天節目
+    }
+    
     if (currentTime >= programStartTime && currentTime < programEndTime) {
       return 'now-playing'; // 現正播放
-    } else if (currentTime < programStartTime) {
-      return 'upcoming'; // 即將播出
+    } else if (currentTime < adjustedProgramStartTime) {
+      return 'upcoming'; // 即將播出（包括隔天節目）
     } else {
       return 'ended'; // 已結束
     }
