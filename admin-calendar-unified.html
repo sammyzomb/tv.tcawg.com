@@ -346,6 +346,7 @@
         <button class="today-btn" onclick="goToToday()">今天</button>
         <button class="btn" style="background: #28a745; margin-left: 10px;" onclick="syncAllToContentful()">🔄 同步到 Contentful</button>
         <button class="btn" style="background: #dc3545; margin-left: 10px;" onclick="uploadSelectedPrograms()">📺 上架選中節目</button>
+        <button class="btn" style="background: #17a2b8; margin-left: 10px;" onclick="reloadFromContentful()">📥 從 Contentful 重新載入</button>
         <button class="btn" style="background: #6f42c1; margin-left: 10px;" onclick="goToDashboard()">🏠 主控台</button>
       </div>
     </div>
@@ -1367,9 +1368,107 @@
     }
 
     function loadEvents() {
-      const saved = localStorage.getItem('calendar_events');
-      if (saved) {
-        events = JSON.parse(saved);
+      // 先嘗試從 Contentful 載入
+      loadEventsFromContentful().then(() => {
+        // 如果 Contentful 載入失敗，降級到 localStorage
+        const saved = localStorage.getItem('calendar_events');
+        if (saved) {
+          events = JSON.parse(saved);
+          console.log('從 localStorage 載入節目資料');
+        }
+      }).catch(() => {
+        // Contentful 載入失敗，使用 localStorage
+        const saved = localStorage.getItem('calendar_events');
+        if (saved) {
+          events = JSON.parse(saved);
+          console.log('Contentful 載入失敗，從 localStorage 載入節目資料');
+        }
+      });
+    }
+
+    // 從 Contentful 載入節目
+    async function loadEventsFromContentful() {
+      try {
+        console.log('正在從 Contentful 載入節目...');
+        
+        // 檢查 Contentful 是否可用
+        if (typeof contentful === 'undefined') {
+          throw new Error('Contentful SDK 未載入');
+        }
+
+        // 創建 Contentful 客戶端
+        const client = contentful.createClient({
+          space: 'os5wf90ljenp',
+          accessToken: 'CFPAT-hNLOfw3XdP5Hf_C3eYjI8294agakAK0Yo5Ew1Mjnsqs'
+        });
+
+        // 獲取所有節目
+        const response = await client.getEntries({
+          content_type: 'scheduleItem',
+          order: 'fields.airDate'
+        });
+
+        console.log(`從 Contentful 載入 ${response.items.length} 個節目`);
+
+        // 清空現有事件
+        events = {};
+
+        // 轉換 Contentful 資料為本地格式
+        response.items.forEach(item => {
+          const fields = item.fields;
+          const airDate = fields.airDate || new Date().toISOString().split('T')[0];
+          const airTime = fields.block || '12-18';
+          
+          // 轉換時段為具體時間
+          const time = convertBlockToTime(airTime);
+          
+          if (!events[airDate]) {
+            events[airDate] = [];
+          }
+
+          events[airDate].push({
+            id: item.sys.id,
+            title: fields.title || '未命名節目',
+            time: time,
+            duration: 30,
+            category: '旅遊節目',
+            description: fields.notes || '',
+            videoType: 'youtube',
+            videoId: '',
+            status: 'published',
+            published: true,
+            publishedAt: item.sys.createdAt,
+            contentfulId: item.sys.id
+          });
+        });
+
+        // 按時間排序
+        Object.keys(events).forEach(date => {
+          events[date].sort((a, b) => a.time.localeCompare(b.time));
+        });
+
+        // 儲存到 localStorage 作為備份
+        saveEvents();
+        
+        console.log('✅ 從 Contentful 載入節目成功');
+        showStatus('✅ 已從 Contentful 載入節目', 'success');
+        
+        return true;
+      } catch (error) {
+        console.error('❌ 從 Contentful 載入節目失敗:', error);
+        showStatus('⚠️ 從 Contentful 載入失敗，使用本地資料', 'warning');
+        throw error;
+      }
+    }
+
+    // 轉換時段為具體時間
+    function convertBlockToTime(block) {
+      switch (block) {
+        case '00-06': return '02:00';
+        case '06-12': return '08:00';
+        case '12-18': return '14:00';
+        case '18-24': return '20:00';
+        default: return '14:00';
       }
     }
 
@@ -1920,6 +2019,19 @@
     // 前往主控台
     function goToDashboard() {
       window.location.href = 'admin-dashboard.html';
+    }
+
+    // 從 Contentful 重新載入節目
+    async function reloadFromContentful() {
+      try {
+        showStatus('正在從 Contentful 重新載入節目...', 'info');
+        await loadEventsFromContentful();
+        renderCurrentView();
+        showStatus('✅ 已從 Contentful 重新載入節目', 'success');
+      } catch (error) {
+        console.error('重新載入失敗:', error);
+        showStatus('❌ 重新載入失敗：' + error.message, 'error');
+      }
     }
 
 
