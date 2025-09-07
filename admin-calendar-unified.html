@@ -2367,6 +2367,45 @@
       }
     }
 
+    // 創建或獲取預設影片 Entry
+    async function createOrGetDefaultVideoEntry(managementClient, space, environment) {
+      try {
+        // 先嘗試獲取現有的影片 Entry
+        const existingVideos = await environment.getEntries({
+          content_type: 'videoAsset',
+          limit: 1
+        });
+        
+        if (existingVideos.items.length > 0) {
+          console.log('找到現有影片 Entry:', existingVideos.items[0].sys.id);
+          return existingVideos.items[0].sys.id;
+        }
+        
+        // 如果沒有現有的，創建一個預設的影片 Entry
+        console.log('創建預設影片 Entry...');
+        const videoEntryData = {
+          fields: {
+            'title': { 'en-US': '預設影片' },
+            'videoFile': { 'en-US': { sys: { type: 'Link', linkType: 'Asset', id: 'placeholder-asset' } } },
+            'duration': { 'en-US': 1800 }, // 30 分鐘
+            'category': { 'en-US': '預設' },
+            'uploadDate': { 'en-US': new Date().toISOString() }
+          }
+        };
+        
+        const videoEntry = await environment.createEntry('videoAsset', videoEntryData);
+        await videoEntry.publish();
+        
+        console.log('創建預設影片 Entry 成功:', videoEntry.sys.id);
+        return videoEntry.sys.id;
+        
+      } catch (error) {
+        console.error('創建或獲取影片 Entry 失敗:', error);
+        // 如果創建失敗，返回 null，讓上架函數決定如何處理
+        return null;
+      }
+    }
+
     // 簡化的上架功能（不依賴 contentful-real-only.js）
     async function uploadProgramSimple(programData) {
       try {
@@ -2398,18 +2437,24 @@
           }
         };
 
-        // 添加 video 欄位（Contentful 要求必填）
-        // 使用一個預設的影片 Entry ID，或者創建一個臨時的
-        const defaultVideoId = 'default-video-placeholder';
-        entryData.fields['video'] = { 
-          'en-US': { 
-            sys: { 
-              type: 'Link', 
-              linkType: 'Entry', 
-              id: defaultVideoId 
+        // 創建或獲取預設影片 Entry
+        const videoEntryId = await createOrGetDefaultVideoEntry(managementClient, space, environment);
+        
+        if (videoEntryId) {
+          // 添加 video 欄位
+          entryData.fields['video'] = { 
+            'en-US': { 
+              sys: { 
+                type: 'Link', 
+                linkType: 'Entry', 
+                id: videoEntryId 
+              } 
             } 
-          } 
-        };
+          };
+          console.log('使用影片 Entry ID:', videoEntryId);
+        } else {
+          console.log('無法創建影片 Entry，跳過 video 欄位');
+        }
         
         console.log('準備上架的 Entry 資料:', entryData);
 
