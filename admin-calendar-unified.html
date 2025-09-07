@@ -1374,9 +1374,9 @@
       // 先嘗試從 Contentful 載入
       loadEventsFromContentful().then(() => {
         // 如果 Contentful 載入失敗，降級到 localStorage
-        const saved = localStorage.getItem('calendar_events');
-        if (saved) {
-          events = JSON.parse(saved);
+      const saved = localStorage.getItem('calendar_events');
+      if (saved) {
+        events = JSON.parse(saved);
           console.log('從 localStorage 載入節目資料');
         }
       }).catch(() => {
@@ -2393,7 +2393,7 @@
         // 檢查內容類型
         const contentTypes = await checkAvailableContentTypes(environment);
         
-        // 顯示結果
+        // 顯示結果在頁面上
         let message = `找到 ${contentTypes.length} 個內容類型：\n\n`;
         contentTypes.forEach(ct => {
           message += `📋 ${ct.name} (${ct.sys.id})\n`;
@@ -2401,8 +2401,44 @@
         });
         
         console.log('Contentful 內容類型:', contentTypes);
-        alert(message);
-        showStatus('✅ 內容類型檢查完成', 'success');
+        console.log('=== 內容類型詳細資訊 ===');
+        console.log(message);
+        
+        // 在狀態欄顯示結果
+        showStatus(`✅ 找到 ${contentTypes.length} 個內容類型，詳情請查看控制台`, 'success');
+        
+        // 在頁面上創建一個顯示區域
+        let displayDiv = document.getElementById('contentTypesDisplay');
+        if (!displayDiv) {
+          displayDiv = document.createElement('div');
+          displayDiv.id = 'contentTypesDisplay';
+          displayDiv.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border: 2px solid #007bff;
+            border-radius: 8px;
+            padding: 20px;
+            max-width: 80%;
+            max-height: 80%;
+            overflow-y: auto;
+            z-index: 10000;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            font-family: monospace;
+            white-space: pre-line;
+          `;
+          document.body.appendChild(displayDiv);
+        }
+        
+        displayDiv.innerHTML = `
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h3 style="margin: 0; color: #007bff;">Contentful 內容類型</h3>
+            <button onclick="document.getElementById('contentTypesDisplay').remove()" style="background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">關閉</button>
+          </div>
+          <div style="max-height: 400px; overflow-y: auto;">${message}</div>
+        `;
         
       } catch (error) {
         console.error('檢查內容類型失敗:', error);
