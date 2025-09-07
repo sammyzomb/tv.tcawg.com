@@ -344,12 +344,8 @@
         <div class="current-date" id="currentDate">2024年8月</div>
         <button class="nav-btn" onclick="nextPeriod()">▶</button>
         <button class="today-btn" onclick="goToToday()">今天</button>
-        <button class="btn" style="background: #6c757d; margin-left: 10px;" onclick="debugEvents()">🔍 調試節目</button>
         <button class="btn" style="background: #28a745; margin-left: 10px;" onclick="syncAllToContentful()">🔄 同步到 Contentful</button>
         <button class="btn" style="background: #dc3545; margin-left: 10px;" onclick="uploadSelectedPrograms()">📺 上架選中節目</button>
-        <button class="btn" style="background: #17a2b8; margin-left: 10px;" onclick="checkSystemStatus()">🔍 檢查系統狀態</button>
-        <button class="btn" style="background: #fd7e14; margin-left: 10px;" onclick="forceLoadManagementSDK()">🔧 強制載入 Management SDK</button>
-        <button class="btn" style="background: #6f42c1; margin-left: 10px;" onclick="openMainConsole()">🚀 Contentful 主控台</button>
         <button class="btn" style="background: #6f42c1; margin-left: 10px;" onclick="goToDashboard()">🏠 主控台</button>
       </div>
     </div>
@@ -1926,95 +1922,6 @@
       window.location.href = 'admin-dashboard.html';
     }
 
-    // 強制載入 Management SDK
-    async function forceLoadManagementSDK() {
-      try {
-        showStatus('正在強制載入 Management SDK...', 'info');
-        console.log('🔧 開始強制載入 Management SDK...');
-        
-        // 檢查是否已經載入
-        if (typeof contentfulManagement !== 'undefined') {
-          showStatus('✅ Management SDK 已經載入', 'success');
-          return;
-        }
-
-        // 先嘗試使用 fetch 預載入
-        console.log('🔄 嘗試使用 fetch 預載入...');
-        try {
-          const response = await fetch('https://cdn.jsdelivr.net/npm/contentful-management@10.0.0/dist/contentful-management.browser.min.js');
-          if (response.ok) {
-            const scriptContent = await response.text();
-            const script = document.createElement('script');
-            script.textContent = scriptContent;
-            document.head.appendChild(script);
-            
-            // 等待一下讓腳本執行
-            await new Promise(resolve => setTimeout(resolve, 500));
-            
-            if (typeof contentfulManagement !== 'undefined') {
-              window.contentfulManagement = contentfulManagement;
-              showStatus('✅ Management SDK 通過 fetch 載入成功！', 'success');
-              return;
-            }
-          }
-        } catch (fetchError) {
-          console.log('❌ fetch 載入失敗，嘗試傳統方式:', fetchError.message);
-        }
-
-        // 嘗試多個 CDN 源（使用固定版本號以提高穩定性）
-        const cdnSources = [
-          'https://cdn.jsdelivr.net/npm/contentful-management@10.0.0/dist/contentful-management.browser.min.js',
-          'https://unpkg.com/contentful-management@10.0.0/dist/contentful-management.browser.min.js',
-          'https://cdnjs.cloudflare.com/ajax/libs/contentful-management/10.0.0/contentful-management.browser.min.js',
-          'https://cdn.jsdelivr.net/npm/contentful-management@9.0.0/dist/contentful-management.browser.min.js',
-          'https://unpkg.com/contentful-management@9.0.0/dist/contentful-management.browser.min.js'
-        ];
-
-        for (let i = 0; i < cdnSources.length; i++) {
-          try {
-            console.log(`🔄 嘗試載入 CDN ${i + 1}: ${cdnSources[i]}`);
-            showStatus(`正在嘗試載入 CDN ${i + 1}...`, 'info');
-            
-            await new Promise((resolve, reject) => {
-              const script = document.createElement('script');
-              script.src = cdnSources[i];
-              
-              script.onload = function() {
-                setTimeout(() => {
-                  if (typeof contentfulManagement !== 'undefined') {
-                    console.log(`✅ Management SDK 從 CDN ${i + 1} 載入成功`);
-                    window.contentfulManagement = contentfulManagement;
-                    resolve();
-                  } else {
-                    reject(new Error(`CDN ${i + 1} 載入失敗`));
-                  }
-                }, 200);
-              };
-
-              script.onerror = function() {
-                reject(new Error(`CDN ${i + 1} 載入失敗`));
-              };
-
-              document.head.appendChild(script);
-            });
-
-            // 如果成功載入，跳出循環
-            showStatus('✅ Management SDK 載入成功！', 'success');
-            return;
-
-          } catch (error) {
-            console.log(`❌ CDN ${i + 1} 載入失敗:`, error.message);
-            if (i === cdnSources.length - 1) {
-              throw new Error('所有 CDN 源都載入失敗');
-            }
-          }
-        }
-
-      } catch (error) {
-        console.error('❌ 強制載入 Management SDK 失敗:', error);
-        showStatus('❌ Management SDK 載入失敗：' + error.message, 'error');
-      }
-    }
 
     // 上架選中的節目到 Contentful
     async function uploadSelectedPrograms() {
@@ -2232,6 +2139,20 @@
       }
     }
 
+    // 將時間轉換為時段範圍
+    function getTimeBlock(timeString) {
+      if (!timeString) return '12-18';
+      
+      const hour = parseInt(timeString.split(':')[0]);
+      
+      if (hour >= 0 && hour < 6) return '00-06';
+      if (hour >= 6 && hour < 12) return '06-12';
+      if (hour >= 12 && hour < 18) return '12-18';
+      if (hour >= 18 && hour < 24) return '18-24';
+      
+      return '12-18'; // 預設值
+    }
+
     // 簡化的上架功能（不依賴 contentful-real-only.js）
     async function uploadProgramSimple(programData) {
       try {
@@ -2254,12 +2175,13 @@
         // 準備 Entry 數據
         const entryData = {
           fields: {
-            '顯示名稱': { 'zh-TW': programData.title || '未命名節目' },
-            '播出日期': { 'zh-TW': programData.airDate || new Date().toISOString().split('T')[0] },
-            '時段': { 'zh-TW': programData.airTime || '14:00' },
-            '槽位序號 (0-11)': { 'zh-TW': programData.slotNumber || 0 },
-            '是否首播': { 'zh-TW': programData.isFirstBroadcast || false },
-            '備註': { 'zh-TW': programData.notes || '' }
+            'title': { 'en-US': programData.title || '未命名節目' },
+            'airDate': { 'en-US': programData.airDate || new Date().toISOString().split('T')[0] },
+            'block': { 'en-US': getTimeBlock(programData.airTime) },
+            'slotIndex': { 'en-US': programData.slotNumber || 0 },
+            'isPremiere': { 'en-US': programData.isFirstBroadcast || false },
+            'notes': { 'en-US': programData.description || '' },
+            'video': { 'en-US': { sys: { type: 'Link', linkType: 'Entry', id: 'default-video-id' } } }
           }
         };
         
