@@ -344,6 +344,7 @@
         <div class="current-date" id="currentDate">2024年8月</div>
         <button class="nav-btn" onclick="nextPeriod()">▶</button>
         <button class="today-btn" onclick="goToToday()">今天</button>
+        <button class="btn" style="background: #ffc107; margin-left: 10px;" onclick="clearOldTestData()">🧹 清理測試資料</button>
         <button class="btn" style="background: #28a745; margin-left: 10px;" onclick="syncAllToContentful()">🔄 同步到 Contentful</button>
         <button class="btn" style="background: #dc3545; margin-left: 10px;" onclick="uploadSelectedPrograms()">📺 上架選中節目</button>
         <button class="btn" style="background: #17a2b8; margin-left: 10px;" onclick="reloadFromContentful()">📥 從 Contentful 重新載入</button>
@@ -1506,6 +1507,12 @@
     async function syncAllToContentful() {
       try {
         showStatus('正在檢查 Contentful 真實連線...', 'info');
+        
+        // 先清理測試資料
+        const removedCount = clearOldTestData();
+        if (removedCount > 0) {
+          showStatus(`已清理 ${removedCount} 個測試節目，繼續同步...`, 'info');
+        }
 
         // 檢查 Management SDK 是否載入
         if (typeof contentfulManagement === 'undefined') {
@@ -2315,6 +2322,51 @@
       return '12-18'; // 預設值
     }
 
+    // 清理舊的測試資料
+    function clearOldTestData() {
+      try {
+        const calendarEvents = JSON.parse(localStorage.getItem('calendar_events') || '{}');
+        let removedCount = 0;
+        
+        Object.keys(calendarEvents).forEach(date => {
+          calendarEvents[date] = calendarEvents[date].filter(event => {
+            // 檢查是否為測試資料
+            const isTestData = 
+              event.title.includes('加拿大') || 
+              event.title.includes('極光') || 
+              event.title.includes('寒冰') || 
+              event.title.includes('捕魚') ||
+              event.title.includes('測試') ||
+              event.title.includes('demo') ||
+              event.title.includes('Demo');
+            
+            if (isTestData) {
+              removedCount++;
+              console.log('移除測試資料:', event.title);
+              return false;
+            }
+            return true;
+          });
+        });
+        
+        // 儲存清理後的資料
+        localStorage.setItem('calendar_events', JSON.stringify(calendarEvents));
+        
+        if (removedCount > 0) {
+          showStatus(`已清理 ${removedCount} 個測試節目資料`, 'success');
+          console.log(`已清理 ${removedCount} 個測試節目資料`);
+        } else {
+          showStatus('沒有找到需要清理的測試資料', 'info');
+        }
+        
+        return removedCount;
+      } catch (error) {
+        console.error('清理測試資料失敗:', error);
+        showStatus('清理測試資料失敗: ' + error.message, 'error');
+        return 0;
+      }
+    }
+
     // 簡化的上架功能（不依賴 contentful-real-only.js）
     async function uploadProgramSimple(programData) {
       try {
@@ -2346,12 +2398,18 @@
           }
         };
 
-        // 如果有影片資料，添加 video 欄位
-        if (programData.youtubeId || programData.mp4File) {
-          // 先創建一個預設的影片 Entry 或使用現有的
-          // 暫時跳過 video 欄位，因為需要先有影片 Entry
-          console.log('跳過 video 欄位，因為需要先創建影片 Entry');
-        }
+        // 添加 video 欄位（Contentful 要求必填）
+        // 使用一個預設的影片 Entry ID，或者創建一個臨時的
+        const defaultVideoId = 'default-video-placeholder';
+        entryData.fields['video'] = { 
+          'en-US': { 
+            sys: { 
+              type: 'Link', 
+              linkType: 'Entry', 
+              id: defaultVideoId 
+            } 
+          } 
+        };
         
         console.log('準備上架的 Entry 資料:', entryData);
 
