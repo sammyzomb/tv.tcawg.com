@@ -2471,8 +2471,8 @@
         
         // 尋找影片相關的內容類型
         const videoContentType = contentTypes.find(ct => 
-          ct.sys.id === 'videoAsset' || 
           ct.sys.id === 'video' || 
+          ct.sys.id === 'videoAsset' || 
           ct.name.toLowerCase().includes('video') ||
           ct.name.toLowerCase().includes('影片')
         );
@@ -2500,8 +2500,17 @@
         const videoEntryData = {
           fields: {
             'title': { 'en-US': '預設影片' },
-            'duration': { 'en-US': 1800 }, // 30 分鐘
-            'category': { 'en-US': '預設' }
+            'videoType': { 'en-US': 'MP4' },
+            'youTubeId': { 'en-US': '' },
+            'mp4Url': { 'en-US': '' },
+            'isHero': { 'en-US': false },
+            'heroTitle': { 'en-US': '' },
+            'heroText': { 'en-US': '' },
+            'isFeatured': { 'en-US': false },
+            'featuredText': { 'en-US': '' },
+            'comingSoon': { 'en-US': false },
+            'releaseDate': { 'en-US': new Date().toISOString() },
+            'description': { 'en-US': '預設影片描述' }
           }
         };
         
