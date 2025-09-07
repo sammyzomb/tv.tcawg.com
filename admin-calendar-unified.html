@@ -345,6 +345,7 @@
         <button class="nav-btn" onclick="nextPeriod()">▶</button>
         <button class="today-btn" onclick="goToToday()">今天</button>
         <button class="btn" style="background: #ffc107; margin-left: 10px;" onclick="clearOldTestData()">🧹 清理測試資料</button>
+        <button class="btn" style="background: #6c757d; margin-left: 10px;" onclick="checkContentfulContentTypes()">🔍 檢查內容類型</button>
         <button class="btn" style="background: #28a745; margin-left: 10px;" onclick="syncAllToContentful()">🔄 同步到 Contentful</button>
         <button class="btn" style="background: #dc3545; margin-left: 10px;" onclick="uploadSelectedPrograms()">📺 上架選中節目</button>
         <button class="btn" style="background: #17a2b8; margin-left: 10px;" onclick="reloadFromContentful()">📥 從 Contentful 重新載入</button>
@@ -2368,12 +2369,88 @@
       }
     }
 
+    // 檢查 Contentful 內容類型（供按鈕調用）
+    async function checkContentfulContentTypes() {
+      try {
+        showStatus('正在檢查 Contentful 內容類型...', 'info');
+        
+        // 檢查 Management SDK
+        if (typeof contentfulManagement === 'undefined') {
+          throw new Error('Management SDK 未載入');
+        }
+
+        // 創建 Management 客戶端
+        const managementClient = contentfulManagement.createClient({
+          accessToken: window.CONTENTFUL_CONFIG?.MANAGEMENT_TOKEN || window.CONTENTFUL_MANAGEMENT_TOKEN || 'CFPAT-hNLOfw3XdP5Hf_C3eYjI8294agakAK0Yo5Ew1Mjnsqs'
+        });
+
+        // 獲取 Space
+        const space = await managementClient.getSpace(window.CONTENTFUL_CONFIG?.SPACE_ID || 'os5wf90ljenp');
+        
+        // 獲取 Environment
+        const environment = await space.getEnvironment('master');
+        
+        // 檢查內容類型
+        const contentTypes = await checkAvailableContentTypes(environment);
+        
+        // 顯示結果
+        let message = `找到 ${contentTypes.length} 個內容類型：\n\n`;
+        contentTypes.forEach(ct => {
+          message += `📋 ${ct.name} (${ct.sys.id})\n`;
+          message += `   欄位: ${ct.fields.map(f => `${f.name}(${f.id}:${f.type})`).join(', ')}\n\n`;
+        });
+        
+        console.log('Contentful 內容類型:', contentTypes);
+        alert(message);
+        showStatus('✅ 內容類型檢查完成', 'success');
+        
+      } catch (error) {
+        console.error('檢查內容類型失敗:', error);
+        showStatus('❌ 檢查內容類型失敗: ' + error.message, 'error');
+        alert('檢查內容類型失敗: ' + error.message);
+      }
+    }
+
+    // 檢查 Contentful 中可用的內容類型
+    async function checkAvailableContentTypes(environment) {
+      try {
+        const contentTypes = await environment.getContentTypes();
+        console.log('可用的內容類型:', contentTypes.items.map(ct => ({
+          id: ct.sys.id,
+          name: ct.name,
+          fields: ct.fields.map(f => ({ id: f.id, name: f.name, type: f.type }))
+        })));
+        return contentTypes.items;
+      } catch (error) {
+        console.error('獲取內容類型失敗:', error);
+        return [];
+      }
+    }
+
     // 創建或獲取預設影片 Entry
     async function createOrGetDefaultVideoEntry(managementClient, space, environment) {
       try {
-        // 先嘗試獲取現有的影片 Entry
+        // 先檢查可用的內容類型
+        const contentTypes = await checkAvailableContentTypes(environment);
+        
+        // 尋找影片相關的內容類型
+        const videoContentType = contentTypes.find(ct => 
+          ct.sys.id === 'videoAsset' || 
+          ct.sys.id === 'video' || 
+          ct.name.toLowerCase().includes('video') ||
+          ct.name.toLowerCase().includes('影片')
+        );
+        
+        if (!videoContentType) {
+          console.log('沒有找到影片內容類型，跳過 video 欄位');
+          return null;
+        }
+        
+        console.log('找到影片內容類型:', videoContentType.sys.id, videoContentType.name);
+        
+        // 嘗試獲取現有的影片 Entry
         const existingVideos = await environment.getEntries({
-          content_type: 'videoAsset',
+          content_type: videoContentType.sys.id,
           limit: 1
         });
         
@@ -2387,14 +2464,25 @@
         const videoEntryData = {
           fields: {
             'title': { 'en-US': '預設影片' },
-            'videoFile': { 'en-US': { sys: { type: 'Link', linkType: 'Asset', id: 'placeholder-asset' } } },
             'duration': { 'en-US': 1800 }, // 30 分鐘
-            'category': { 'en-US': '預設' },
-            'uploadDate': { 'en-US': new Date().toISOString() }
+            'category': { 'en-US': '預設' }
           }
         };
         
-        const videoEntry = await environment.createEntry('videoAsset', videoEntryData);
+        // 根據內容類型添加必要的欄位
+        videoContentType.fields.forEach(field => {
+          if (field.required && !videoEntryData.fields[field.id]) {
+            if (field.type === 'Text' || field.type === 'ShortText') {
+              videoEntryData.fields[field.id] = { 'en-US': '預設值' };
+            } else if (field.type === 'Number') {
+              videoEntryData.fields[field.id] = { 'en-US': 0 };
+            } else if (field.type === 'Boolean') {
+              videoEntryData.fields[field.id] = { 'en-US': false };
+            }
+          }
+        });
+        
+        const videoEntry = await environment.createEntry(videoContentType.sys.id, videoEntryData);
         await videoEntry.publish();
         
         console.log('創建預設影片 Entry 成功:', videoEntry.sys.id);
