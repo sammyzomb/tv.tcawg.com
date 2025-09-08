@@ -1,13 +1,12 @@
-// 瀏覽器專用設定檔案
-// 注意：這個檔案包含敏感資訊，僅用於開發測試
-// 生產環境應該使用環境變數或後端 API
+// 瀏覽器專用設定檔案範本
+// 請複製此檔案為 browser-config.js 並填入真實的 Token
 
 const BROWSER_CONFIG = {
   // Contentful 設定
-  CONTENTFUL_SPACE_ID: 'os5wf90ljenp',
-  CONTENTFUL_DELIVERY_TOKEN: 'lODH-WLwHwVZv7O4rFdBWjSnrzaQWGD4koeOZ1Dypj0',
-  CONTENTFUL_PREVIEW_TOKEN: 'mXFNgpFCKUXCsKRorRGcfCCluU3yR4RgJmTOJXEXLqI',
-  CONTENTFUL_MANAGEMENT_TOKEN: 'CFPAT-hNLOfw3XdP5Hf_C3eYjI8294agakAK0Yo5Ew1Mjnsqs',
+  CONTENTFUL_SPACE_ID: 'your-space-id-here',
+  CONTENTFUL_DELIVERY_TOKEN: 'your-delivery-token-here',
+  CONTENTFUL_PREVIEW_TOKEN: 'your-preview-token-here',
+  CONTENTFUL_MANAGEMENT_TOKEN: 'your-management-token-here',
   
   // 管理員設定
   SUPER_ADMIN_EMAIL: 'your-admin-email@example.com',

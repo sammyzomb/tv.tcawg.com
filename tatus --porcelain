@@ -18,3 +18,8 @@
 [33m99cb071[m Create FIREBASE_ADMIN_SYSTEM_UPDATE.md
 [33m8c3cfd2[m 更新超級管理員問題
 [33m6a91840[m chore: remove setup check file
+[33m5983ce1[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m 20250908 12:31
+[33md79af03[m 20250908更新上架問題
+[33m06d63e9[m  修復影片內容類型 ID 和欄位結構
+[33madc3f92[m  改進內容類型檢查顯示方式
+[33meb3215c[m  修復內容類型問題並添加診斷工具
