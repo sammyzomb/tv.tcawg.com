@@ -1156,15 +1156,18 @@
         
         html += `
           <div class="event ${event.status === '首播' ? 'first-air' : ''} ${isPrimeTime(parseInt(event.time.split(':')[0])) ? 'prime-time' : ''}"
-               onclick="${(event.youtubeId && isCurrentPlaying) ? `openFullscreenPlayer('${event.youtubeId}')` : `openEventModal('${dateString}', '${event.time}')`}">
+               data-date="${dateString}" 
+               data-time="${event.time}" 
+               data-video-id="${event.youtubeId || ''}" 
+               data-is-current="${isCurrentPlaying}">
             <span class="event-time-label">${event.time}</span>${displayTitle}
-            ${(event.youtubeId && isCurrentPlaying) ? `<button class="watch-btn-small" onclick="event.stopPropagation(); openFullscreenPlayer('${event.youtubeId}')" style="background: #2b71d2; color: white; border: none; padding: 2px 4px; border-radius: 3px; font-size: 0.6rem; margin-left: 4px; cursor: pointer;">觀看</button>` : ''}
+            ${(event.youtubeId && isCurrentPlaying) ? `<button class="watch-btn-small" data-video-id="${event.youtubeId}" style="background: #2b71d2; color: white; border: none; padding: 2px 4px; border-radius: 3px; font-size: 0.6rem; margin-left: 4px; cursor: pointer;">觀看</button>` : ''}
             ${event.title.length > maxTitleLength || event.description ? `
               <div class="event-tooltip">
                 <strong>${event.title}</strong>
                 ${event.description ? `<br><small>${event.description}</small>` : ''}
                 <br><small>${event.time} | ${event.category} | ${event.duration}分鐘</small>
-                ${(event.youtubeId && isCurrentPlaying) ? `<br><button class="watch-btn-tooltip" onclick="openFullscreenPlayer('${event.youtubeId}')" style="background: #2b71d2; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; margin-top: 4px; cursor: pointer;">立即觀看</button>` : ''}
+                ${(event.youtubeId && isCurrentPlaying) ? `<br><button class="watch-btn-tooltip" data-video-id="${event.youtubeId}" style="background: #2b71d2; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; margin-top: 4px; cursor: pointer;">立即觀看</button>` : ''}
               </div>
             ` : ''}
           </div>
@@ -1942,7 +1945,20 @@
       const programStartTime = programHour * 60 + programMinute;
       const programEndTime = programStartTime + parseInt(event.duration);
       
-      return currentTime >= programStartTime && currentTime < programEndTime;
+      const isCurrent = currentTime >= programStartTime && currentTime < programEndTime;
+      
+      console.log('檢查節目狀態:', {
+        title: event.title,
+        time: event.time,
+        duration: event.duration,
+        currentTime: `${now.getHours()}:${now.getMinutes()}`,
+        programStartTime: `${programHour}:${programMinute}`,
+        programEndTime: `${Math.floor(programEndTime / 60)}:${programEndTime % 60}`,
+        isCurrent: isCurrent,
+        youtubeId: event.youtubeId
+      });
+      
+      return isCurrent;
     }
 
     // 獲取星期幾的輔助函數
@@ -3198,7 +3214,7 @@
     // === 全螢幕播放器功能 ===
     let fullscreenPlayerObject = null;
 
-    function openFullscreenPlayer(videoId) {
+    window.openFullscreenPlayer = function(videoId) {
       console.log('openFullscreenPlayer 被調用，videoId:', videoId);
       
       const fullscreenPlayerEl = document.getElementById('fullscreenPlayer');
@@ -3231,7 +3247,7 @@
       }
     }
 
-    function createYouTubePlayer(videoId) {
+    window.createYouTubePlayer = function(videoId) {
       console.log('createYouTubePlayer 被調用，videoId:', videoId);
       
       const fullscreenPlayerEl = document.getElementById('fullscreenPlayer');
@@ -3280,7 +3296,7 @@
       }
     }
 
-    function loadYouTubeAPI() {
+    window.loadYouTubeAPI = function() {
       return new Promise((resolve, reject) => {
         console.log('loadYouTubeAPI 被調用');
         
@@ -3312,7 +3328,7 @@
       });
     }
 
-    function closeFullscreenPlayer() {
+    window.closeFullscreenPlayer = function() {
       const fullscreenPlayerEl = document.getElementById('fullscreenPlayer');
       if (!fullscreenPlayerEl) return;
 
@@ -3339,6 +3355,27 @@
           openFullscreenPlayer(videoId);
         } else {
           console.error('找不到影片 ID');
+        }
+      }
+    });
+
+    // 節目卡片點擊事件監聽
+    document.addEventListener('click', function(e) {
+      const eventCard = e.target.closest('.event');
+      if (eventCard) {
+        const videoId = eventCard.getAttribute('data-video-id');
+        const isCurrent = eventCard.getAttribute('data-is-current') === 'true';
+        const date = eventCard.getAttribute('data-date');
+        const time = eventCard.getAttribute('data-time');
+        
+        console.log('點擊節目卡片:', { videoId, isCurrent, date, time });
+        
+        if (videoId && isCurrent) {
+          console.log('播放現正播出的節目:', videoId);
+          openFullscreenPlayer(videoId);
+        } else if (date && time) {
+          console.log('打開編輯模態框:', date, time);
+          openEventModal(date, time);
         }
       }
     });

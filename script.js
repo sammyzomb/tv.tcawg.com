@@ -1349,3 +1349,396 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
+// === 全螢幕播放器功能 ===
+let fullscreenPlayerObject = null;
+
+function openFullscreenPlayer(videoId) {
+  console.log('openFullscreenPlayer 被調用，videoId:', videoId);
+  
+  // 創建全螢幕播放器容器（如果不存在）
+  let fullscreenPlayerEl = document.getElementById('fullscreenPlayer');
+  if (!fullscreenPlayerEl) {
+    console.log('創建全螢幕播放器容器...');
+    fullscreenPlayerEl = document.createElement('div');
+    fullscreenPlayerEl.id = 'fullscreenPlayer';
+    fullscreenPlayerEl.className = 'fullscreen-player';
+    fullscreenPlayerEl.innerHTML = `
+      <div class="player-container">
+        <button class="close-player-btn" onclick="closeFullscreenPlayer()">×</button>
+        <button class="fullscreen-btn" onclick="requestFullscreen()" title="全螢幕">⛶</button>
+        <div id="main-player"></div>
+      </div>
+    `;
+    document.body.appendChild(fullscreenPlayerEl);
+    console.log('全螢幕播放器容器已創建');
+  } else {
+    console.log('全螢幕播放器容器已存在');
+  }
+
+  // 防止頁面滾動
+  document.body.style.overflow = 'hidden';
+  
+  // 顯示播放器
+  fullscreenPlayerEl.classList.add('active');
+  console.log('播放器容器已顯示');
+
+  // 確保 DOM 元素完全創建後再創建 YouTube 播放器
+  setTimeout(() => {
+    // 創建 YouTube 播放器
+    if (window.YT && window.YT.Player) {
+      console.log('YouTube API 已載入，直接創建播放器');
+      createYouTubePlayer(videoId);
+    } else {
+      console.log('YouTube API 未載入，開始載入...');
+      // 如果 YouTube API 還沒載入，先載入
+      loadYouTubeAPI().then(() => {
+        console.log('YouTube API 載入成功');
+        createYouTubePlayer(videoId);
+      }).catch(error => {
+        console.error('YouTube API 載入失敗:', error);
+        showErrorMessage('無法載入影片播放器，請稍後再試');
+      });
+    }
+  }, 100); // 延遲 100ms 確保 DOM 元素完全創建
+}
+
+function createYouTubePlayer(videoId) {
+  console.log('createYouTubePlayer 被調用，videoId:', videoId);
+  
+  const fullscreenPlayerEl = document.getElementById('fullscreenPlayer');
+  let playerDiv = document.getElementById('main-player');
+  
+  if (!playerDiv) {
+    console.log('播放器容器不存在，重新創建...');
+    // 如果容器不存在，重新創建
+    if (fullscreenPlayerEl) {
+      fullscreenPlayerEl.innerHTML = `
+        <div class="player-container">
+          <button class="close-player-btn" onclick="closeFullscreenPlayer()">×</button>
+          <div id="main-player"></div>
+        </div>
+      `;
+      playerDiv = document.getElementById('main-player');
+    }
+  }
+  
+  if (!playerDiv) {
+    console.error('仍然找不到播放器容器');
+    return;
+  }
+
+  // 清空之前的播放器
+  playerDiv.innerHTML = '';
+  
+  try {
+    // 創建新的 YouTube 播放器
+    fullscreenPlayerObject = new YT.Player('main-player', {
+      width: '100%',
+      height: '100%',
+      videoId: videoId,
+      playerVars: {
+        autoplay: 1,
+        controls: 1,
+        rel: 0,
+        showinfo: 0,
+        modestbranding: 1,
+        fs: 1,
+        cc_load_policy: 0,
+        iv_load_policy: 3,
+        autohide: 0,
+        enablejsapi: 1
+      },
+      events: {
+        onReady: function(event) {
+          console.log('YouTube 播放器準備就緒');
+          
+          // 開始播放
+          event.target.playVideo();
+          
+          // 延遲設定品質和全螢幕
+          setTimeout(() => {
+            try {
+              // 嘗試設定為最高品質
+              const availableQualities = event.target.getAvailableQualityLevels();
+              console.log('可用品質:', availableQualities);
+              
+              if (availableQualities && availableQualities.length > 0) {
+                // 優先選擇高清品質
+                if (availableQualities.includes('hd1080')) {
+                  event.target.setPlaybackQuality('hd1080');
+                  console.log('設定為 1080p');
+                } else if (availableQualities.includes('hd720')) {
+                  event.target.setPlaybackQuality('hd720');
+                  console.log('設定為 720p');
+                } else if (availableQualities.includes('large')) {
+                  event.target.setPlaybackQuality('large');
+                  console.log('設定為 large');
+                }
+              }
+            } catch (error) {
+              console.log('設定品質時發生錯誤:', error);
+            }
+            
+            // 嘗試進入全螢幕
+            try {
+              console.log('嘗試進入全螢幕模式');
+              
+              // 嘗試多種全螢幕方法
+              const playerElement = document.getElementById('main-player');
+              if (playerElement) {
+                if (playerElement.requestFullscreen) {
+                  playerElement.requestFullscreen();
+                } else if (playerElement.webkitRequestFullscreen) {
+                  playerElement.webkitRequestFullscreen();
+                } else if (playerElement.mozRequestFullScreen) {
+                  playerElement.mozRequestFullScreen();
+                } else if (playerElement.msRequestFullscreen) {
+                  playerElement.msRequestFullscreen();
+                } else {
+                  console.log('瀏覽器不支援全螢幕 API');
+                }
+              }
+              
+              // 同時嘗試 YouTube 播放器的全螢幕
+              if (event.target.requestFullscreen) {
+                event.target.requestFullscreen();
+              }
+            } catch (error) {
+              console.log('無法自動進入全螢幕，用戶可手動點擊全螢幕按鈕:', error);
+            }
+          }, 2000);
+        },
+        onStateChange: function(event) {
+          console.log('播放器狀態改變:', event.data);
+          
+          // 當開始播放時，記錄當前品質
+          if (event.data === YT.PlayerState.PLAYING) {
+            setTimeout(() => {
+              try {
+                const currentQuality = event.target.getPlaybackQuality();
+                console.log('當前播放品質:', currentQuality);
+              } catch (error) {
+                console.log('獲取播放品質時發生錯誤:', error);
+              }
+            }, 1000);
+          }
+        },
+        onError: function(event) {
+          console.error('YouTube 播放器錯誤:', event.data);
+          showErrorMessage('影片播放失敗，請檢查影片 ID 是否正確');
+        }
+      }
+    });
+    
+    console.log('YouTube 播放器創建成功');
+  } catch (error) {
+    console.error('創建 YouTube 播放器時發生錯誤:', error);
+    showErrorMessage('播放器創建失敗: ' + error.message);
+  }
+}
+
+function loadYouTubeAPI() {
+  return new Promise((resolve, reject) => {
+    console.log('loadYouTubeAPI 被調用');
+    
+    if (window.YT && window.YT.Player) {
+      console.log('YouTube API 已經載入');
+      resolve();
+      return;
+    }
+
+    // 載入 YouTube IFrame API
+    const tag = document.createElement('script');
+    tag.src = 'https://www.youtube.com/iframe_api';
+    const firstScriptTag = document.getElementsByTagName('script')[0];
+    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+    // 設置全局回調函數
+    window.onYouTubeIframeAPIReady = function() {
+      console.log('YouTube IFrame API 載入完成');
+      resolve();
+    };
+
+    // 設置超時
+    setTimeout(() => {
+      reject(new Error('YouTube API 載入超時'));
+    }, 10000);
+  });
+}
+
+function closeFullscreenPlayer() {
+  const fullscreenPlayerEl = document.getElementById('fullscreenPlayer');
+  if (!fullscreenPlayerEl) return;
+
+  // 恢復頁面滾動
+  document.body.style.overflow = '';
+
+  // 隱藏播放器
+  fullscreenPlayerEl.classList.remove('active');
+
+  // 銷毀 YouTube 播放器
+  if (fullscreenPlayerObject) {
+    fullscreenPlayerObject.destroy();
+    fullscreenPlayerObject = null;
+  }
+}
+
+function showErrorMessage(message) {
+  // 創建錯誤訊息顯示
+  const errorDiv = document.createElement('div');
+  errorDiv.style.cssText = `
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #ff4444;
+    color: white;
+    padding: 20px;
+    border-radius: 8px;
+    z-index: 10000;
+    font-size: 16px;
+    max-width: 400px;
+    text-align: center;
+  `;
+  errorDiv.textContent = message;
+  document.body.appendChild(errorDiv);
+
+  // 3秒後自動移除
+  setTimeout(() => {
+    if (errorDiv.parentNode) {
+      errorDiv.parentNode.removeChild(errorDiv);
+    }
+  }, 3000);
+}
+
+function requestFullscreen() {
+  console.log('手動請求全螢幕');
+  
+  const playerElement = document.getElementById('main-player');
+  if (playerElement) {
+    try {
+      if (playerElement.requestFullscreen) {
+        playerElement.requestFullscreen();
+      } else if (playerElement.webkitRequestFullscreen) {
+        playerElement.webkitRequestFullscreen();
+      } else if (playerElement.mozRequestFullScreen) {
+        playerElement.mozRequestFullScreen();
+      } else if (playerElement.msRequestFullscreen) {
+        playerElement.msRequestFullscreen();
+      } else {
+        console.log('瀏覽器不支援全螢幕 API');
+        showErrorMessage('您的瀏覽器不支援全螢幕功能');
+      }
+    } catch (error) {
+      console.error('全螢幕請求失敗:', error);
+      showErrorMessage('無法進入全螢幕模式');
+    }
+  }
+}
+
+// 添加全螢幕播放器樣式
+function addFullscreenPlayerStyles() {
+  const style = document.createElement('style');
+  style.textContent = `
+    .fullscreen-player {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.95);
+      z-index: 9999;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      margin: 0;
+      padding: 0;
+    }
+
+    .fullscreen-player.active {
+      display: flex;
+    }
+
+    .player-container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      max-width: 100vw;
+      max-height: 100vh;
+      margin: 0;
+      padding: 0;
+    }
+
+    .close-player-btn {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: #ff4444;
+      color: white;
+      border: none;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      font-size: 24px;
+      cursor: pointer;
+      z-index: 10000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .close-player-btn:hover {
+      background: #ff6666;
+    }
+
+    .fullscreen-btn {
+      position: absolute;
+      top: 20px;
+      right: 70px;
+      background: #2b71d2;
+      color: white;
+      border: none;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      font-size: 18px;
+      cursor: pointer;
+      z-index: 10000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .fullscreen-btn:hover {
+      background: #4a8ce8;
+    }
+
+    #main-player {
+      width: 100%;
+      height: 100%;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+  `;
+  document.head.appendChild(style);
+}
+
+// 頁面載入時添加樣式
+document.addEventListener('DOMContentLoaded', () => {
+  addFullscreenPlayerStyles();
+});
+
+// 添加鍵盤事件監聽
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    closeFullscreenPlayer();
+  }
+});
+
+// 點擊背景關閉播放器
+document.addEventListener('click', function(e) {
+  if (e.target && e.target.classList.contains('fullscreen-player')) {
+    closeFullscreenPlayer();
+  }
+});
+
