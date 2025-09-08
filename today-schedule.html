@@ -7,6 +7,10 @@
   
   <link rel="stylesheet" href="style.css">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  
+  <!-- Contentful SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/contentful@latest/dist/contentful.browser.min.js"></script>
+  <script src="browser-config.js"></script>
   <style>
     /* 今日節目表專用樣式 */
     .today-schedule-container {
@@ -232,6 +236,108 @@
       transform: scale(1.2);
     }
 
+    /* 播放按鈕樣式 */
+    .play-overlay {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    
+    .program-card:hover .play-overlay {
+      opacity: 1;
+    }
+    
+    .play-btn {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: rgba(43, 113, 210, 0.9);
+      border: none;
+      color: white;
+      font-size: 24px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    }
+    
+    .play-btn:hover {
+      background: rgba(43, 113, 210, 1);
+      transform: scale(1.1);
+    }
+    
+    /* 觀看按鈕樣式 */
+    .watch-btn {
+      background: #2b71d2;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-top: 10px;
+      width: 100%;
+    }
+    
+    .watch-btn:hover {
+      background: #1e5bb8;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(43, 113, 210, 0.3);
+    }
+
+    /* 全螢幕播放器樣式 */
+    .fullscreen-player {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: #000;
+      z-index: 10000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .fullscreen-player.active {
+      display: flex;
+    }
+    
+    .close-player-btn {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: rgba(0, 0, 0, 0.7);
+      color: white;
+      border: none;
+      font-size: 30px;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      cursor: pointer;
+      z-index: 10001;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.3s ease;
+    }
+    
+    .close-player-btn:hover {
+      background: rgba(0, 0, 0, 0.9);
+    }
+    
+    #main-player {
+      width: 100%;
+      height: 100%;
+    }
+
     .scroll-arrows {
       position: absolute;
       top: 50%;
@@ -360,6 +466,7 @@
         <div class="time-info">台灣時間</div>
         <div class="time-info" id="currentDate">9月2日 星期二</div>
         <div class="time-info">現在時間 <span class="current-time" id="currentTime">12:46</span></div>
+        <button onclick="testPlayback()" style="background: #28a745; color: white; border: none; padding: 8px 16px; border-radius: 4px; margin-left: 10px; cursor: pointer;">測試播放</button>
       </div>
     </div>
 
@@ -397,6 +504,9 @@
       let currentProgramIndex = 0;
       let programs = [];
       
+      // 將 programs 設為全域變數，方便調試
+      window.programs = programs;
+      
       // 初始化
       initTodaySchedule();
       
@@ -414,57 +524,157 @@
         setInterval(checkProgramStatus, 30000);
       }
       
+      // 從 Contentful 載入節目數據
+      async function loadProgramsFromContentful() {
+        try {
+          // 檢查 Contentful SDK 是否載入
+          if (typeof contentful === 'undefined') {
+            throw new Error('Contentful SDK 未載入');
+          }
+          
+          // 創建 Contentful 客戶端
+          const client = contentful.createClient({
+            space: window.CONTENTFUL_CONFIG?.SPACE_ID || 'os5wf90ljenp',
+            accessToken: window.CONTENTFUL_CONFIG?.DELIVERY_TOKEN || 'lODH-WLwHwVZv7O4rFdBWjSnrzaQWGD4koeOZ1Dypj0'
+          });
+          
+          // 獲取今天的日期
+          const today = new Date();
+          const todayString = today.getFullYear() + '-' + 
+                             String(today.getMonth() + 1).padStart(2, '0') + '-' + 
+                             String(today.getDate()).padStart(2, '0');
+          
+          console.log('從 Contentful 載入今日節目:', todayString);
+          
+          // 查詢今日的節目
+          const response = await client.getEntries({
+            content_type: 'scheduleItem',
+            'fields.airDate': todayString,
+            include: 2 // 包含連結的資源
+          });
+          
+          console.log('Contentful 回應:', response);
+          
+          // 轉換 Contentful 資料格式
+          programs = response.items.map(entry => {
+            const fields = entry.fields;
+            
+            // 從備註中提取時間
+            const notes = fields.notes?.['en-US'] || '';
+            const timeMatch = notes.match(/\[時間:(\d{2}:\d{2})\]/);
+            const airTime = timeMatch ? timeMatch[1] : '00:00';
+            
+            // 處理縮圖
+            let thumbnail = 'https://via.placeholder.com/320x200/000000/ffffff?text=節目圖片';
+            
+            console.log('處理節目縮圖:', fields.title?.['en-US'], {
+              hasThumbnail: !!(fields.thumbnail && fields.thumbnail['en-US']),
+              hasThumbnailUrl: !!(fields.thumbnailUrl && fields.thumbnailUrl['en-US']),
+              thumbnailAsset: fields.thumbnail?.['en-US'],
+              thumbnailUrl: fields.thumbnailUrl?.['en-US']
+            });
+            
+            // 如果有縮圖 Asset
+            if (fields.thumbnail && fields.thumbnail['en-US']) {
+              const thumbnailAsset = fields.thumbnail['en-US'];
+              if (thumbnailAsset.fields && thumbnailAsset.fields.file) {
+                thumbnail = 'https:' + thumbnailAsset.fields.file['en-US'].url;
+                console.log('使用 Contentful Asset 縮圖:', thumbnail);
+              }
+            }
+            // 如果有縮圖 URL
+            else if (fields.thumbnailUrl && fields.thumbnailUrl['en-US']) {
+              thumbnail = fields.thumbnailUrl['en-US'];
+              console.log('使用 YouTube URL 縮圖:', thumbnail);
+            }
+            
+            return {
+              time: airTime,
+              title: fields.title?.['en-US'] || '未命名節目',
+              duration: "30", // 預設 30 分鐘
+              category: "旅遊節目",
+              description: notes.replace(/\[時間:\d{2}:\d{2}\]/, '').trim() || '節目描述',
+              thumbnail: thumbnail
+            };
+          });
+          
+          // 按時間排序
+          programs.sort((a, b) => a.time.localeCompare(b.time));
+          
+          // 更新全域變數
+          window.programs = programs;
+          
+          console.log('從 Contentful 載入節目成功:', programs.length, '個節目');
+          console.log('節目縮圖資料:', programs.map(p => ({title: p.title, thumbnail: p.thumbnail})));
+          
+        } catch (error) {
+          console.error('從 Contentful 載入節目失敗:', error);
+          throw error;
+        }
+      }
+      
       // 載入節目數據
       async function loadPrograms() {
         try {
-          const response = await fetch('schedule.json');
-          const data = await response.json();
-          programs = data.today.schedule || [];
+          // 首先嘗試從 Contentful 載入
+          await loadProgramsFromContentful();
         } catch (error) {
-          console.error('載入節目數據失敗:', error);
-          // 使用預設數據
-          programs = [
-            {
-              time: "12:00",
-              title: "午間精選 - 泰國清邁古城巡禮",
-              duration: "60",
-              category: "亞洲旅遊",
-              description: "漫步清邁古城，感受泰北蘭納王朝的歷史文化",
-              thumbnail: "https://images.unsplash.com/photo-1552733407-5d5c46c3bb3b?w=400&h=225&fit=crop"
-            },
-            {
-              time: "13:00",
-              title: "海島假期 - 馬爾地夫水上別墅",
-              duration: "45",
-              category: "海島旅遊",
-              description: "在馬爾地夫的透明海水中，體驗最奢華的水上別墅生活",
-              thumbnail: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=225&fit=crop"
-            },
-            {
-              time: "14:00",
-              title: "歷史探索 - 埃及金字塔之謎",
-              duration: "60",
-              category: "歷史旅遊",
-              description: "深入探索古埃及金字塔的建造之謎與法老文明",
-              thumbnail: "https://images.unsplash.com/photo-1503177119275-0aa32b3a9368?w=400&h=225&fit=crop"
-            },
-            {
-              time: "15:00",
-              title: "冒險之旅 - 秘魯馬丘比丘",
-              duration: "45",
-              category: "冒險旅遊",
-              description: "登上印加帝國的失落之城，感受安地斯山脈的神秘",
-              thumbnail: "https://images.unsplash.com/photo-1587595431973-160d0d94add1?w=400&h=225&fit=crop"
-            },
-            {
-              time: "16:00",
-              title: "藝術之旅 - 義大利佛羅倫斯文藝復興",
-              duration: "60",
-              category: "藝術旅遊",
-              description: "在文藝復興的發源地，欣賞米開朗基羅與達文西的傑作",
-              thumbnail: "https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=400&h=225&fit=crop"
+          console.error('從 Contentful 載入節目數據失敗:', error);
+          // 如果 Contentful 載入失敗，嘗試從 schedule.json 載入
+          try {
+            const response = await fetch('schedule.json');
+            const data = await response.json();
+            programs = data.today.schedule || [];
+          } catch (jsonError) {
+            console.error('載入 schedule.json 失敗:', jsonError);
+            // 使用預設數據（只包含當前時間之後的節目）
+            const now = new Date();
+            const taiwanTime = new Date(now.getTime() + (8 * 60 * 60 * 1000));
+            const currentHour = taiwanTime.getUTCHours();
+            const currentMinute = taiwanTime.getUTCMinutes();
+            
+            // 生成從當前時間開始的完整24個節目表（12個小時）
+            programs = [];
+            const startHour = currentHour;
+            const startMinute = currentMinute < 30 ? 0 : 1; // 計算當前時段（每30分鐘一個時段）
+            
+            // 生成24個時段的節目（12個小時）
+            for (let i = 0; i < 24; i++) {
+              const hour = (startHour + Math.floor(i / 2)) % 24;
+              const minute = ((startMinute + i) % 2) * 30;
+              const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+              
+              programs.push({
+                time: timeString,
+                title: "目前暫無節目",
+                duration: "30",
+                category: "空檔",
+                description: "此時段暫無節目安排",
+                thumbnail: "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop",
+                youtubeId: "",
+                status: "空檔",
+                tags: []
+              });
             }
-          ];
+            
+            // 添加一個實際的節目作為範例（13:30 西班牙節目）
+            const exampleProgram = {
+              time: "13:30",
+              title: "Top 10 Best Places to Visit in Spain - Travel Video",
+              duration: "30",
+              category: "旅遊節目",
+              description: "探索西班牙最美麗的景點",
+              thumbnail: "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop",
+              youtubeId: "example123",
+              status: "首播",
+              tags: []
+            };
+            
+            // 找到 13:30 的位置並替換
+            const index = programs.findIndex(p => p.time === "13:30");
+            if (index !== -1) {
+              programs[index] = exampleProgram;
+            }
         }
       }
       
@@ -490,19 +700,22 @@
         
         if (!carousel || !indicators) return;
         
+        // 過濾節目：只顯示當前和未來的節目
+        const visiblePrograms = programs.filter(shouldShowProgram);
+        
         // 渲染節目卡片
-        carousel.innerHTML = programs.map((program, index) => {
+        carousel.innerHTML = visiblePrograms.map((program, index) => {
           const isCurrent = isCurrentProgram(program);
           return createProgramCard(program, index, isCurrent);
         }).join('');
         
         // 渲染指示器
-        indicators.innerHTML = programs.map((_, index) => 
+        indicators.innerHTML = visiblePrograms.map((_, index) => 
           `<div class="indicator-dot ${index === 0 ? 'active' : ''}" data-index="${index}"></div>`
         ).join('');
         
         // 更新當前節目索引
-        currentProgramIndex = programs.findIndex(p => isCurrentProgram(p));
+        currentProgramIndex = visiblePrograms.findIndex(p => isCurrentProgram(p));
         if (currentProgramIndex === -1) currentProgramIndex = 0;
         
         updateActiveIndicator();
@@ -516,6 +729,7 @@
               <img src="${program.thumbnail}" alt="${program.title}" onerror="this.src='https://via.placeholder.com/320x200/000000/ffffff?text=節目圖片'">
               <div class="time-badge">${program.time}</div>
               ${isCurrent ? '<div class="status-badge"><span class="status-dot"></span>現正播出</div>' : ''}
+              ${program.youtubeId ? '<div class="play-overlay"><button class="play-btn" data-video-id="' + program.youtubeId + '">▶</button></div>' : ''}
             </div>
             <div class="program-info">
               <div class="program-title">${program.title}</div>
@@ -527,6 +741,7 @@
                   <span>${program.duration}分鐘</span>
                 </div>
               </div>
+              ${program.youtubeId ? '<button class="watch-btn" data-video-id="' + program.youtubeId + '">立即觀看</button>' : ''}
             </div>
           </div>
         `;
@@ -534,27 +749,12 @@
       
       // 檢查節目狀態
       function checkProgramStatus() {
-        programs.forEach((program, index) => {
-          const card = document.querySelector(`[data-index="${index}"]`);
-          if (card) {
-            const isCurrent = isCurrentProgram(program);
-            card.classList.toggle('current', isCurrent);
-            
-            // 更新狀態徽章
-            const statusBadge = card.querySelector('.status-badge');
-            if (isCurrent && !statusBadge) {
-              const imageContainer = card.querySelector('.program-image');
-              imageContainer.insertAdjacentHTML('beforeend', 
-                '<div class="status-badge"><span class="status-dot"></span>現正播出</div>'
-              );
-            } else if (!isCurrent && statusBadge) {
-              statusBadge.remove();
-            }
-          }
-        });
+        // 重新渲染節目表以過濾已結束的節目
+        renderPrograms();
         
         // 更新當前節目索引
-        currentProgramIndex = programs.findIndex(p => isCurrentProgram(p));
+        const visiblePrograms = programs.filter(shouldShowProgram);
+        currentProgramIndex = visiblePrograms.findIndex(p => isCurrentProgram(p));
         if (currentProgramIndex === -1) currentProgramIndex = 0;
         
         updateActiveIndicator();
@@ -571,6 +771,20 @@
         const programEndTime = programStartTime + parseInt(program.duration);
         
         return currentTime >= programStartTime && currentTime < programEndTime;
+      }
+      
+      // 判斷是否應該顯示節目（只顯示當前和未來節目）
+      function shouldShowProgram(program) {
+        const now = new Date();
+        const taiwanTime = new Date(now.getTime() + (8 * 60 * 60 * 1000));
+        const currentTime = taiwanTime.getUTCHours() * 60 + taiwanTime.getUTCMinutes();
+        
+        const [programHour, programMinute] = program.time.split(':').map(Number);
+        const programStartTime = programHour * 60 + programMinute;
+        const programEndTime = programStartTime + parseInt(program.duration);
+        
+        // 只顯示當前時間 < 節目結束時間的節目（包括正在播放的節目）
+        return currentTime < programEndTime;
       }
       
       // 設置事件監聽器
@@ -602,6 +816,20 @@
             // 這裡可以添加播放節目的邏輯
           }
         });
+
+        // 播放按鈕點擊事件
+        document.addEventListener('click', (e) => {
+          if (e.target.classList.contains('play-btn') || e.target.classList.contains('watch-btn')) {
+            e.stopPropagation();
+            const videoId = e.target.getAttribute('data-video-id');
+            if (videoId) {
+              console.log('播放影片 ID:', videoId);
+              openFullscreenPlayer(videoId);
+            } else {
+              console.error('找不到影片 ID');
+            }
+          }
+        });
       }
       
       // 滾動到指定節目
@@ -630,7 +858,181 @@
           dot.classList.toggle('active', index === currentProgramIndex);
         });
       }
+
+      // === 全螢幕播放器功能 ===
+      let fullscreenPlayerObject = null;
+
+      function openFullscreenPlayer(videoId) {
+        console.log('openFullscreenPlayer 被調用，videoId:', videoId);
+        
+        const fullscreenPlayerEl = document.getElementById('fullscreenPlayer');
+        if (!fullscreenPlayerEl) {
+          console.error('找不到 fullscreenPlayer 元素');
+          return;
+        }
+
+        // 防止頁面滾動
+        document.body.style.overflow = 'hidden';
+        
+        // 顯示播放器
+        fullscreenPlayerEl.classList.add('active');
+        console.log('播放器容器已顯示');
+
+        // 創建 YouTube 播放器
+        if (window.YT && window.YT.Player) {
+          console.log('YouTube API 已載入，直接創建播放器');
+          createYouTubePlayer(videoId);
+        } else {
+          console.log('YouTube API 未載入，開始載入...');
+          // 如果 YouTube API 還沒載入，先載入
+          loadYouTubeAPI().then(() => {
+            console.log('YouTube API 載入成功');
+            createYouTubePlayer(videoId);
+          }).catch(error => {
+            console.error('YouTube API 載入失敗:', error);
+            showErrorMessage('無法載入影片播放器，請稍後再試');
+          });
+        }
+      }
+
+      function createYouTubePlayer(videoId) {
+        console.log('createYouTubePlayer 被調用，videoId:', videoId);
+        
+        const fullscreenPlayerEl = document.getElementById('fullscreenPlayer');
+        const playerDiv = document.getElementById('main-player');
+        
+        if (!playerDiv) {
+          console.error('找不到 main-player 元素');
+          return;
+        }
+        
+        if (fullscreenPlayerObject) {
+          console.log('銷毀現有播放器');
+          fullscreenPlayerObject.destroy();
+        }
+
+        console.log('創建新的 YouTube 播放器...');
+        try {
+          fullscreenPlayerObject = new YT.Player('main-player', {
+            width: '100%',
+            height: '100%',
+            videoId: videoId,
+            playerVars: {
+              autoplay: 1,
+              controls: 1,
+              rel: 0,
+              modestbranding: 1,
+              fs: 1,
+              enablejsapi: 1
+            },
+            events: {
+              onReady: function(event) {
+                console.log('YouTube 播放器準備就緒');
+                event.target.setPlaybackQuality('highres');
+                event.target.playVideo();
+              },
+              onError: function(event) {
+                console.error('YouTube 播放器錯誤:', event.data);
+                showErrorMessage('影片播放失敗，請檢查影片 ID 是否正確');
+              }
+            }
+          });
+          console.log('YouTube 播放器創建成功');
+        } catch (error) {
+          console.error('創建 YouTube 播放器時發生錯誤:', error);
+          showErrorMessage('播放器創建失敗: ' + error.message);
+        }
+      }
+
+      function loadYouTubeAPI() {
+        return new Promise((resolve, reject) => {
+          console.log('loadYouTubeAPI 被調用');
+          
+          if (window.YT && window.YT.Player) {
+            console.log('YouTube API 已經載入');
+            resolve();
+            return;
+          }
+
+          console.log('開始載入 YouTube IFrame API...');
+          
+          // 載入 YouTube IFrame API
+          const tag = document.createElement('script');
+          tag.src = 'https://www.youtube.com/iframe_api';
+          const firstScriptTag = document.getElementsByTagName('script')[0];
+          firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+          // 設定全域回調
+          window.onYouTubeIframeAPIReady = function() {
+            console.log('YouTube API 載入完成');
+            resolve();
+          };
+
+          // 設定超時
+          setTimeout(() => {
+            console.error('YouTube API 載入超時');
+            reject(new Error('YouTube API 載入超時'));
+          }, 10000);
+        });
+      }
+
+      function closeFullscreenPlayer() {
+        const fullscreenPlayerEl = document.getElementById('fullscreenPlayer');
+        if (!fullscreenPlayerEl) return;
+
+        // 恢復頁面滾動
+        document.body.style.overflow = '';
+        
+        // 隱藏播放器
+        fullscreenPlayerEl.classList.remove('active');
+
+        // 銷毀播放器
+        if (fullscreenPlayerObject) {
+          fullscreenPlayerObject.destroy();
+          fullscreenPlayerObject = null;
+        }
+      }
+
+      function showErrorMessage(message) {
+        // 簡單的錯誤訊息顯示
+        alert(message);
+        closeFullscreenPlayer();
+      }
+
+      // 關閉按鈕事件監聽
+      document.addEventListener('click', function(e) {
+        if (e.target && e.target.classList.contains('close-player-btn')) {
+          closeFullscreenPlayer();
+        }
+      });
+
+      // ESC 鍵關閉播放器
+      window.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+          closeFullscreenPlayer();
+        }
+      });
+
+      // 點擊播放器背景關閉
+      document.getElementById('fullscreenPlayer')?.addEventListener('click', function(e) {
+        if (e.target === this) {
+          closeFullscreenPlayer();
+        }
+      });
+
+      // 測試播放功能
+      window.testPlayback = function() {
+        console.log('測試播放功能');
+        const testVideoId = '3GZCJfIOg_k'; // 使用預設的測試影片 ID
+        openFullscreenPlayer(testVideoId);
+      };
     });
   </script>
+
+  <!-- 全螢幕播放器 -->
+  <div class="fullscreen-player" id="fullscreenPlayer">
+    <button class="close-player-btn" title="關閉播放器">&times;</button>
+    <div id="main-player"></div>
+  </div>
 </body>
 </html>

@@ -1,5 +1,7 @@
 # 配置檔案 - 包含敏感資訊
 config.js
+browser-config.js
+PRIVATE_TOKENS.txt
 
 # 環境變數檔案
 .env
