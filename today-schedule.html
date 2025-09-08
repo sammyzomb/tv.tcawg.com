@@ -627,54 +627,54 @@
             programs = data.today.schedule || [];
           } catch (jsonError) {
             console.error('載入 schedule.json 失敗:', jsonError);
-            // 使用預設數據
-            programs = [
-            {
-              time: "12:00",
-              title: "午間精選 - 泰國清邁古城巡禮",
-              duration: "60",
-              category: "亞洲旅遊",
-              description: "漫步清邁古城，感受泰北蘭納王朝的歷史文化",
-              thumbnail: "https://images.unsplash.com/photo-1552733407-5d5c46c3bb3b?w=400&h=225&fit=crop",
-              youtubeId: "3GZCJfIOg_k"
-            },
-            {
-              time: "13:00",
-              title: "海島假期 - 馬爾地夫水上別墅",
-              duration: "45",
-              category: "海島旅遊",
-              description: "在馬爾地夫的透明海水中，體驗最奢華的水上別墅生活",
-              thumbnail: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=225&fit=crop",
-              youtubeId: "LcdGhVwS3gw"
-            },
-            {
-              time: "14:00",
-              title: "歷史探索 - 埃及金字塔之謎",
-              duration: "60",
-              category: "歷史旅遊",
-              description: "深入探索古埃及金字塔的建造之謎與法老文明",
-              thumbnail: "https://images.unsplash.com/photo-1503177119275-0aa32b3a9368?w=400&h=225&fit=crop",
-              youtubeId: "25Fmx1G-C3k"
-            },
-            {
-              time: "15:00",
-              title: "冒險之旅 - 秘魯馬丘比丘",
-              duration: "45",
-              category: "冒險旅遊",
-              description: "登上印加帝國的失落之城，感受安地斯山脈的神秘",
-              thumbnail: "https://images.unsplash.com/photo-1587595431973-160d0d94add1?w=400&h=225&fit=crop",
-              youtubeId: "QoHTSSS3DwQ"
-            },
-            {
-              time: "16:00",
-              title: "藝術之旅 - 義大利佛羅倫斯文藝復興",
-              duration: "60",
-              category: "藝術旅遊",
-              description: "在文藝復興的發源地，欣賞米開朗基羅與達文西的傑作",
-              thumbnail: "https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=400&h=225&fit=crop",
-              youtubeId: "BDnpjQmGRqY"
+            // 使用預設數據（只包含當前時間之後的節目）
+            const now = new Date();
+            const taiwanTime = new Date(now.getTime() + (8 * 60 * 60 * 1000));
+            const currentHour = taiwanTime.getUTCHours();
+            const currentMinute = taiwanTime.getUTCMinutes();
+            
+            // 生成從當前時間開始的完整24個節目表（12個小時）
+            programs = [];
+            const startHour = currentHour;
+            const startMinute = currentMinute < 30 ? 0 : 1; // 計算當前時段（每30分鐘一個時段）
+            
+            // 生成24個時段的節目（12個小時）
+            for (let i = 0; i < 24; i++) {
+              const hour = (startHour + Math.floor(i / 2)) % 24;
+              const minute = ((startMinute + i) % 2) * 30;
+              const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+              
+              programs.push({
+                time: timeString,
+                title: "目前暫無節目",
+                duration: "30",
+                category: "空檔",
+                description: "此時段暫無節目安排",
+                thumbnail: "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop",
+                youtubeId: "",
+                status: "空檔",
+                tags: []
+              });
             }
-          ];
+            
+            // 添加一個實際的節目作為範例（13:30 西班牙節目）
+            const exampleProgram = {
+              time: "13:30",
+              title: "Top 10 Best Places to Visit in Spain - Travel Video",
+              duration: "30",
+              category: "旅遊節目",
+              description: "探索西班牙最美麗的景點",
+              thumbnail: "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop",
+              youtubeId: "example123",
+              status: "首播",
+              tags: []
+            };
+            
+            // 找到 13:30 的位置並替換
+            const index = programs.findIndex(p => p.time === "13:30");
+            if (index !== -1) {
+              programs[index] = exampleProgram;
+            }
         }
       }
       
@@ -700,19 +700,22 @@
         
         if (!carousel || !indicators) return;
         
+        // 過濾節目：只顯示當前和未來的節目
+        const visiblePrograms = programs.filter(shouldShowProgram);
+        
         // 渲染節目卡片
-        carousel.innerHTML = programs.map((program, index) => {
+        carousel.innerHTML = visiblePrograms.map((program, index) => {
           const isCurrent = isCurrentProgram(program);
           return createProgramCard(program, index, isCurrent);
         }).join('');
         
         // 渲染指示器
-        indicators.innerHTML = programs.map((_, index) => 
+        indicators.innerHTML = visiblePrograms.map((_, index) => 
           `<div class="indicator-dot ${index === 0 ? 'active' : ''}" data-index="${index}"></div>`
         ).join('');
         
         // 更新當前節目索引
-        currentProgramIndex = programs.findIndex(p => isCurrentProgram(p));
+        currentProgramIndex = visiblePrograms.findIndex(p => isCurrentProgram(p));
         if (currentProgramIndex === -1) currentProgramIndex = 0;
         
         updateActiveIndicator();
@@ -746,27 +749,12 @@
       
       // 檢查節目狀態
       function checkProgramStatus() {
-        programs.forEach((program, index) => {
-          const card = document.querySelector(`[data-index="${index}"]`);
-          if (card) {
-            const isCurrent = isCurrentProgram(program);
-            card.classList.toggle('current', isCurrent);
-            
-            // 更新狀態徽章
-            const statusBadge = card.querySelector('.status-badge');
-            if (isCurrent && !statusBadge) {
-              const imageContainer = card.querySelector('.program-image');
-              imageContainer.insertAdjacentHTML('beforeend', 
-                '<div class="status-badge"><span class="status-dot"></span>現正播出</div>'
-              );
-            } else if (!isCurrent && statusBadge) {
-              statusBadge.remove();
-            }
-          }
-        });
+        // 重新渲染節目表以過濾已結束的節目
+        renderPrograms();
         
         // 更新當前節目索引
-        currentProgramIndex = programs.findIndex(p => isCurrentProgram(p));
+        const visiblePrograms = programs.filter(shouldShowProgram);
+        currentProgramIndex = visiblePrograms.findIndex(p => isCurrentProgram(p));
         if (currentProgramIndex === -1) currentProgramIndex = 0;
         
         updateActiveIndicator();
@@ -783,6 +771,20 @@
         const programEndTime = programStartTime + parseInt(program.duration);
         
         return currentTime >= programStartTime && currentTime < programEndTime;
+      }
+      
+      // 判斷是否應該顯示節目（只顯示當前和未來節目）
+      function shouldShowProgram(program) {
+        const now = new Date();
+        const taiwanTime = new Date(now.getTime() + (8 * 60 * 60 * 1000));
+        const currentTime = taiwanTime.getUTCHours() * 60 + taiwanTime.getUTCMinutes();
+        
+        const [programHour, programMinute] = program.time.split(':').map(Number);
+        const programStartTime = programHour * 60 + programMinute;
+        const programEndTime = programStartTime + parseInt(program.duration);
+        
+        // 只顯示當前時間 < 節目結束時間的節目（包括正在播放的節目）
+        return currentTime < programEndTime;
       }
       
       // 設置事件監聽器
