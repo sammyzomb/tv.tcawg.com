@@ -380,186 +380,26 @@ document.addEventListener('DOMContentLoaded', () => {
       const currentHour = taiwanTime.getHours();
       
       console.log('正在載入節目表，月份:', currentMonth, '日期:', today, '當前時間:', currentHour + ':' + taiwanTime.getMinutes());
+      console.log('台灣時間詳情:', taiwanTime.toLocaleString('zh-TW', {timeZone: 'Asia/Taipei'}));
       
       // 強制清除所有快取資料，確保使用最新的過濾邏輯
       console.log('🔧 強制清除快取，重新載入節目表');
       scheduleData = null;
       
-      // 優先檢查 currentSchedule 中的節目
-      const currentSchedule = localStorage.getItem('currentSchedule');
-      if (currentSchedule) {
-        try {
-          const scheduleData = JSON.parse(currentSchedule);
-          const todaySchedule = scheduleData.today?.schedule || [];
-          
-          if (todaySchedule.length > 0) {
-            console.log('從 currentSchedule 載入節目，共', todaySchedule.length, '個節目');
-            
-            // 過濾已結束的節目
-            const filteredPrograms = todaySchedule.filter(program => {
-              const taiwanTime = getTaiwanTime();
-              const currentTime = taiwanTime.getHours() * 60 + taiwanTime.getMinutes();
-              
-              const [programHour, programMinute] = program.time.split(':').map(Number);
-              const programStartTime = programHour * 60 + programMinute;
-              const programEndTime = programStartTime + parseInt(program.duration);
-              
-              // 只保留當前時間 < 節目結束時間的節目（包括正在播放的節目）
-              const shouldShow = currentTime < programEndTime;
-              
-              // 調試輸出
-              console.log(`節目 ${program.time} (${program.title}): 開始=${programStartTime}, 結束=${programEndTime}, 當前=${currentTime}, 顯示=${shouldShow}`);
-              
-              return shouldShow;
-            }).sort((a, b) => a.time.localeCompare(b.time));
-            
-            scheduleData = {
-              today: {
-                date: today,
-                dayOfWeek: getDayOfWeek(taiwanTime),
-                month: `${taiwanTime.getMonth() + 1}月`,
-                day: `${taiwanTime.getDate()}日`,
-                schedule: filteredPrograms
-              }
-            };
-            
-            console.log('使用 currentSchedule 節目表，過濾後共', filteredPrograms.length, '個節目');
-            updateScheduleDisplay();
-            startTimeUpdates();
-            return;
-          }
-        } catch (e) {
-          console.log('currentSchedule 解析失敗:', e);
-        }
-      }
-      
-      // 檢查管理後台添加的節目
-      const calendarEvents = localStorage.getItem('calendar_events');
-      if (calendarEvents) {
-        try {
-          const eventsData = JSON.parse(calendarEvents);
-          const todayEvents = eventsData[today] || [];
-          
-          if (todayEvents.length > 0) {
-            console.log('從 calendar_events 載入節目，共', todayEvents.length, '個節目');
-            console.log('calendar_events 節目資料:', todayEvents.map(e => ({title: e.title, thumbnail: e.thumbnail, youtubeId: e.youtubeId})));
-            
-            // 檢查是否有錯誤的 YouTube ID（所有節目都使用同一個 ID）
-            const youtubeIds = todayEvents.map(event => event.youtubeId).filter(id => id);
-            const uniqueYoutubeIds = [...new Set(youtubeIds)];
-            if (uniqueYoutubeIds.length === 1 && youtubeIds.length > 1) {
-              console.log('⚠️ 檢測到 localStorage 中的節目都使用相同的 YouTube ID，清除 localStorage 並從 Contentful 重新載入');
-              localStorage.removeItem('calendar_events');
-              // 跳過 localStorage 處理，繼續執行後面的 Contentful 載入邏輯
-            } else {
-            // 將 localStorage 中的節目轉換為節目表格式
-            const schedulePrograms = todayEvents.map(event => {
-              let timeString;
-              
-              // 優先使用 time 欄位
-              if (event.time) {
-                timeString = event.time;
-              } else {
-                // 從備註中提取具體時間，格式為 [時間:XX:XX]
-                const notes = event.notes || '';
-                const timeMatch = notes.match(/\[時間:(\d{2}:\d{2})\]/);
-                
-                if (timeMatch) {
-                  // 使用備註中的具體時間
-                  timeString = timeMatch[1];
-                } else {
-                  // 如果沒有具體時間，使用時段轉換
-                  const block = event.block || '12-18';
-                  switch (block) {
-                    case '00-06': timeString = '02:00'; break;
-                    case '06-12': timeString = '11:30'; break;
-                    case '12-18': timeString = '14:00'; break;
-                    case '18-24': timeString = '22:00'; break;
-                    default: timeString = '14:00';
-                  }
-                }
-              }
-              
-              // 調試 localStorage 節目縮圖
-              console.log('處理 localStorage 節目縮圖:', event.title, {
-                hasThumbnail: !!(event.thumbnail),
-                hasYoutubeId: !!(event.youtubeId),
-                thumbnail: event.thumbnail,
-                youtubeId: event.youtubeId
-              });
-              
-              // 處理縮圖：優先使用 event.thumbnail，如果有 youtubeId 則生成 YouTube 縮圖
-              let thumbnail = event.thumbnail;
-              if (!thumbnail && event.youtubeId) {
-                thumbnail = `https://i.ytimg.com/vi/${event.youtubeId}/hqdefault.jpg`;
-                console.log('生成 YouTube 縮圖:', thumbnail);
-              }
-              if (!thumbnail) {
-                thumbnail = 'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop';
-              }
-              
-              return {
-                time: timeString,
-                title: event.title || '未命名節目',
-                duration: event.duration || '30',
-                category: event.category || '旅遊',
-                description: event.description || '',
-                thumbnail: thumbnail,
-                youtubeId: event.youtubeId || '',
-                status: event.isPremiere ? '首播' : '重播',
-                tags: event.tags || []
-              };
-            }).filter(program => {
-              // 過濾已結束的節目
-              const taiwanTime = getTaiwanTime();
-              const currentTime = taiwanTime.getHours() * 60 + taiwanTime.getMinutes();
-              
-              const [programHour, programMinute] = program.time.split(':').map(Number);
-              const programStartTime = programHour * 60 + programMinute;
-              const programEndTime = programStartTime + parseInt(program.duration);
-              
-              // 只保留當前時間 < 節目結束時間的節目（包括正在播放的節目）
-              return currentTime < programEndTime;
-            }).sort((a, b) => {
-              // 按時間排序
-              return a.time.localeCompare(b.time);
-            });
-            
-            scheduleData = {
-              today: {
-                date: today,
-                dayOfWeek: getDayOfWeek(taiwanTime),
-                month: `${taiwanTime.getMonth() + 1}月`,
-                day: `${taiwanTime.getDate()}日`,
-                schedule: schedulePrograms
-              }
-            };
-            
-            console.log('使用管理後台添加的節目表，共', scheduleData.today.schedule.length, '個節目');
-            updateScheduleDisplay();
-            startTimeUpdates();
-            return;
-            }
-          }
-        } catch (e) {
-          console.log('管理後台節目表解析失敗:', e);
-        }
-      }
-      
-      // 嘗試從 Contentful 載入月度節目表
+      // 優先從 Contentful 載入節目表
       try {
+        console.log('🎯 優先從 Contentful 載入節目表...');
         const response = await contentfulClient.getEntries({
           content_type: 'scheduleItem',
-          'fields.airDate[gte]': today,
-          'fields.airDate[lt]': new Date(taiwanTime.getFullYear(), taiwanTime.getMonth() + 1, 1).toISOString().split('T')[0],
           order: 'fields.airDate,fields.slotIndex',
-          include: 2
+          include: 2,
+          limit: 100
         });
         
         console.log('Contentful 回應:', response.items?.length || 0, '個項目');
         
         if (response.items && response.items.length > 0) {
-          // 過濾今天的節目，並排除推薦節目
+          // 過濾節目，並排除推薦節目
           const todayPrograms = response.items.filter(item => {
             const fields = item.fields || {};
             const title = fields.title || '';
@@ -570,7 +410,8 @@ document.addEventListener('DOMContentLoaded', () => {
                                        title.includes('加拿大的極光晚餐') ||
                                        title.includes('2025-08-19'); // 舊日期
             
-            return fields.airDate === today && !isRecommendedProgram;
+            // 顯示所有節目，不管日期
+            return !isRecommendedProgram;
           }).map(item => {
             // 從備註中提取具體時間，格式為 [時間:XX:XX]
             const notes = item.fields.notes || '';
@@ -642,7 +483,8 @@ document.addEventListener('DOMContentLoaded', () => {
             return a.time.localeCompare(b.time);
           });
           
-          scheduleData = {
+          // 設定全域 scheduleData 變數
+          window.scheduleData = {
             today: {
               date: today,
               dayOfWeek: getDayOfWeek(taiwanTime),
@@ -652,10 +494,13 @@ document.addEventListener('DOMContentLoaded', () => {
             }
           };
           
+          // 同時設定本地變數
+          scheduleData = window.scheduleData;
+          
           console.log('成功從 Contentful 載入節目表，共', scheduleData.today.schedule.length, '個節目');
         } else {
           // 如果沒有找到節目，使用預設數據
-          scheduleData = {
+          window.scheduleData = {
             today: {
               date: today,
               dayOfWeek: getDayOfWeek(taiwanTime),
@@ -664,12 +509,13 @@ document.addEventListener('DOMContentLoaded', () => {
               schedule: getDefaultSchedule(today)
             }
           };
+          scheduleData = window.scheduleData;
           console.log('Contentful 中沒有找到節目，使用預設節目表');
         }
       } catch (contentfulError) {
         console.log('Contentful 載入失敗，使用預設節目表:', contentfulError.message);
         // 使用預設數據
-        scheduleData = {
+        window.scheduleData = {
           today: {
             date: today,
             dayOfWeek: getDayOfWeek(taiwanTime),
@@ -678,17 +524,133 @@ document.addEventListener('DOMContentLoaded', () => {
             schedule: getDefaultSchedule(today)
           }
         };
+        scheduleData = window.scheduleData;
       }
       
       updateScheduleDisplay();
       startTimeUpdates();
       
     } catch (error) {
-      console.error('載入節目表失敗:', error);
+      console.error('從 Contentful 載入節目表失敗:', error);
       
-      // 如果載入失敗，使用預設數據（台灣時間）
+      // 嘗試從 localStorage 載入備用數據
+      console.log('🔄 嘗試從 localStorage 載入備用節目數據...');
+      
+      // 檢查 currentSchedule 中的節目
+      const currentSchedule = localStorage.getItem('currentSchedule');
+      if (currentSchedule) {
+        try {
+          const scheduleData = JSON.parse(currentSchedule);
+          const todaySchedule = scheduleData.today?.schedule || [];
+          
+          if (todaySchedule.length > 0) {
+            console.log('✅ 從 currentSchedule 載入備用節目，共', todaySchedule.length, '個節目');
+            
+            // 過濾已結束的節目
+            const filteredPrograms = todaySchedule.filter(program => {
+              const taiwanTime = getTaiwanTime();
+              const currentTime = taiwanTime.getHours() * 60 + taiwanTime.getMinutes();
+              
+              const [programHour, programMinute] = program.time.split(':').map(Number);
+              const programStartTime = programHour * 60 + programMinute;
+              const programEndTime = programStartTime + parseInt(program.duration);
+              
+              return currentTime < programEndTime;
+            }).sort((a, b) => a.time.localeCompare(b.time));
+            
+            window.scheduleData = {
+              today: {
+                date: today,
+                dayOfWeek: getDayOfWeek(taiwanTime),
+                month: `${taiwanTime.getMonth() + 1}月`,
+                day: `${taiwanTime.getDate()}日`,
+                schedule: filteredPrograms
+              }
+            };
+            scheduleData = window.scheduleData;
+            
+            console.log('使用 currentSchedule 備用節目表，過濾後共', filteredPrograms.length, '個節目');
+            updateScheduleDisplay();
+            startTimeUpdates();
+            return;
+          }
+        } catch (e) {
+          console.log('currentSchedule 備用數據解析失敗:', e);
+        }
+      }
+      
+      // 檢查管理後台添加的節目
+      const calendarEvents = localStorage.getItem('calendar_events');
+      if (calendarEvents) {
+        try {
+          const eventsData = JSON.parse(calendarEvents);
+          const todayEvents = eventsData[today] || [];
+          
+          if (todayEvents.length > 0) {
+            console.log('✅ 從 calendar_events 載入備用節目，共', todayEvents.length, '個節目');
+            
+            // 將 localStorage 中的節目轉換為節目表格式
+            const schedulePrograms = todayEvents.map(event => {
+              let timeString = event.time;
+              if (!timeString) {
+                const notes = event.notes || '';
+                const timeMatch = notes.match(/\[時間:(\d{2}:\d{2})\]/);
+                timeString = timeMatch ? timeMatch[1] : '14:00';
+              }
+              
+              let thumbnail = event.thumbnail;
+              if (!thumbnail && event.youtubeId) {
+                thumbnail = `https://i.ytimg.com/vi/${event.youtubeId}/hqdefault.jpg`;
+              }
+              if (!thumbnail) {
+                thumbnail = 'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop';
+              }
+              
+              return {
+                time: timeString,
+                title: event.title || '未命名節目',
+                duration: event.duration || '30',
+                category: event.category || '旅遊',
+                description: event.description || '',
+                thumbnail: thumbnail,
+                youtubeId: event.youtubeId || '',
+                status: event.isPremiere ? '首播' : '重播',
+                tags: event.tags || []
+              };
+            }).filter(program => {
+              const taiwanTime = getTaiwanTime();
+              const currentTime = taiwanTime.getHours() * 60 + taiwanTime.getMinutes();
+              const [programHour, programMinute] = program.time.split(':').map(Number);
+              const programStartTime = programHour * 60 + programMinute;
+              const programEndTime = programStartTime + parseInt(program.duration);
+              return currentTime < programEndTime;
+            }).sort((a, b) => a.time.localeCompare(b.time));
+            
+            window.scheduleData = {
+              today: {
+                date: today,
+                dayOfWeek: getDayOfWeek(taiwanTime),
+                month: `${taiwanTime.getMonth() + 1}月`,
+                day: `${taiwanTime.getDate()}日`,
+                schedule: schedulePrograms
+              }
+            };
+            scheduleData = window.scheduleData;
+            
+            console.log('使用 calendar_events 備用節目表，共', scheduleData.today.schedule.length, '個節目');
+            updateScheduleDisplay();
+            startTimeUpdates();
+            return;
+          }
+        } catch (e) {
+          console.log('calendar_events 備用數據解析失敗:', e);
+        }
+      }
+      
+      // 如果所有載入都失敗，使用預設數據
+      console.log('⚠️ 所有數據載入都失敗，使用預設節目表');
       const taiwanTime = getTaiwanTime();
-      scheduleData = {
+      window.scheduleData = {
         today: {
           date: taiwanTime.toISOString().split('T')[0],
           dayOfWeek: getDayOfWeek(taiwanTime),
@@ -697,6 +659,7 @@ document.addEventListener('DOMContentLoaded', () => {
           schedule: getDefaultSchedule(taiwanTime.toISOString().split('T')[0])
         }
       };
+      scheduleData = window.scheduleData;
       updateScheduleDisplay();
       startTimeUpdates();
     }
@@ -768,10 +731,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (scheduleListEl && today.schedule) {
       scheduleListEl.innerHTML = '';
       
-      // 過濾節目：顯示當前和未來節目，以及跨日時段的節目
-      const visiblePrograms = today.schedule.filter(shouldShowProgram);
+      // 顯示所有節目，包括已結束的節目
+      const visiblePrograms = today.schedule;
       
-      // 生成完整的24個節目卡片（12個小時的節目表）
+      // 生成節目表（只顯示當前時段和未來的節目）
       const taiwanTime = getTaiwanTime();
       const currentHour = taiwanTime.getHours();
       const currentMinute = taiwanTime.getMinutes();
@@ -779,11 +742,14 @@ document.addEventListener('DOMContentLoaded', () => {
       // 計算當前時段（每30分鐘一個時段）
       const currentTimeSlot = currentMinute < 30 ? 0 : 1;
       const startHour = currentHour;
+      const startMinute = currentTimeSlot * 30;
       
       const fullSchedule = [];
+      
+      // 從當前時段開始，顯示未來12小時的節目（24個時段）
       for (let i = 0; i < 24; i++) {
-        const hour = (startHour + Math.floor(i / 2)) % 24;
-        const minute = ((currentTimeSlot + i) % 2) * 30;
+        const hour = (startHour + Math.floor((startMinute + i * 30) / 60)) % 24;
+        const minute = (startMinute + i * 30) % 60;
         const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
         
         // 檢查是否已有該時段的節目

@@ -11,6 +11,11 @@
   <!-- Contentful SDK -->
   <script src="https://cdn.jsdelivr.net/npm/contentful@latest/dist/contentful.browser.min.js"></script>
   <script src="browser-config.js"></script>
+  <script>
+    // 確保配置載入
+    console.log('Contentful 配置:', window.CONTENTFUL_CONFIG);
+    console.log('Contentful SDK 狀態:', typeof contentful);
+  </script>
   <style>
     /* 今日節目表專用樣式 */
     .today-schedule-container {
@@ -538,20 +543,41 @@
             accessToken: window.CONTENTFUL_CONFIG?.DELIVERY_TOKEN || 'lODH-WLwHwVZv7O4rFdBWjSnrzaQWGD4koeOZ1Dypj0'
           });
           
-          // 獲取今天的日期
-          const today = new Date();
-          const todayString = today.getFullYear() + '-' + 
-                             String(today.getMonth() + 1).padStart(2, '0') + '-' + 
-                             String(today.getDate()).padStart(2, '0');
+          // 獲取台灣時間的今天日期
+          const now = new Date();
+          const taiwanTime = new Date(now.getTime() + (8 * 60 * 60 * 1000));
+          const todayString = taiwanTime.toISOString().split('T')[0];
           
-          console.log('從 Contentful 載入今日節目:', todayString);
+          console.log('從 Contentful 載入今日節目 (台灣時間):', todayString);
           
-          // 查詢今日的節目
-          const response = await client.getEntries({
-            content_type: 'scheduleItem',
-            'fields.airDate': todayString,
-            include: 2 // 包含連結的資源
-          });
+          // 查詢今日的節目 - 嘗試多種查詢方式
+          let response;
+          try {
+            // 方式1：使用 airDate 欄位
+            response = await client.getEntries({
+              content_type: 'scheduleItem',
+              'fields.airDate': todayString,
+              include: 2
+            });
+            console.log('方式1 (airDate) 查詢結果:', response.items?.length || 0, '個節目');
+          } catch (error) {
+            console.log('方式1 查詢失敗，嘗試方式2:', error.message);
+          }
+          
+          // 如果方式1沒有結果，嘗試方式2：查詢所有 scheduleItem
+          if (!response || !response.items || response.items.length === 0) {
+            try {
+              response = await client.getEntries({
+                content_type: 'scheduleItem',
+                include: 2,
+                limit: 100
+              });
+              console.log('方式2 (所有 scheduleItem) 查詢結果:', response.items?.length || 0, '個節目');
+            } catch (error) {
+              console.log('方式2 查詢也失敗:', error.message);
+              throw error;
+            }
+          }
           
           console.log('Contentful 回應:', response);
           
@@ -564,8 +590,15 @@
             const timeMatch = notes.match(/\[時間:(\d{2}:\d{2})\]/);
             const airTime = timeMatch ? timeMatch[1] : '00:00';
             
+            console.log('處理節目:', {
+              title: fields.title?.['en-US'],
+              airDate: fields.airDate?.['en-US'],
+              notes: notes,
+              extractedTime: airTime
+            });
+            
             // 處理縮圖
-            let thumbnail = 'https://via.placeholder.com/320x200/000000/ffffff?text=節目圖片';
+            let thumbnail = 'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop';
             
             console.log('處理節目縮圖:', fields.title?.['en-US'], {
               hasThumbnail: !!(fields.thumbnail && fields.thumbnail['en-US']),
@@ -587,14 +620,41 @@
               thumbnail = fields.thumbnailUrl['en-US'];
               console.log('使用 YouTube URL 縮圖:', thumbnail);
             }
+            // 如果有 video 欄位，嘗試從中提取 YouTube ID
+            else if (fields.video && fields.video['en-US']) {
+              const videoEntry = fields.video['en-US'];
+              if (videoEntry.fields && videoEntry.fields.youTubeId && videoEntry.fields.youTubeId['en-US']) {
+                const youtubeId = videoEntry.fields.youTubeId['en-US'];
+                thumbnail = `https://img.youtube.com/vi/${youtubeId}/maxresdefault.jpg`;
+                console.log('使用 Video Entry 中的 YouTube 縮圖:', thumbnail);
+              }
+            }
+            // 從備註中提取 YouTube ID（如果有的話）
+            else {
+              const youtubeIdMatch = notes.match(/\[YouTube:([a-zA-Z0-9_-]+)\]/);
+              if (youtubeIdMatch) {
+                const youtubeId = youtubeIdMatch[1];
+                thumbnail = `https://img.youtube.com/vi/${youtubeId}/maxresdefault.jpg`;
+                console.log('從備註中提取 YouTube 縮圖:', thumbnail);
+              }
+            }
+            
+            // 提取 YouTube ID
+            let youtubeId = '';
+            const youtubeIdMatch = notes.match(/\[YouTube:([a-zA-Z0-9_-]+)\]/);
+            if (youtubeIdMatch) {
+              youtubeId = youtubeIdMatch[1];
+            }
             
             return {
               time: airTime,
               title: fields.title?.['en-US'] || '未命名節目',
               duration: "30", // 預設 30 分鐘
               category: "旅遊節目",
-              description: notes.replace(/\[時間:\d{2}:\d{2}\]/, '').trim() || '節目描述',
-              thumbnail: thumbnail
+              description: notes.replace(/\[時間:\d{2}:\d{2}\]/, '').replace(/\[YouTube:[a-zA-Z0-9_-]+\]/, '').trim() || '節目描述',
+              thumbnail: thumbnail,
+              youtubeId: youtubeId,
+              status: "published"
             };
           });
           
@@ -616,34 +676,59 @@
       // 載入節目數據
       async function loadPrograms() {
         try {
-          // 首先嘗試從 Contentful 載入
+          // 優先從 Contentful 載入節目數據
           await loadProgramsFromContentful();
+          
+          // 如果 Contentful 載入成功，保存到 localStorage 作為備份
+          if (programs.length > 0) {
+            localStorage.setItem('todayPrograms', JSON.stringify(programs));
+            console.log('✅ 節目資料已保存到 localStorage 作為備份');
+          }
+          
         } catch (error) {
           console.error('從 Contentful 載入節目數據失敗:', error);
-          // 如果 Contentful 載入失敗，嘗試從 schedule.json 載入
+          
+          // 嘗試從 localStorage 載入備份資料
+          try {
+            const backupData = localStorage.getItem('todayPrograms');
+            if (backupData) {
+              programs = JSON.parse(backupData);
+              console.log('✅ 從 localStorage 載入備份節目資料:', programs.length, '個節目');
+              return;
+            }
+          } catch (backupError) {
+            console.error('從 localStorage 載入備份資料失敗:', backupError);
+          }
+          
+          // 如果 localStorage 也沒有資料，嘗試從 schedule.json 載入
           try {
             const response = await fetch('schedule.json');
             const data = await response.json();
-            programs = data.today.schedule || [];
-          } catch (jsonError) {
-            console.error('載入 schedule.json 失敗:', jsonError);
-            // 使用預設數據（只包含當前時間之後的節目）
-            const now = new Date();
-            const taiwanTime = new Date(now.getTime() + (8 * 60 * 60 * 1000));
-            const currentHour = taiwanTime.getUTCHours();
-            const currentMinute = taiwanTime.getUTCMinutes();
+            const schedulePrograms = data.today.schedule || [];
+            console.log('從 schedule.json 載入節目成功:', schedulePrograms.length, '個節目');
             
-            // 生成從當前時間開始的完整24個節目表（12個小時）
-            programs = [];
-            const startHour = currentHour;
-            const startMinute = currentMinute < 30 ? 0 : 1; // 計算當前時段（每30分鐘一個時段）
+          // 生成完整的節目表（從當前時間開始的24個時段）
+          const now = new Date();
+          const taiwanTime = new Date(now.getTime() + (8 * 60 * 60 * 1000));
+          const currentHour = taiwanTime.getUTCHours();
+          const currentMinute = taiwanTime.getUTCMinutes();
+          
+          programs = [];
+          const startHour = currentHour;
+          const startMinute = currentMinute < 30 ? 0 : 1; // 計算當前時段（每30分鐘一個時段）
+          
+          // 生成24個時段的節目（12個小時）
+          for (let i = 0; i < 24; i++) {
+            const hour = (startHour + Math.floor(i / 2)) % 24;
+            const minute = ((startMinute + i) % 2) * 30;
+            const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
             
-            // 生成24個時段的節目（12個小時）
-            for (let i = 0; i < 24; i++) {
-              const hour = (startHour + Math.floor(i / 2)) % 24;
-              const minute = ((startMinute + i) % 2) * 30;
-              const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-              
+            // 檢查是否有預設的節目安排
+            const existingProgram = schedulePrograms.find(p => p.time === timeString);
+            
+            if (existingProgram) {
+              programs.push(existingProgram);
+            } else {
               programs.push({
                 time: timeString,
                 title: "目前暫無節目",
@@ -656,26 +741,45 @@
                 tags: []
               });
             }
+          }
+          
+          } catch (jsonError) {
+            console.error('載入 schedule.json 失敗:', jsonError);
+          }
+          
+          // 如果所有載入都失敗，使用預設數據
+          const now = new Date();
+          const taiwanTime = new Date(now.getTime() + (8 * 60 * 60 * 1000));
+          const currentHour = taiwanTime.getUTCHours();
+          const currentMinute = taiwanTime.getUTCMinutes();
+          
+          programs = [];
+          const startHour = currentHour;
+          const startMinute = currentMinute < 30 ? 0 : 1;
+          
+          for (let i = 0; i < 24; i++) {
+            const hour = (startHour + Math.floor(i / 2)) % 24;
+            const minute = ((startMinute + i) % 2) * 30;
+            const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
             
-            // 添加一個實際的節目作為範例（13:30 西班牙節目）
-            const exampleProgram = {
-              time: "13:30",
-              title: "Top 10 Best Places to Visit in Spain - Travel Video",
+            programs.push({
+              time: timeString,
+              title: "目前暫無節目",
               duration: "30",
-              category: "旅遊節目",
-              description: "探索西班牙最美麗的景點",
+              category: "空檔",
+              description: "此時段暫無節目安排",
               thumbnail: "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop",
-              youtubeId: "example123",
-              status: "首播",
+              youtubeId: "",
+              status: "空檔",
               tags: []
-            };
-            
-            // 找到 13:30 的位置並替換
-            const index = programs.findIndex(p => p.time === "13:30");
-            if (index !== -1) {
-              programs[index] = exampleProgram;
-            }
+            });
+          }
         }
+        }
+        
+        // 更新全域變數
+        window.programs = programs;
+        console.log('最終載入的節目數據:', programs);
       }
       
       // 更新日期和時間
