@@ -123,6 +123,52 @@
 
     .status-bar { position: fixed; bottom: 20px; right: 20px; background: #333; color: white; padding: 15px 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 1001; display: none; }
 
+    /* 全螢幕播放器樣式 */
+    .fullscreen-player {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: #000;
+      z-index: 10000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .fullscreen-player.active {
+      display: flex;
+    }
+    
+    .close-player-btn {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: rgba(0, 0, 0, 0.7);
+      color: white;
+      border: none;
+      font-size: 30px;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      cursor: pointer;
+      z-index: 10001;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.3s ease;
+    }
+    
+    .close-player-btn:hover {
+      background: rgba(0, 0, 0, 0.9);
+    }
+    
+    #main-player {
+      width: 100%;
+      height: 100%;
+    }
+
     /* 週視圖和日視圖樣式 */
     .week-row, .day-row { transition: background-color 0.2s ease; }
     .week-row:hover, .day-row:hover { background-color: #f8f9fa; }
@@ -350,6 +396,7 @@
         <button class="btn" style="background: #dc3545; margin-left: 10px;" onclick="uploadSelectedPrograms()">📺 上架選中節目</button>
         <button class="btn" style="background: #17a2b8; margin-left: 10px;" onclick="reloadFromContentful()">📥 從 Contentful 重新載入</button>
         <button class="btn" style="background: #6f42c1; margin-left: 10px;" onclick="goToDashboard()">🏠 主控台</button>
+        <button class="btn" style="background: #fd7e14; margin-left: 10px;" onclick="cleanupPastPrograms()">🧹 清理過去節目</button>
       </div>
     </div>
 
@@ -394,6 +441,12 @@
         <!-- 時間槽將在這裡動態生成 -->
       </div>
     </div>
+  </div>
+
+  <!-- 全螢幕播放器 -->
+  <div class="fullscreen-player" id="fullscreenPlayer">
+    <button class="close-player-btn" title="關閉播放器">&times;</button>
+    <div id="main-player"></div>
   </div>
 
   <div class="modal" id="eventModal">
@@ -613,6 +666,9 @@
       loadEvents();
       renderCurrentView();
       updateCurrentDateDisplay();
+      
+      // 自動清理過去節目
+      cleanupPastPrograms();
     });
 
     function switchView(view) {
@@ -1046,6 +1102,7 @@
                 <span style="margin-left: 8px;">${event.duration}分鐘</span>
               </div>
               ${event.description ? `<div style="color: #666; font-size: 0.8rem; color: #666; margin-top: 4px; word-break: break-word;">${event.description}</div>` : ''}
+              ${event.youtubeId ? `<button class="watch-btn" onclick="openFullscreenPlayer('${event.youtubeId}')" style="background: #2b71d2; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; margin-top: 6px; cursor: pointer;">立即觀看</button>` : ''}
             `;
 
             eventCell.appendChild(eventDiv);
@@ -1094,11 +1151,13 @@
           <div class="event ${event.status === '首播' ? 'first-air' : ''} ${isPrimeTime(parseInt(event.time.split(':')[0])) ? 'prime-time' : ''}"
                onclick="openEventModal('${dateString}', '${event.time}')">
             <span class="event-time-label">${event.time}</span>${displayTitle}
+            ${event.youtubeId ? `<button class="watch-btn-small" onclick="event.stopPropagation(); openFullscreenPlayer('${event.youtubeId}')" style="background: #2b71d2; color: white; border: none; padding: 2px 4px; border-radius: 3px; font-size: 0.6rem; margin-left: 4px; cursor: pointer;">觀看</button>` : ''}
             ${event.title.length > maxTitleLength || event.description ? `
               <div class="event-tooltip">
                 <strong>${event.title}</strong>
                 ${event.description ? `<br><small>${event.description}</small>` : ''}
                 <br><small>${event.time} | ${event.category} | ${event.duration}分鐘</small>
+                ${event.youtubeId ? `<br><button class="watch-btn-tooltip" onclick="openFullscreenPlayer('${event.youtubeId}')" style="background: #2b71d2; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; margin-top: 4px; cursor: pointer;">立即觀看</button>` : ''}
               </div>
             ` : ''}
           </div>
@@ -1826,10 +1885,44 @@
       // 按時間排序
       currentSchedule.today.schedule.sort((a, b) => a.time.localeCompare(b.time));
       
+      // 過濾過去時間的節目
+      currentSchedule.today.schedule = filterPastPrograms(currentSchedule.today.schedule);
+      
       // 儲存到 localStorage
       localStorage.setItem('currentSchedule', JSON.stringify(currentSchedule));
       
       console.log('已更新今日節目表，新增節目:', scheduleItem);
+    }
+
+    // 過濾過去時間的節目
+    function filterPastPrograms(programs) {
+      const now = new Date();
+      const currentTime = now.getHours() * 60 + now.getMinutes();
+      
+      return programs.filter(program => {
+        const [programHour, programMinute] = program.time.split(':').map(Number);
+        const programStartTime = programHour * 60 + programMinute;
+        const programEndTime = programStartTime + parseInt(program.duration);
+        
+        // 只保留當前時間之後的節目（包括正在播放的節目）
+        return currentTime < programEndTime;
+      });
+    }
+
+    // 清理今日節目表中的過去節目
+    function cleanupPastPrograms() {
+      const currentSchedule = JSON.parse(localStorage.getItem('currentSchedule') || '{}');
+      
+      if (currentSchedule.today && currentSchedule.today.schedule) {
+        const originalCount = currentSchedule.today.schedule.length;
+        currentSchedule.today.schedule = filterPastPrograms(currentSchedule.today.schedule);
+        const filteredCount = currentSchedule.today.schedule.length;
+        
+        if (originalCount !== filteredCount) {
+          localStorage.setItem('currentSchedule', JSON.stringify(currentSchedule));
+          console.log(`已清理 ${originalCount - filteredCount} 個過去時間的節目`);
+        }
+      }
     }
 
     // 獲取星期幾的輔助函數
@@ -3081,6 +3174,126 @@
         };
       }
     }
+
+    // === 全螢幕播放器功能 ===
+    let fullscreenPlayerObject = null;
+
+    function openFullscreenPlayer(videoId) {
+      const fullscreenPlayerEl = document.getElementById('fullscreenPlayer');
+      if (!fullscreenPlayerEl) return;
+
+      // 防止頁面滾動
+      document.body.style.overflow = 'hidden';
+      
+      // 顯示播放器
+      fullscreenPlayerEl.classList.add('active');
+
+      // 創建 YouTube 播放器
+      if (window.YT && window.YT.Player) {
+        createYouTubePlayer(videoId);
+      } else {
+        // 如果 YouTube API 還沒載入，先載入
+        loadYouTubeAPI().then(() => {
+          createYouTubePlayer(videoId);
+        });
+      }
+    }
+
+    function createYouTubePlayer(videoId) {
+      const fullscreenPlayerEl = document.getElementById('fullscreenPlayer');
+      const playerDiv = document.getElementById('main-player');
+      
+      if (fullscreenPlayerObject) {
+        fullscreenPlayerObject.destroy();
+      }
+
+      fullscreenPlayerObject = new YT.Player('main-player', {
+        width: '100%',
+        height: '100%',
+        videoId: videoId,
+        playerVars: {
+          autoplay: 1,
+          controls: 1,
+          rel: 0,
+          modestbranding: 1,
+          fs: 1,
+          enablejsapi: 1
+        },
+        events: {
+          onReady: function(event) {
+            event.target.setPlaybackQuality('highres');
+            event.target.playVideo();
+          },
+          onError: function(event) {
+            console.error('YouTube 播放器錯誤:', event.data);
+            showStatus('影片播放失敗，請檢查影片 ID 是否正確', 'error');
+          }
+        }
+      });
+    }
+
+    function loadYouTubeAPI() {
+      return new Promise((resolve, reject) => {
+        if (window.YT && window.YT.Player) {
+          resolve();
+          return;
+        }
+
+        // 載入 YouTube IFrame API
+        const tag = document.createElement('script');
+        tag.src = 'https://www.youtube.com/iframe_api';
+        const firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+        // 設定全域回調
+        window.onYouTubeIframeAPIReady = function() {
+          resolve();
+        };
+
+        // 設定超時
+        setTimeout(() => {
+          reject(new Error('YouTube API 載入超時'));
+        }, 10000);
+      });
+    }
+
+    function closeFullscreenPlayer() {
+      const fullscreenPlayerEl = document.getElementById('fullscreenPlayer');
+      if (!fullscreenPlayerEl) return;
+
+      // 恢復頁面滾動
+      document.body.style.overflow = '';
+      
+      // 隱藏播放器
+      fullscreenPlayerEl.classList.remove('active');
+
+      // 銷毀播放器
+      if (fullscreenPlayerObject) {
+        fullscreenPlayerObject.destroy();
+        fullscreenPlayerObject = null;
+      }
+    }
+
+    // 關閉按鈕事件監聽
+    document.addEventListener('click', function(e) {
+      if (e.target && e.target.classList.contains('close-player-btn')) {
+        closeFullscreenPlayer();
+      }
+    });
+
+    // ESC 鍵關閉播放器
+    window.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        closeFullscreenPlayer();
+      }
+    });
+
+    // 點擊播放器背景關閉
+    document.getElementById('fullscreenPlayer')?.addEventListener('click', function(e) {
+      if (e.target === this) {
+        closeFullscreenPlayer();
+      }
+    });
   </script>
 </body>
 </html>
