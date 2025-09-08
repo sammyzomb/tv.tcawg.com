@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>修復 Contentful 節目資料</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .program-item {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            background: #f9f9f9;
+        }
+        .program-title {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .youtube-id-input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            margin: 5px 0;
+        }
+        .button {
+            background: #007cba;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .button:hover {
+            background: #005a87;
+        }
+        .button.danger {
+            background: #dc3545;
+        }
+        .button.danger:hover {
+            background: #c82333;
+        }
+        .status {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .thumbnail-preview {
+            width: 200px;
+            height: 112px;
+            object-fit: cover;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .instructions {
+            background: #e7f3ff;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid #007cba;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 修復 Contentful 節目資料</h1>
+        
+        <div class="instructions">
+            <h3>📋 使用說明：</h3>
+            <ol>
+                <li>請為每個節目輸入正確的 YouTube ID</li>
+                <li>點擊「預覽縮圖」確認縮圖正確</li>
+                <li>點擊「批量修復」開始修復</li>
+                <li>修復完成後，重新載入今日節目表頁面</li>
+            </ol>
+        </div>
+
+        <div id="status"></div>
+        
+        <div id="programs-container">
+            <!-- 節目列表將在這裡動態生成 -->
+        </div>
+        
+        <div style="text-align: center; margin-top: 30px;">
+            <button class="button" onclick="previewAllThumbnails()">🔍 預覽所有縮圖</button>
+            <button class="button" onclick="fixAllPrograms()">🔧 批量修復</button>
+            <button class="button danger" onclick="clearAllData()">🗑️ 清除所有資料</button>
+        </div>
+    </div>
+
+    <!-- 載入 Contentful SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/contentful@latest/dist/contentful.browser.min.js"></script>
+    <script src="browser-config.js"></script>
+    
+    <script>
+        let contentfulClient;
+        let managementClient;
+        let programs = [];
+        
+        // 初始化
+        async function init() {
+            try {
+                // 創建 Contentful 客戶端
+                contentfulClient = contentful.createClient({
+                    space: window.CONTENTFUL_SPACE_ID,
+                    accessToken: window.CONTENTFUL_DELIVERY_TOKEN
+                });
+                
+                // 創建 Management 客戶端
+                managementClient = contentful.createClient({
+                    space: window.CONTENTFUL_SPACE_ID,
+                    accessToken: window.CONTENTFUL_MANAGEMENT_TOKEN
+                });
+                
+                showStatus('✅ Contentful 客戶端初始化成功', 'success');
+                await loadPrograms();
+            } catch (error) {
+                showStatus('❌ 初始化失敗: ' + error.message, 'error');
+            }
+        }
+        
+        // 載入節目資料
+        async function loadPrograms() {
+            try {
+                showStatus('🔄 正在載入節目資料...', 'info');
+                
+                const response = await contentfulClient.getEntries({
+                    content_type: 'scheduleItem',
+                    'fields.airDate': '2025-09-08',
+                    include: 2
+                });
+                
+                programs = response.items.map(item => {
+                    const fields = item.fields;
+                    const video = fields.video?.fields || {};
+                    
+                    return {
+                        id: item.sys.id,
+                        title: fields.title,
+                        currentYoutubeId: video.youtubeId || video.youTubeId || '7K6nAIzdM8A',
+                        newYoutubeId: video.youtubeId || video.youTubeId || '7K6nAIzdM8A',
+                        videoId: fields.video?.sys?.id,
+                        airDate: fields.airDate,
+                        time: fields.time || '12:00'
+                    };
+                });
+                
+                renderPrograms();
+                showStatus(`✅ 載入 ${programs.length} 個節目`, 'success');
+            } catch (error) {
+                showStatus('❌ 載入節目失敗: ' + error.message, 'error');
+            }
+        }
+        
+        // 渲染節目列表
+        function renderPrograms() {
+            const container = document.getElementById('programs-container');
+            container.innerHTML = '';
+            
+            programs.forEach((program, index) => {
+                const programDiv = document.createElement('div');
+                programDiv.className = 'program-item';
+                programDiv.innerHTML = `
+                    <div class="program-title">${program.title}</div>
+                    <div>
+                        <label>YouTube ID:</label>
+                        <input type="text" 
+                               class="youtube-id-input" 
+                               value="${program.newYoutubeId}" 
+                               onchange="updateYoutubeId(${index}, this.value)"
+                               placeholder="輸入 YouTube ID">
+                    </div>
+                    <div>
+                        <button class="button" onclick="previewThumbnail(${index})">🔍 預覽縮圖</button>
+                        <button class="button" onclick="fixProgram(${index})">🔧 修復此節目</button>
+                    </div>
+                    <div id="thumbnail-${index}"></div>
+                `;
+                container.appendChild(programDiv);
+            });
+        }
+        
+        // 更新 YouTube ID
+        function updateYoutubeId(index, youtubeId) {
+            programs[index].newYoutubeId = youtubeId;
+        }
+        
+        // 預覽縮圖
+        function previewThumbnail(index) {
+            const program = programs[index];
+            const thumbnailUrl = `https://i.ytimg.com/vi/${program.newYoutubeId}/hqdefault.jpg`;
+            
+            const thumbnailDiv = document.getElementById(`thumbnail-${index}`);
+            thumbnailDiv.innerHTML = `
+                <img src="${thumbnailUrl}" class="thumbnail-preview" alt="縮圖預覽">
+                <div>縮圖 URL: ${thumbnailUrl}</div>
+            `;
+        }
+        
+        // 預覽所有縮圖
+        function previewAllThumbnails() {
+            programs.forEach((_, index) => {
+                previewThumbnail(index);
+            });
+        }
+        
+        // 修復單個節目
+        async function fixProgram(index) {
+            const program = programs[index];
+            
+            try {
+                showStatus(`🔄 正在修復節目: ${program.title}`, 'info');
+                
+                // 獲取現有的 video 條目
+                const videoEntry = await managementClient.getEntry(program.videoId);
+                
+                // 更新 video 條目的 YouTube ID
+                videoEntry.fields.youTubeId = {
+                    'en-US': program.newYoutubeId
+                };
+                
+                // 更新 video 條目的標題
+                videoEntry.fields.title = {
+                    'en-US': program.title
+                };
+                
+                // 保存更新
+                await managementClient.updateEntry(videoEntry);
+                await managementClient.publishEntry(videoEntry);
+                
+                showStatus(`✅ 修復完成: ${program.title}`, 'success');
+                
+                // 更新預覽
+                previewThumbnail(index);
+                
+            } catch (error) {
+                showStatus(`❌ 修復失敗: ${program.title} - ${error.message}`, 'error');
+            }
+        }
+        
+        // 批量修復所有節目
+        async function fixAllPrograms() {
+            showStatus('🔄 開始批量修復...', 'info');
+            
+            for (let i = 0; i < programs.length; i++) {
+                await fixProgram(i);
+                // 添加延遲避免 API 限制
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+            
+            showStatus('✅ 批量修復完成！請重新載入今日節目表頁面', 'success');
+        }
+        
+        // 清除所有資料
+        function clearAllData() {
+            if (confirm('確定要清除所有資料嗎？此操作不可逆！')) {
+                localStorage.clear();
+                showStatus('🗑️ 已清除所有本地資料', 'info');
+            }
+        }
+        
+        // 顯示狀態
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+        
+        // 頁面載入時初始化
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

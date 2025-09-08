@@ -395,6 +395,17 @@ document.addEventListener('DOMContentLoaded', () => {
           const todayEvents = eventsData[today] || [];
           
           if (todayEvents.length > 0) {
+            console.log('從 calendar_events 載入節目，共', todayEvents.length, '個節目');
+            console.log('calendar_events 節目資料:', todayEvents.map(e => ({title: e.title, thumbnail: e.thumbnail, youtubeId: e.youtubeId})));
+            
+            // 檢查是否有錯誤的 YouTube ID（所有節目都使用同一個 ID）
+            const youtubeIds = todayEvents.map(event => event.youtubeId).filter(id => id);
+            const uniqueYoutubeIds = [...new Set(youtubeIds)];
+            if (uniqueYoutubeIds.length === 1 && youtubeIds.length > 1) {
+              console.log('⚠️ 檢測到 localStorage 中的節目都使用相同的 YouTube ID，清除 localStorage 並從 Contentful 重新載入');
+              localStorage.removeItem('calendar_events');
+              // 跳過 localStorage 處理，繼續執行後面的 Contentful 載入邏輯
+            } else {
             // 將 localStorage 中的節目轉換為節目表格式
             const schedulePrograms = todayEvents.map(event => {
               let timeString;
@@ -423,17 +434,38 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
               }
               
+              // 調試 localStorage 節目縮圖
+              console.log('處理 localStorage 節目縮圖:', event.title, {
+                hasThumbnail: !!(event.thumbnail),
+                hasYoutubeId: !!(event.youtubeId),
+                thumbnail: event.thumbnail,
+                youtubeId: event.youtubeId
+              });
+              
+              // 處理縮圖：優先使用 event.thumbnail，如果有 youtubeId 則生成 YouTube 縮圖
+              let thumbnail = event.thumbnail;
+              if (!thumbnail && event.youtubeId) {
+                thumbnail = `https://i.ytimg.com/vi/${event.youtubeId}/hqdefault.jpg`;
+                console.log('生成 YouTube 縮圖:', thumbnail);
+              }
+              if (!thumbnail) {
+                thumbnail = 'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop';
+              }
+              
               return {
                 time: timeString,
                 title: event.title || '未命名節目',
                 duration: event.duration || '30',
                 category: event.category || '旅遊',
                 description: event.description || '',
-                thumbnail: event.thumbnail || 'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop',
+                thumbnail: thumbnail,
                 youtubeId: event.youtubeId || '',
                 status: event.isPremiere ? '首播' : '重播',
                 tags: event.tags || []
               };
+            }).sort((a, b) => {
+              // 按時間排序
+              return a.time.localeCompare(b.time);
             });
             
             scheduleData = {
@@ -450,6 +482,7 @@ document.addEventListener('DOMContentLoaded', () => {
             updateScheduleDisplay();
             startTimeUpdates();
             return;
+            }
           }
         } catch (e) {
           console.log('管理後台節目表解析失敗:', e);
@@ -505,21 +538,51 @@ document.addEventListener('DOMContentLoaded', () => {
             // 從 video 欄位獲取影片資訊
             const video = item.fields.video?.fields || {};
             
+            // 處理縮圖：優先使用 item.fields.thumbnailUrl，然後是 video.thumbnail，最後是 YouTube 縮圖
+            let thumbnail = null;
+            
+            // 1. 優先使用 item.fields.thumbnailUrl
+            if (item.fields.thumbnailUrl) {
+              thumbnail = item.fields.thumbnailUrl;
+            }
+            // 2. 使用 video.thumbnail Asset
+            else if (video.thumbnail?.fields?.file?.url) {
+              thumbnail = video.thumbnail.fields.file.url.startsWith('http') ? 
+                video.thumbnail.fields.file.url : 
+                `https:${video.thumbnail.fields.file.url}`;
+            }
+            // 3. 使用 YouTube 縮圖
+            else if (video.youtubeId || video.youTubeId) {
+              const youtubeId = video.youtubeId || video.youTubeId;
+              thumbnail = `https://i.ytimg.com/vi/${youtubeId}/hqdefault.jpg`;
+            }
+            // 4. 預設縮圖
+            else {
+              thumbnail = 'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop';
+            }
+            
+            // 調試縮圖處理
+            console.log('處理節目縮圖 (v2.5):', item.fields.title, {
+              hasItemThumbnailUrl: !!(item.fields.thumbnailUrl),
+              hasVideoThumbnail: !!(video.thumbnail?.fields?.file?.url),
+              hasYoutubeId: !!(video.youtubeId || video.youTubeId),
+              finalThumbnail: thumbnail
+            });
+            
             return {
               time: timeString,
               title: item.fields.title || '未命名節目',
               duration: '30', // 預設30分鐘
               category: video.category || '旅遊',
               description: video.description || '',
-              thumbnail: video.thumbnail?.fields?.file?.url ? 
-                (video.thumbnail.fields.file.url.startsWith('http') ? 
-                  video.thumbnail.fields.file.url : 
-                  `https:${video.thumbnail.fields.file.url}`) :
-                'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop',
-              youtubeId: video.youtubeId || '',
+              thumbnail: thumbnail,
+              youtubeId: video.youtubeId || video.youTubeId || '',
               status: item.fields.isPremiere ? '首播' : '重播',
               tags: []
             };
+          }).sort((a, b) => {
+            // 按時間排序
+            return a.time.localeCompare(b.time);
           });
           
           scheduleData = {

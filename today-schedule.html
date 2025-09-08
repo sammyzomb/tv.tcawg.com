@@ -7,6 +7,10 @@
   
   <link rel="stylesheet" href="style.css">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  
+  <!-- Contentful SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/contentful@latest/dist/contentful.browser.min.js"></script>
+  <script src="browser-config.js"></script>
   <style>
     /* 今日節目表專用樣式 */
     .today-schedule-container {
@@ -397,6 +401,9 @@
       let currentProgramIndex = 0;
       let programs = [];
       
+      // 將 programs 設為全域變數，方便調試
+      window.programs = programs;
+      
       // 初始化
       initTodaySchedule();
       
@@ -414,16 +421,111 @@
         setInterval(checkProgramStatus, 30000);
       }
       
+      // 從 Contentful 載入節目數據
+      async function loadProgramsFromContentful() {
+        try {
+          // 檢查 Contentful SDK 是否載入
+          if (typeof contentful === 'undefined') {
+            throw new Error('Contentful SDK 未載入');
+          }
+          
+          // 創建 Contentful 客戶端
+          const client = contentful.createClient({
+            space: window.CONTENTFUL_CONFIG?.SPACE_ID || 'os5wf90ljenp',
+            accessToken: window.CONTENTFUL_CONFIG?.DELIVERY_TOKEN || 'lODH-WLwHwVZv7O4rFdBWjSnrzaQWGD4koeOZ1Dypj0'
+          });
+          
+          // 獲取今天的日期
+          const today = new Date();
+          const todayString = today.getFullYear() + '-' + 
+                             String(today.getMonth() + 1).padStart(2, '0') + '-' + 
+                             String(today.getDate()).padStart(2, '0');
+          
+          console.log('從 Contentful 載入今日節目:', todayString);
+          
+          // 查詢今日的節目
+          const response = await client.getEntries({
+            content_type: 'scheduleItem',
+            'fields.airDate': todayString,
+            include: 2 // 包含連結的資源
+          });
+          
+          console.log('Contentful 回應:', response);
+          
+          // 轉換 Contentful 資料格式
+          programs = response.items.map(entry => {
+            const fields = entry.fields;
+            
+            // 從備註中提取時間
+            const notes = fields.notes?.['en-US'] || '';
+            const timeMatch = notes.match(/\[時間:(\d{2}:\d{2})\]/);
+            const airTime = timeMatch ? timeMatch[1] : '00:00';
+            
+            // 處理縮圖
+            let thumbnail = 'https://via.placeholder.com/320x200/000000/ffffff?text=節目圖片';
+            
+            console.log('處理節目縮圖:', fields.title?.['en-US'], {
+              hasThumbnail: !!(fields.thumbnail && fields.thumbnail['en-US']),
+              hasThumbnailUrl: !!(fields.thumbnailUrl && fields.thumbnailUrl['en-US']),
+              thumbnailAsset: fields.thumbnail?.['en-US'],
+              thumbnailUrl: fields.thumbnailUrl?.['en-US']
+            });
+            
+            // 如果有縮圖 Asset
+            if (fields.thumbnail && fields.thumbnail['en-US']) {
+              const thumbnailAsset = fields.thumbnail['en-US'];
+              if (thumbnailAsset.fields && thumbnailAsset.fields.file) {
+                thumbnail = 'https:' + thumbnailAsset.fields.file['en-US'].url;
+                console.log('使用 Contentful Asset 縮圖:', thumbnail);
+              }
+            }
+            // 如果有縮圖 URL
+            else if (fields.thumbnailUrl && fields.thumbnailUrl['en-US']) {
+              thumbnail = fields.thumbnailUrl['en-US'];
+              console.log('使用 YouTube URL 縮圖:', thumbnail);
+            }
+            
+            return {
+              time: airTime,
+              title: fields.title?.['en-US'] || '未命名節目',
+              duration: "30", // 預設 30 分鐘
+              category: "旅遊節目",
+              description: notes.replace(/\[時間:\d{2}:\d{2}\]/, '').trim() || '節目描述',
+              thumbnail: thumbnail
+            };
+          });
+          
+          // 按時間排序
+          programs.sort((a, b) => a.time.localeCompare(b.time));
+          
+          // 更新全域變數
+          window.programs = programs;
+          
+          console.log('從 Contentful 載入節目成功:', programs.length, '個節目');
+          console.log('節目縮圖資料:', programs.map(p => ({title: p.title, thumbnail: p.thumbnail})));
+          
+        } catch (error) {
+          console.error('從 Contentful 載入節目失敗:', error);
+          throw error;
+        }
+      }
+      
       // 載入節目數據
       async function loadPrograms() {
         try {
-          const response = await fetch('schedule.json');
-          const data = await response.json();
-          programs = data.today.schedule || [];
+          // 首先嘗試從 Contentful 載入
+          await loadProgramsFromContentful();
         } catch (error) {
-          console.error('載入節目數據失敗:', error);
-          // 使用預設數據
-          programs = [
+          console.error('從 Contentful 載入節目數據失敗:', error);
+          // 如果 Contentful 載入失敗，嘗試從 schedule.json 載入
+          try {
+            const response = await fetch('schedule.json');
+            const data = await response.json();
+            programs = data.today.schedule || [];
+          } catch (jsonError) {
+            console.error('載入 schedule.json 失敗:', jsonError);
+            // 使用預設數據
+            programs = [
             {
               time: "12:00",
               title: "午間精選 - 泰國清邁古城巡禮",

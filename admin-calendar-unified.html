@@ -424,11 +424,30 @@
         <div class="form-group" id="youtubeIdGroup" style="display: none;">
           <label>YouTube ID：</label>
           <input type="text" id="youtubeId" placeholder="例如：dQw4w9WgXcQ" onblur="fetchYouTubeInfo()">
+          <button type="button" class="btn btn-info" onclick="generateYouTubeThumbnail()" style="margin-top: 5px;">
+            🖼️ 自動生成 YouTube 縮圖
+          </button>
         </div>
 
         <div class="form-group" id="mp4FileGroup" style="display: none;">
           <label>MP4 檔案：</label>
           <input type="file" id="mp4File" accept=".mp4" onchange="handleFileUpload()">
+        </div>
+        
+        <div class="form-group">
+          <label>節目縮圖：</label>
+          <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px;">
+            <input type="file" id="thumbnailFile" accept="image/*" style="flex: 1;" onchange="previewThumbnail()">
+            <button type="button" class="btn btn-secondary" onclick="clearThumbnail()">清除</button>
+          </div>
+          <div id="thumbnailPreview" style="margin-top: 10px; text-align: center;">
+            <img id="thumbnailImage" style="max-width: 200px; max-height: 150px; border: 1px solid #ddd; border-radius: 4px; display: none;">
+            <div id="thumbnailPlaceholder" style="width: 200px; height: 150px; border: 2px dashed #ddd; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: #666; margin: 0 auto;">
+              預覽縮圖
+            </div>
+          </div>
+          <!-- 隱藏欄位存儲 Contentful Asset ID -->
+          <input type="hidden" id="thumbnailAssetId" value="">
         </div>
 
         <div class="form-group">
@@ -1177,6 +1196,26 @@
         document.getElementById('status').value = existingEvent.status;
         document.getElementById('videoType').value = existingEvent.videoType || '';
         document.getElementById('youtubeId').value = existingEvent.youtubeId || '';
+        
+        // 載入現有的縮圖資料
+        if (existingEvent.thumbnail) {
+          // 如果有現有縮圖，顯示在預覽中
+          const thumbnailImage = document.getElementById('thumbnailImage');
+          const placeholder = document.getElementById('thumbnailPlaceholder');
+          
+          if (existingEvent.thumbnail.startsWith('http')) {
+            // 如果是 URL（YouTube 縮圖或自訂 URL）
+            thumbnailImage.src = existingEvent.thumbnail;
+            thumbnailImage.style.display = 'block';
+            placeholder.style.display = 'none';
+            
+            // 如果是 YouTube 縮圖，設定隱藏欄位
+            if (existingEvent.thumbnail.includes('i.ytimg.com') || existingEvent.thumbnail.includes('img.youtube.com')) {
+              document.getElementById('thumbnailAssetId').setAttribute('data-youtube-url', existingEvent.thumbnail);
+            }
+          }
+        }
+        
         toggleVideoFields();
       } else {
         document.getElementById('modalTitle').textContent = '新增節目';
@@ -1322,6 +1361,24 @@
         ? document.getElementById('youtubeId').value
         : document.getElementById('mp4File').files[0] ? document.getElementById('mp4File').files[0].name : null;
 
+      // 處理縮圖資料
+      const thumbnailAssetId = document.getElementById('thumbnailAssetId').value;
+      const youtubeThumbnailUrl = document.getElementById('thumbnailAssetId').getAttribute('data-youtube-url');
+      const thumbnailFile = document.getElementById('thumbnailFile').files[0];
+      const thumbnailImage = document.getElementById('thumbnailImage');
+      
+      let thumbnail = null;
+      if (thumbnailAssetId) {
+        // 如果有 Contentful Asset ID，使用預設縮圖（實際縮圖會在 Contentful 中）
+        thumbnail = 'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop';
+      } else if (youtubeThumbnailUrl) {
+        // 如果有 YouTube 縮圖 URL
+        thumbnail = youtubeThumbnailUrl;
+      } else if (thumbnailImage.src && thumbnailImage.src.startsWith('http')) {
+        // 如果有預覽的縮圖
+        thumbnail = thumbnailImage.src;
+      }
+
       const event = {
         date: date,
         time: time,
@@ -1332,7 +1389,8 @@
         status: document.getElementById('status').value,
         videoType: videoType,
         youtubeId: videoType === 'YouTube' ? document.getElementById('youtubeId').value : null,
-        mp4File: videoType === 'MP4' ? (document.getElementById('mp4File').files[0] ? document.getElementById('mp4File').files[0].name : null) : null
+        mp4File: videoType === 'MP4' ? (document.getElementById('mp4File').files[0] ? document.getElementById('mp4File').files[0].name : null) : null,
+        thumbnail: thumbnail
       };
 
       if (!events[date]) {
@@ -1373,18 +1431,14 @@
     function loadEvents() {
       // 先嘗試從 Contentful 載入
       loadEventsFromContentful().then(() => {
-        // 如果 Contentful 載入失敗，降級到 localStorage
-      const saved = localStorage.getItem('calendar_events');
-      if (saved) {
-        events = JSON.parse(saved);
-          console.log('從 localStorage 載入節目資料');
-        }
+        // Contentful 載入成功，不需要從 localStorage 載入
+        console.log('✅ 使用 Contentful 資料，跳過 localStorage 載入 (v2.1)');
       }).catch(() => {
         // Contentful 載入失敗，使用 localStorage
         const saved = localStorage.getItem('calendar_events');
         if (saved) {
           events = JSON.parse(saved);
-          console.log('Contentful 載入失敗，從 localStorage 載入節目資料');
+          console.log('❌ Contentful 載入失敗，從 localStorage 載入節目資料 (v2.1)');
         }
       });
     }
@@ -1412,6 +1466,9 @@
         });
 
         console.log(`從 Contentful 載入 ${response.items.length} 個節目`);
+        console.log('Contentful 原始資料範例:', response.items[0]?.fields);
+        console.log('Contentful video 欄位範例:', response.items[0]?.fields?.video);
+        console.log('Contentful video 欄位詳細內容:', JSON.stringify(response.items[0]?.fields?.video, null, 2));
 
         // 清空現有事件
         events = {};
@@ -1436,6 +1493,49 @@
           // 清理描述，移除時間標記
           const cleanDescription = notes.replace(/\[時間:\d{2}:\d{2}\]/, '').trim();
           
+          // 處理縮圖
+          let thumbnail = null;
+          console.log('處理 Contentful 節目縮圖:', fields.title, {
+            hasThumbnail: !!(fields.thumbnail && fields.thumbnail['en-US']),
+            hasThumbnailUrl: !!(fields.thumbnailUrl && fields.thumbnailUrl['en-US']),
+            thumbnailAsset: fields.thumbnail?.['en-US'],
+            thumbnailUrl: fields.thumbnailUrl?.['en-US']
+          });
+          
+          if (fields.thumbnail && fields.thumbnail['en-US']) {
+            const thumbnailAsset = fields.thumbnail['en-US'];
+            if (thumbnailAsset.fields && thumbnailAsset.fields.file) {
+              thumbnail = 'https:' + thumbnailAsset.fields.file['en-US'].url;
+              console.log('使用 Contentful Asset 縮圖:', thumbnail);
+            }
+          } else if (fields.thumbnailUrl && fields.thumbnailUrl['en-US']) {
+            thumbnail = fields.thumbnailUrl['en-US'];
+            console.log('使用 Contentful URL 縮圖:', thumbnail);
+          }
+          
+          // 處理 YouTube ID
+          let youtubeId = '';
+          // 檢查 video 欄位結構
+          
+          if (fields.video && fields.video['en-US'] && fields.video['en-US'].fields) {
+            const videoFields = fields.video['en-US'].fields;
+            youtubeId = videoFields.youtubeId || videoFields.youTubeId || videoFields.YouTubeID || '';
+            // 成功提取 YouTube ID (標準結構)
+          } else if (fields.video && fields.video.fields) {
+            // 備用處理方式：直接從 video.fields 讀取
+            const videoFields = fields.video.fields;
+            youtubeId = videoFields.youtubeId || videoFields.youTubeId || videoFields.YouTubeID || '';
+            // 成功提取 YouTube ID (直接結構)
+          } else {
+            // 沒有找到 video 欄位或結構不正確
+          }
+          
+          // 如果沒有縮圖但有 YouTube ID，自動生成 YouTube 縮圖
+          if (!thumbnail && youtubeId) {
+            thumbnail = `https://i.ytimg.com/vi/${youtubeId}/hqdefault.jpg`;
+            // 自動生成 YouTube 縮圖成功
+          }
+          
           events[airDate].push({
             id: item.sys.id,
             title: fields.title || '未命名節目',
@@ -1443,8 +1543,9 @@
             duration: 30,
             category: '旅遊節目',
             description: cleanDescription,
-            videoType: 'youtube',
-            videoId: '',
+            videoType: youtubeId ? 'YouTube' : 'MP4',
+            youtubeId: youtubeId,
+            thumbnail: thumbnail,
             status: 'published',
             published: true,
             publishedAt: item.sys.createdAt,
@@ -1461,6 +1562,10 @@
         saveEvents();
         
         console.log('✅ 從 Contentful 載入節目成功');
+        const allPrograms = Object.values(events).flat();
+        console.log('Contentful 節目縮圖總結:', allPrograms.map(e => ({title: e.title, thumbnail: e.thumbnail, youtubeId: e.youtubeId})));
+        console.log('有縮圖的節目數量:', allPrograms.filter(e => e.thumbnail).length);
+        console.log('有 YouTube ID 的節目數量:', allPrograms.filter(e => e.youtubeId).length);
         showStatus('✅ 已從 Contentful 載入節目', 'success');
         
         return true;
@@ -1766,6 +1871,27 @@
       showStatus('正在上架節目到 Contentful...', 'info');
 
       try {
+        // 處理縮圖資料
+        const thumbnailFile = document.getElementById('thumbnailFile').files[0];
+        const thumbnailImage = document.getElementById('thumbnailImage');
+        const thumbnailAssetId = document.getElementById('thumbnailAssetId').value;
+        const youtubeThumbnailUrl = document.getElementById('thumbnailAssetId').getAttribute('data-youtube-url');
+        let thumbnailUrl = null;
+        
+        // 如果有上傳的縮圖檔案
+        if (thumbnailFile) {
+          // 縮圖檔案會在 uploadProgramSimple 中處理
+        } else if (thumbnailAssetId) {
+          // 如果有 Contentful Asset ID（自訂縮圖已上傳）
+          // 這個會在 uploadProgramSimple 中處理
+        } else if (youtubeThumbnailUrl) {
+          // 如果有 YouTube 縮圖 URL
+          thumbnailUrl = youtubeThumbnailUrl;
+        } else if (thumbnailImage.src && thumbnailImage.src.startsWith('http')) {
+          // 如果是 YouTube 縮圖 URL（但未處理）
+          thumbnailUrl = thumbnailImage.src;
+        }
+        
         const programData = {
           title: title,
           airDate: date,
@@ -1776,7 +1902,10 @@
           status: status,
           videoType: document.getElementById('videoType').value,
           youtubeId: document.getElementById('videoType').value === 'YouTube' ? document.getElementById('youtubeId').value : null,
-          mp4File: document.getElementById('videoType').value === 'MP4' ? (document.getElementById('mp4File').files[0] ? document.getElementById('mp4File').files[0].name : null) : null
+          mp4File: document.getElementById('videoType').value === 'MP4' ? (document.getElementById('mp4File').files[0] ? document.getElementById('mp4File').files[0].name : null) : null,
+          thumbnailFile: thumbnailFile,
+          thumbnailUrl: thumbnailUrl,
+          thumbnailAssetId: thumbnailAssetId
         };
 
         // 使用簡化的上架功能
@@ -2482,7 +2611,7 @@
     }
 
     // 創建或獲取預設影片 Entry
-    async function createOrGetDefaultVideoEntry(managementClient, space, environment) {
+    async function createOrGetVideoEntry(managementClient, space, environment, programData) {
       try {
         // 先檢查可用的內容類型
         const contentTypes = await checkAvailableContentTypes(environment);
@@ -2502,25 +2631,34 @@
         
         console.log('找到影片內容類型:', videoContentType.sys.id, videoContentType.name);
         
-        // 嘗試獲取現有的影片 Entry
+        // 獲取節目的 YouTube ID
+        const youtubeId = programData.youtubeId || programData.youTubeId || '';
+        const programTitle = programData.title || '未命名節目';
+        
+        if (!youtubeId) {
+          console.log('節目沒有 YouTube ID，跳過 video 欄位');
+          return null;
+        }
+        
+        // 嘗試找到現有的影片 Entry（根據 YouTube ID）
         const existingVideos = await environment.getEntries({
           content_type: videoContentType.sys.id,
+          'fields.youTubeId': youtubeId,
           limit: 1
         });
         
         if (existingVideos.items.length > 0) {
-          console.log('找到現有影片 Entry:', existingVideos.items[0].sys.id);
+          console.log('找到現有影片 Entry (YouTube ID:', youtubeId, '):', existingVideos.items[0].sys.id);
           return existingVideos.items[0].sys.id;
         }
         
-        // 如果沒有現有的，創建一個預設的影片 Entry
-        console.log('創建預設影片 Entry...');
+        // 如果沒有現有的，創建一個新的影片 Entry
+        console.log('創建新的影片 Entry (YouTube ID:', youtubeId, ')...');
         const videoEntryData = {
           fields: {
-            'title': { 'en-US': '預設影片' },
-            'videoType': { 'en-US': 'MP4' },
-            'youTubeId': { 'en-US': '' },
-            'mp4Url': { 'en-US': '' },
+            'title': { 'en-US': programTitle },
+            'videoType': { 'en-US': 'YouTube' },
+            'youTubeId': { 'en-US': youtubeId },
             'isHero': { 'en-US': false },
             'heroTitle': { 'en-US': '' },
             'heroText': { 'en-US': '' },
@@ -2528,7 +2666,7 @@
             'featuredText': { 'en-US': '' },
             'comingSoon': { 'en-US': false },
             'releaseDate': { 'en-US': new Date().toISOString() },
-            'description': { 'en-US': '預設影片描述' }
+            'description': { 'en-US': programData.description || '' }
           }
         };
         
@@ -2548,13 +2686,246 @@
         const videoEntry = await environment.createEntry(videoContentType.sys.id, videoEntryData);
         await videoEntry.publish();
         
-        console.log('創建預設影片 Entry 成功:', videoEntry.sys.id);
+        console.log('創建新的影片 Entry 成功 (YouTube ID:', youtubeId, '):', videoEntry.sys.id);
         return videoEntry.sys.id;
         
       } catch (error) {
         console.error('創建或獲取影片 Entry 失敗:', error);
         // 如果創建失敗，返回 null，讓上架函數決定如何處理
         return null;
+      }
+    }
+
+    // 縮圖相關功能
+    function previewThumbnail() {
+      const fileInput = document.getElementById('thumbnailFile');
+      const imagePreview = document.getElementById('thumbnailImage');
+      const placeholder = document.getElementById('thumbnailPlaceholder');
+      
+      if (fileInput.files && fileInput.files[0]) {
+        const file = fileInput.files[0];
+        
+        // 檢查檔案類型
+        if (!file.type.startsWith('image/')) {
+          showStatus('請選擇圖片檔案', 'warning');
+          return;
+        }
+        
+        // 檢查檔案大小 (限制為 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+          showStatus('圖片檔案大小不能超過 5MB', 'warning');
+          return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          imagePreview.src = e.target.result;
+          imagePreview.style.display = 'block';
+          placeholder.style.display = 'none';
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+    
+    function clearThumbnail() {
+      const fileInput = document.getElementById('thumbnailFile');
+      const imagePreview = document.getElementById('thumbnailImage');
+      const placeholder = document.getElementById('thumbnailPlaceholder');
+      const thumbnailAssetId = document.getElementById('thumbnailAssetId');
+      
+      fileInput.value = '';
+      imagePreview.src = '';
+      imagePreview.style.display = 'none';
+      placeholder.style.display = 'flex';
+      
+      // 清除隱藏欄位
+      thumbnailAssetId.value = '';
+      thumbnailAssetId.removeAttribute('data-youtube-url');
+    }
+    
+    async function generateYouTubeThumbnail() {
+      const youtubeId = document.getElementById('youtubeId').value.trim();
+      
+      if (!youtubeId) {
+        showStatus('請先輸入 YouTube ID', 'warning');
+        return;
+      }
+      
+      // 驗證 YouTube ID 格式
+      const youtubeIdPattern = /^[a-zA-Z0-9_-]{11}$/;
+      if (!youtubeIdPattern.test(youtubeId)) {
+        showStatus('YouTube ID 格式不正確，應該是 11 個字符', 'warning');
+        return;
+      }
+      
+      // 生成 YouTube 縮圖 URL
+      const thumbnailUrl = `https://img.youtube.com/vi/${youtubeId}/maxresdefault.jpg`;
+      
+      // 預覽縮圖
+      const imagePreview = document.getElementById('thumbnailImage');
+      const placeholder = document.getElementById('thumbnailPlaceholder');
+      
+      // 先隱藏預覽
+      imagePreview.style.display = 'none';
+      placeholder.style.display = 'flex';
+      placeholder.textContent = '載入中...';
+      
+      try {
+        // 測試縮圖是否可用並上傳到 Contentful
+        const testImage = new Image();
+        testImage.crossOrigin = 'anonymous'; // 允許跨域
+        
+        testImage.onload = async function() {
+          try {
+            // 先顯示預覽
+            imagePreview.src = thumbnailUrl;
+            imagePreview.style.display = 'block';
+            placeholder.style.display = 'none';
+            
+            // 上傳縮圖到 Contentful
+            showStatus('正在上傳 YouTube 縮圖到 Contentful...', 'info');
+            const uploadResult = await uploadYouTubeThumbnailToContentful(thumbnailUrl, youtubeId);
+            
+            if (uploadResult.success) {
+              if (uploadResult.isYouTubeUrl) {
+                showStatus('YouTube 縮圖已準備就緒，可跨裝置同步！', 'success');
+                // 將 YouTube URL 存儲在隱藏欄位中，供上架時使用
+                document.getElementById('thumbnailAssetId').value = '';
+                // 將 URL 存儲在 data 屬性中
+                document.getElementById('thumbnailAssetId').setAttribute('data-youtube-url', uploadResult.url);
+              } else {
+                showStatus('YouTube 縮圖已上傳到 Contentful，可跨裝置同步！', 'success');
+                document.getElementById('thumbnailAssetId').value = uploadResult.assetId;
+              }
+            } else {
+              showStatus('縮圖處理失敗，但預覽正常', 'warning');
+            }
+          } catch (error) {
+            console.error('上傳縮圖失敗:', error);
+            showStatus('縮圖預覽成功，但上傳失敗', 'warning');
+          }
+        };
+        
+        testImage.onerror = async function() {
+          // 如果 maxresdefault 不可用，嘗試 hqdefault
+          const fallbackUrl = `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`;
+          const fallbackImage = new Image();
+          fallbackImage.crossOrigin = 'anonymous';
+          
+          fallbackImage.onload = async function() {
+            try {
+              // 先顯示預覽
+              imagePreview.src = fallbackUrl;
+              imagePreview.style.display = 'block';
+              placeholder.style.display = 'none';
+              
+              // 上傳備用縮圖到 Contentful
+              showStatus('正在上傳 YouTube 縮圖到 Contentful（備用解析度）...', 'info');
+              const uploadResult = await uploadYouTubeThumbnailToContentful(fallbackUrl, youtubeId);
+              
+              if (uploadResult.success) {
+                if (uploadResult.isYouTubeUrl) {
+                  showStatus('YouTube 縮圖已準備就緒，可跨裝置同步！', 'success');
+                  document.getElementById('thumbnailAssetId').value = '';
+                  document.getElementById('thumbnailAssetId').setAttribute('data-youtube-url', uploadResult.url);
+                } else {
+                  showStatus('YouTube 縮圖已上傳到 Contentful，可跨裝置同步！', 'success');
+                  document.getElementById('thumbnailAssetId').value = uploadResult.assetId;
+                }
+              } else {
+                showStatus('縮圖處理失敗，但預覽正常', 'warning');
+              }
+            } catch (error) {
+              console.error('上傳備用縮圖失敗:', error);
+              showStatus('縮圖預覽成功，但上傳失敗', 'warning');
+            }
+          };
+          
+          fallbackImage.onerror = function() {
+            placeholder.textContent = '無法載入 YouTube 縮圖';
+            showStatus('無法載入 YouTube 縮圖，請檢查 ID 是否正確', 'error');
+          };
+          
+          fallbackImage.src = fallbackUrl;
+        };
+        
+        testImage.src = thumbnailUrl;
+        
+      } catch (error) {
+        console.error('生成 YouTube 縮圖失敗:', error);
+        showStatus('生成 YouTube 縮圖失敗', 'error');
+      }
+    }
+    
+    // 處理 YouTube 縮圖（直接存儲 URL，不上傳到 Contentful）
+    async function uploadYouTubeThumbnailToContentful(thumbnailUrl, youtubeId) {
+      try {
+        // 直接返回成功，使用 YouTube 縮圖 URL
+        // 這樣可以避免 Contentful 上傳的複雜性，同時確保跨裝置同步
+        return {
+          success: true,
+          assetId: null, // 不使用 Asset ID
+          url: thumbnailUrl, // 直接使用 YouTube 縮圖 URL
+          isYouTubeUrl: true // 標記這是 YouTube URL
+        };
+        
+      } catch (error) {
+        console.error('處理 YouTube 縮圖失敗:', error);
+        return {
+          success: false,
+          error: error.message
+        };
+      }
+    }
+    
+    // 上傳縮圖到 Contentful
+    async function uploadThumbnailToContentful(file) {
+      try {
+        if (typeof contentfulManagement === 'undefined') {
+          throw new Error('Management SDK 未載入');
+        }
+        
+        const managementClient = contentfulManagement.createClient({
+          accessToken: window.CONTENTFUL_CONFIG?.MANAGEMENT_TOKEN || window.CONTENTFUL_MANAGEMENT_TOKEN
+        });
+        
+        const space = await managementClient.getSpace(window.CONTENTFUL_CONFIG?.SPACE_ID || 'os5wf90ljenp');
+        const environment = await space.getEnvironment('master');
+        
+        // 創建 Asset
+        const asset = await environment.createAsset({
+          fields: {
+            title: {
+              'en-US': `Thumbnail for ${document.getElementById('title').value || 'Program'}`
+            },
+            file: {
+              'en-US': {
+                contentType: file.type,
+                fileName: file.name,
+                upload: file
+              }
+            }
+          }
+        });
+        
+        // 處理 Asset
+        await asset.processForAllLocales();
+        
+        // 發布 Asset
+        await asset.publish();
+        
+        return {
+          success: true,
+          assetId: asset.sys.id,
+          url: `https:${asset.fields.file['en-US'].url}`
+        };
+        
+      } catch (error) {
+        console.error('上傳縮圖失敗:', error);
+        return {
+          success: false,
+          error: error.message
+        };
       }
     }
 
@@ -2623,9 +2994,47 @@
             'notes': { 'en-US': (programData.description || '') + ` [時間:${airTime}]` } // 將具體時間存儲在備註中
           }
         };
+        
+        // 處理縮圖
+        if (programData.thumbnailFile) {
+          console.log('上傳縮圖到 Contentful...');
+          const thumbnailResult = await uploadThumbnailToContentful(programData.thumbnailFile);
+          
+          if (thumbnailResult.success) {
+            // 添加縮圖 Asset 連結
+            entryData.fields['thumbnail'] = {
+              'en-US': {
+                sys: {
+                  type: 'Link',
+                  linkType: 'Asset',
+                  id: thumbnailResult.assetId
+                }
+              }
+            };
+            console.log('縮圖上傳成功:', thumbnailResult.assetId);
+          } else {
+            console.warn('縮圖上傳失敗:', thumbnailResult.error);
+          }
+        } else if (programData.thumbnailAssetId) {
+          // 如果有 Contentful Asset ID（自訂縮圖已上傳）
+          entryData.fields['thumbnail'] = {
+            'en-US': {
+              sys: {
+                type: 'Link',
+                linkType: 'Asset',
+                id: programData.thumbnailAssetId
+              }
+            }
+          };
+          console.log('使用已上傳的 Contentful 縮圖 Asset:', programData.thumbnailAssetId);
+        } else if (programData.thumbnailUrl) {
+          // 如果是 YouTube 縮圖 URL，直接存儲
+          entryData.fields['thumbnailUrl'] = { 'en-US': programData.thumbnailUrl };
+          console.log('使用 YouTube 縮圖 URL:', programData.thumbnailUrl);
+        }
 
-        // 創建或獲取預設影片 Entry
-        const videoEntryId = await createOrGetDefaultVideoEntry(managementClient, space, environment);
+        // 創建或獲取影片 Entry（使用節目的 YouTube ID）
+        const videoEntryId = await createOrGetVideoEntry(managementClient, space, environment, programData);
         
         if (videoEntryId) {
           // 添加 video 欄位
