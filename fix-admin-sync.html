@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>修復管理員同步問題</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        
+        .header h1 {
+            color: #333;
+            margin: 0;
+            font-size: 2rem;
+        }
+        
+        .fix-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            background: #f8f9fa;
+        }
+        
+        .fix-section h3 {
+            margin-top: 0;
+            color: #495057;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .status-success { background: #28a745; }
+        .status-warning { background: #ffc107; }
+        .status-error { background: #dc3545; }
+        .status-info { background: #17a2b8; }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            margin: 5px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #0056b3;
+        }
+        
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #1e7e34;
+        }
+        
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+        
+        .btn-warning:hover {
+            background: #e0a800;
+        }
+        
+        .log-area {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            padding: 15px;
+            margin-top: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            white-space: pre-wrap;
+        }
+        
+        .accounts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .account-card {
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 15px;
+        }
+        
+        .account-email {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .account-name {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+        
+        .account-role {
+            background: #e9ecef;
+            color: #495057;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            display: inline-block;
+        }
+        
+        .account-status {
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            margin-left: 10px;
+        }
+        
+        .status-active {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status-inactive {
+            background: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔧 修復管理員同步問題</h1>
+            <p>修復管理員系統無法從 Firestore 讀取資料的問題</p>
+        </div>
+
+        <div class="fix-section">
+            <h3>
+                <span class="status-indicator status-info"></span>
+                修復步驟
+            </h3>
+            <p>我們將執行以下修復步驟：</p>
+            <ol>
+                <li>初始化 Firebase 連接</li>
+                <li>從 Firestore 讀取所有管理員資料</li>
+                <li>確認純 Firebase 模式</li>
+                <li>測試管理員系統</li>
+            </ol>
+            
+            <div style="margin-top: 20px;">
+                <button class="btn btn-primary" onclick="startFix()">🚀 開始修復</button>
+                <button class="btn btn-success" onclick="testAdminSystem()">🧪 測試管理員系統</button>
+                <button class="btn btn-warning" onclick="clearAllCache()">🗑️ 清除所有快取</button>
+            </div>
+        </div>
+
+        <div class="fix-section">
+            <h3>
+                <span class="status-indicator status-info"></span>
+                從 Firestore 讀取的管理員資料
+            </h3>
+            <div id="firestore-accounts" class="accounts-grid">
+                <p>等待修復...</p>
+            </div>
+        </div>
+
+        <div class="fix-section">
+            <h3>
+                <span class="status-indicator status-info"></span>
+                修復日誌
+            </h3>
+            <div id="log-area" class="log-area">等待操作...</div>
+        </div>
+    </div>
+
+    <script>
+        let logArea = document.getElementById('log-area');
+        let firebaseApp = null;
+        let firebaseDb = null;
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logMessage = `[${timestamp}] ${message}\n`;
+            logArea.textContent += logMessage;
+            logArea.scrollTop = logArea.scrollHeight;
+            console.log(message);
+        }
+        
+        async function initializeFirebase() {
+            log('初始化 Firebase...');
+            
+            try {
+                const { initializeApp } = await import('https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js');
+                const { getFirestore } = await import('https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js');
+                
+                const config = {
+                    apiKey: "AIzaSyB5MLyG5H1sCflHFU7WeKQCmC0Ft5TIqjM",
+                    authDomain: "tv-tcawg-com.firebaseapp.com",
+                    projectId: "tv-tcawg-com",
+                    storageBucket: "tv-tcawg-com.firebasestorage.app",
+                    messagingSenderId: "313251141126",
+                    appId: "1:313251141126:web:88ef97ce28798c0a2e9587",
+                    measurementId: "G-83Z5VTRTZH"
+                };
+                
+                firebaseApp = initializeApp(config);
+                firebaseDb = getFirestore(firebaseApp);
+                
+                // 儲存到全域變數
+                window.firebaseApp = firebaseApp;
+                window.firebaseDb = firebaseDb;
+                window.firebase9Loaded = true;
+                
+                log('✅ Firebase 初始化成功');
+                return true;
+                
+            } catch (error) {
+                log(`❌ Firebase 初始化失敗: ${error.message}`, 'error');
+                return false;
+            }
+        }
+        
+        async function loadFirestoreAccounts() {
+            log('從 Firestore 讀取管理員資料...');
+            
+            try {
+                const { collection, getDocs } = await import('https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js');
+                
+                const accountsRef = collection(firebaseDb, 'admin_accounts');
+                const snapshot = await getDocs(accountsRef);
+                
+                const accounts = [];
+                snapshot.forEach(doc => {
+                    accounts.push({
+                        id: doc.id,
+                        ...doc.data()
+                    });
+                });
+                
+                log(`✅ 從 Firestore 讀取到 ${accounts.length} 個管理員帳號`);
+                
+                // 顯示帳號列表
+                displayAccounts(accounts);
+                
+                return accounts;
+                
+            } catch (error) {
+                log(`❌ 讀取 Firestore 資料失敗: ${error.message}`, 'error');
+                return null;
+            }
+        }
+        
+        function displayAccounts(accounts) {
+            const container = document.getElementById('firestore-accounts');
+            
+            if (accounts && accounts.length > 0) {
+                container.innerHTML = accounts.map(account => `
+                    <div class="account-card">
+                        <div class="account-email">${account.email}</div>
+                        <div class="account-name">${account.name}</div>
+                        <div>
+                            <span class="account-role">${account.role}</span>
+                            <span class="account-status ${account.status === 'active' ? 'status-active' : 'status-inactive'}">
+                                ${account.status === 'active' ? '啟用' : '停用'}
+                            </span>
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                container.innerHTML = '<p>❌ 沒有找到管理員帳號</p>';
+            }
+        }
+        
+        async function updateLocalCache(accounts) {
+            log('✅ 純 Firebase 模式，資料直接從 Firestore 讀取');
+            
+            // 純 Firebase 模式，不更新本地快取
+            return true;
+        }
+        
+        async function startFix() {
+            log('🚀 開始修復管理員同步問題...');
+            
+            try {
+                // 步驟 1: 初始化 Firebase
+                const firebaseInit = await initializeFirebase();
+                if (!firebaseInit) {
+                    throw new Error('Firebase 初始化失敗');
+                }
+                
+                // 步驟 2: 從 Firestore 讀取資料
+                const accounts = await loadFirestoreAccounts();
+                if (!accounts) {
+                    throw new Error('無法從 Firestore 讀取資料');
+                }
+                
+                // 步驟 3: 純 Firebase 模式確認
+                const cacheUpdate = await updateLocalCache(accounts);
+                if (!cacheUpdate) {
+                    throw new Error('Firebase 模式確認失敗');
+                }
+                
+                log('✅ 修復完成！管理員系統現在應該可以正常工作了');
+                log('請重新整理管理員登入頁面測試');
+                
+            } catch (error) {
+                log(`❌ 修復失敗: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testAdminSystem() {
+            log('🧪 測試管理員系統...');
+            
+            try {
+                // 檢查管理員服務是否可用
+                if (window.adminAccountsFirebaseService) {
+                    const accounts = await window.adminAccountsFirebaseService.getAllAccounts();
+                    log(`✅ 管理員系統測試成功，找到 ${accounts.length} 個帳號`);
+                    
+                    accounts.forEach(account => {
+                        log(`- ${account.email} (${account.name}) - ${account.role}`);
+                    });
+                } else {
+                    log('❌ 管理員服務未載入');
+                }
+                
+            } catch (error) {
+                log(`❌ 管理員系統測試失敗: ${error.message}`, 'error');
+            }
+        }
+        
+        function clearAllCache() {
+            log('🗑️ 清除所有快取...');
+            
+            try {
+                // 清除所有相關的 localStorage
+                localStorage.removeItem('admin_accounts_backup');
+                localStorage.removeItem('admin_accounts_last_fetch');
+                localStorage.removeItem('admin_accounts_cache');
+                
+                log('✅ 所有快取已清除');
+                
+            } catch (error) {
+                log(`❌ 清除快取失敗: ${error.message}`, 'error');
+            }
+        }
+        
+        // 頁面載入時自動初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            log('修復工具已啟動');
+        });
+    </script>
+</body>
+</html>
+

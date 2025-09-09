@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>刪除同步診斷工具</title>
+    <style>
+        body {
+            font-family: 'Microsoft JhengHei', Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            font-weight: 300;
+        }
+        .content {
+            padding: 30px;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            background: #f8f9fa;
+        }
+        .section h3 {
+            margin-top: 0;
+            color: #495057;
+            border-bottom: 2px solid #dee2e6;
+            padding-bottom: 10px;
+        }
+        .btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+            transition: all 0.3s ease;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .btn-danger {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+        }
+        .btn-success {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+        }
+        .btn-warning {
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+        }
+        .log-area {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 20px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            margin-top: 15px;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        .accounts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .account-card {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .account-card h4 {
+            margin: 0 0 10px 0;
+            color: #495057;
+        }
+        .account-card p {
+            margin: 5px 0;
+            color: #6c757d;
+            font-size: 14px;
+        }
+        .test-account {
+            border: 2px solid #ffc107;
+            background: #fff3cd;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 刪除同步診斷工具</h1>
+            <p>檢查管理員帳號刪除操作是否正確同步到 Firebase</p>
+        </div>
+        
+        <div class="content">
+            <!-- 控制按鈕 -->
+            <div class="section">
+                <h3>🎯 診斷操作</h3>
+                <button class="btn" onclick="checkFirebaseConnection()">🔗 檢查 Firebase 連接</button>
+                <button class="btn" onclick="fetchFirestoreAccounts()">📥 從 Firestore 讀取帳號</button>
+                <button class="btn" onclick="checkLocalCache()">💾 檢查本地快取</button>
+                <button class="btn btn-warning" onclick="testDeleteOperation()">🗑️ 測試刪除操作</button>
+                <button class="btn btn-danger" onclick="clearAllData()">🧹 清除所有資料</button>
+            </div>
+
+            <!-- 狀態顯示 -->
+            <div class="section">
+                <h3>📊 系統狀態</h3>
+                <div id="statusDisplay">
+                    <div class="status warning">等待診斷...</div>
+                </div>
+            </div>
+
+            <!-- Firestore 帳號列表 -->
+            <div class="section">
+                <h3>🔥 Firestore 帳號列表</h3>
+                <div id="firestoreAccounts" class="accounts-grid">
+                    <p>點擊「從 Firestore 讀取帳號」按鈕開始檢查</p>
+                </div>
+            </div>
+
+            <!-- 本地快取帳號列表 -->
+            <div class="section">
+                <h3>💾 本地快取帳號列表</h3>
+                <div id="localAccounts" class="accounts-grid">
+                    <p>點擊「檢查本地快取」按鈕開始檢查</p>
+                </div>
+            </div>
+
+            <!-- 日誌區域 -->
+            <div class="section">
+                <h3>📝 診斷日誌</h3>
+                <div id="logArea" class="log-area">等待操作...\n</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getFirestore, collection, getDocs, doc, deleteDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        // Firebase 配置
+        const firebaseConfig = {
+            apiKey: "AIzaSyB5MLyG5H1sCflHFU7WeKQCmC0Ft5TIqjM",
+            authDomain: "tv-tcawg-com.firebaseapp.com",
+            projectId: "tv-tcawg-com",
+            storageBucket: "tv-tcawg-com.firebasestorage.app",
+            messagingSenderId: "313251141126",
+            appId: "1:313251141126:web:88ef97ce28798c0a2e9587",
+            measurementId: "G-83Z5VTRTZH"
+        };
+
+        let app = null;
+        let db = null;
+
+        // 全域函數
+        window.checkFirebaseConnection = async function() {
+            log('🔗 檢查 Firebase 連接...');
+            try {
+                if (!app) {
+                    app = initializeApp(firebaseConfig);
+                    db = getFirestore(app);
+                    log('✅ Firebase 初始化成功');
+                } else {
+                    log('✅ Firebase 已連接');
+                }
+                updateStatus('success', 'Firebase 連接正常');
+            } catch (error) {
+                log('❌ Firebase 連接失敗: ' + error.message);
+                updateStatus('error', 'Firebase 連接失敗: ' + error.message);
+            }
+        };
+
+        window.fetchFirestoreAccounts = async function() {
+            log('📥 從 Firestore 讀取管理員帳號...');
+            try {
+                if (!db) {
+                    await checkFirebaseConnection();
+                }
+                
+                const accountsRef = collection(db, 'admin_accounts');
+                const snapshot = await getDocs(accountsRef);
+                
+                const accounts = [];
+                snapshot.forEach((doc) => {
+                    accounts.push({ id: doc.id, ...doc.data() });
+                });
+                
+                log(`✅ 從 Firestore 讀取到 ${accounts.length} 個管理員帳號`);
+                displayAccounts(accounts, 'firestoreAccounts');
+                updateStatus('success', `Firestore 中有 ${accounts.length} 個帳號`);
+                
+                return accounts;
+            } catch (error) {
+                log('❌ 讀取 Firestore 失敗: ' + error.message);
+                updateStatus('error', '讀取 Firestore 失敗: ' + error.message);
+                return [];
+            }
+        };
+
+        window.checkLocalCache = function() {
+            log('💾 檢查本地快取...');
+            try {
+                const cachedAccounts = localStorage.getItem('admin_accounts');
+                if (cachedAccounts) {
+                    const accounts = JSON.parse(cachedAccounts);
+                    log(`✅ 本地快取中有 ${accounts.length} 個管理員帳號`);
+                    displayAccounts(accounts, 'localAccounts');
+                    updateStatus('success', `本地快取中有 ${accounts.length} 個帳號`);
+                } else {
+                    log('⚠️ 本地快取中沒有管理員帳號資料');
+                    document.getElementById('localAccounts').innerHTML = '<p>本地快取中沒有管理員帳號資料</p>';
+                    updateStatus('warning', '本地快取中沒有管理員帳號資料');
+                }
+            } catch (error) {
+                log('❌ 檢查本地快取失敗: ' + error.message);
+                updateStatus('error', '檢查本地快取失敗: ' + error.message);
+            }
+        };
+
+        window.testDeleteOperation = async function() {
+            log('🗑️ 測試刪除操作...');
+            try {
+                // 先讀取 Firestore 帳號
+                const firestoreAccounts = await fetchFirestoreAccounts();
+                
+                // 找到測試用帳號
+                const testAccount = firestoreAccounts.find(acc => 
+                    acc.name === '測試用' || acc.email === 'kkk@yyyy.com.tw'
+                );
+                
+                if (!testAccount) {
+                    log('⚠️ 找不到測試用帳號，無法進行刪除測試');
+                    updateStatus('warning', '找不到測試用帳號');
+                    return;
+                }
+                
+                log(`🎯 找到測試用帳號: ${testAccount.name} (${testAccount.email})`);
+                log('⚠️ 注意：這只是測試，不會實際刪除帳號');
+                
+                // 模擬刪除操作（不實際執行）
+                log('📝 模擬刪除操作步驟：');
+                log('1. 從本地快取中移除帳號');
+                log('2. 呼叫 syncToFirebase() 同步到 Firestore');
+                log('3. 驗證 Firestore 中的帳號是否被刪除');
+                
+                updateStatus('warning', '測試完成，未實際刪除帳號');
+                
+            } catch (error) {
+                log('❌ 測試刪除操作失敗: ' + error.message);
+                updateStatus('error', '測試刪除操作失敗: ' + error.message);
+            }
+        };
+
+        window.clearAllData = function() {
+            log('🧹 清除所有資料...');
+            try {
+                // 清除本地快取
+                localStorage.removeItem('admin_accounts');
+                localStorage.removeItem('admin_accounts_backup');
+                localStorage.removeItem('admin_sync_mode');
+                
+                log('✅ 本地快取已清除');
+                updateStatus('success', '所有資料已清除');
+                
+                // 清空顯示
+                document.getElementById('localAccounts').innerHTML = '<p>本地快取已清除</p>';
+                
+            } catch (error) {
+                log('❌ 清除資料失敗: ' + error.message);
+                updateStatus('error', '清除資料失敗: ' + error.message);
+            }
+        };
+
+        function displayAccounts(accounts, containerId) {
+            const container = document.getElementById(containerId);
+            if (accounts.length === 0) {
+                container.innerHTML = '<p>沒有找到管理員帳號</p>';
+                return;
+            }
+            
+            container.innerHTML = accounts.map(account => {
+                const isTestAccount = account.name === '測試用' || account.email === 'kkk@yyyy.com.tw';
+                return `
+                    <div class="account-card ${isTestAccount ? 'test-account' : ''}">
+                        <h4>${account.name || '未命名'}</h4>
+                        <p><strong>ID:</strong> ${account.id}</p>
+                        <p><strong>Email:</strong> ${account.email || '未設定'}</p>
+                        <p><strong>角色:</strong> ${account.role || '未設定'}</p>
+                        <p><strong>狀態:</strong> ${account.status || '未設定'}</p>
+                        <p><strong>建立時間:</strong> ${account.created_at || '未知'}</p>
+                        ${isTestAccount ? '<p style="color: #856404; font-weight: bold;">🎯 這是測試用帳號</p>' : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateStatus(type, message) {
+            const statusDisplay = document.getElementById('statusDisplay');
+            statusDisplay.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+
+        function log(message) {
+            const logArea = document.getElementById('logArea');
+            const timestamp = new Date().toLocaleString('zh-TW');
+            logArea.textContent += `[${timestamp}] ${message}\n`;
+            logArea.scrollTop = logArea.scrollHeight;
+        }
+
+        // 頁面載入時自動檢查
+        window.addEventListener('load', function() {
+            log('🔍 刪除同步診斷工具已啟動');
+            log('請點擊「檢查 Firebase 連接」開始診斷');
+        });
+    </script>
+</body>
+</html>

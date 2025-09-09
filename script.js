@@ -109,18 +109,26 @@ document.addEventListener('DOMContentLoaded', () => {
       let rendered = 0;
 
       // 建立「所有節目 / 查看更多」連結（導到所有節目頁）
-      const moreWrap = document.createElement('div');
-      moreWrap.id = 'featured-actions';
-      moreWrap.style = 'text-align:center;margin-top:16px;';
+      // 檢查是否已經存在，避免重複創建
+      let moreWrap = document.getElementById('featured-actions');
+      if (!moreWrap) {
+        // 先移除任何可能存在的重複按鈕
+        const existingButtons = document.querySelectorAll('#featured-actions, .video-more-btn');
+        existingButtons.forEach(btn => btn.remove());
+        
+        moreWrap = document.createElement('div');
+        moreWrap.id = 'featured-actions';
+        moreWrap.style = 'text-align:center;margin-top:16px;';
 
-      const moreLink = document.createElement('a');
-      moreLink.id = 'featured-more';
-      moreLink.href = 'videos.html'; // 重點：直接連到所有節目頁
-      moreLink.className = 'video-more-btn';
-      moreLink.textContent = '所有節目'; // 如果你要顯示「查看更多」，把文字改回去即可
-      moreLink.style = 'padding:10px 16px;border-radius:10px;border:0;background:#0a5bfd;color:#fff;font-weight:700;cursor:pointer;box-shadow:0 4px 10px rgba(0,0,0,.08);display:inline-block;text-decoration:none;';
-      moreWrap.appendChild(moreLink);
-      container.after(moreWrap);
+        const moreLink = document.createElement('a');
+        moreLink.id = 'featured-more';
+        moreLink.href = 'videos.html'; // 重點：直接連到所有節目頁
+        moreLink.className = 'video-more-btn';
+        moreLink.textContent = '所有節目'; // 如果你要顯示「查看更多」，把文字改回去即可
+        moreLink.style = 'padding:10px 16px;border-radius:10px;border:0;background:#0a5bfd;color:#fff;font-weight:700;cursor:pointer;box-shadow:0 4px 10px rgba(0,0,0,.08);display:inline-block;text-decoration:none;';
+        moreWrap.appendChild(moreLink);
+        container.after(moreWrap);
+      }
 
       function renderNextPage() {
         const slice = allItems.slice(rendered, rendered + PAGE_SIZE);
@@ -770,9 +778,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const { today } = scheduleData;
     
     // 更新日期顯示（使用台灣時間）
-    const monthDayEl = document.getElementById('currentMonthDay');
-    const dayOfWeekEl = document.getElementById('currentDayOfWeek');
-    const currentTimeEl = document.getElementById('currentTime');
+    const currentDateTimeEl = document.getElementById('currentDateTime');
     const scheduleListEl = document.getElementById('schedule-list');
 
     // 獲取台灣時間的日期信息
@@ -780,10 +786,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const currentMonth = taiwanTime.getUTCMonth() + 1;
     const currentDay = taiwanTime.getUTCDate();
     const currentDayOfWeek = getDayOfWeek(taiwanTime);
+    const timeString = getCurrentTimeString();
 
-    if (monthDayEl) monthDayEl.textContent = `${currentMonth}月${currentDay}日`;
-    if (dayOfWeekEl) dayOfWeekEl.textContent = currentDayOfWeek;
-    if (currentTimeEl) currentTimeEl.textContent = getCurrentTimeString();
+    if (currentDateTimeEl) {
+      currentDateTimeEl.textContent = `${currentMonth}月${currentDay}日 ${currentDayOfWeek} ${timeString}`;
+    }
 
     // 更新節目列表（現代電視台設計）
     if (scheduleListEl && today.schedule) {
@@ -943,8 +950,11 @@ document.addEventListener('DOMContentLoaded', () => {
       dot.addEventListener('click', () => {
         // 滾動到對應位置
         const scrollPosition = i * 4 * 336; // 4個卡片 * 卡片寬度(320px + 16px gap)
+        // 確保不會滾動到現正播出卡片（第一個卡片）
+        const maxScroll = Math.max(0, scrollPosition);
+        
         container.scrollTo({
-          left: scrollPosition,
+          left: maxScroll,
           behavior: 'smooth'
         });
         
@@ -976,15 +986,16 @@ document.addEventListener('DOMContentLoaded', () => {
     
     if (!leftArrow || !rightArrow) return;
     
-    // 如果節目數量少於等於4個，隱藏箭頭
+    // 左箭頭始終隱藏，因為現正播出卡片不參與輪播
+    leftArrow.style.display = 'none';
+    
+    // 如果節目數量少於等於4個，隱藏右箭頭
     if (itemCount <= 4) {
-      leftArrow.style.display = 'none';
       rightArrow.style.display = 'none';
       return;
     }
     
-    // 顯示箭頭
-    leftArrow.style.display = 'flex';
+    // 只顯示右箭頭
     rightArrow.style.display = 'flex';
     
     // 更新箭頭狀態
@@ -993,12 +1004,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const scrollWidth = container.scrollWidth;
       const clientWidth = container.clientWidth;
       
-      // 左箭頭：如果已經滾動到最左邊，則禁用
-      if (scrollLeft <= 0) {
-        leftArrow.classList.add('disabled');
-      } else {
-        leftArrow.classList.remove('disabled');
-      }
+      // 左箭頭始終隱藏，不需要狀態更新
       
       // 右箭頭：如果已經滾動到最右邊，則禁用
       if (scrollLeft >= scrollWidth - clientWidth - 1) {
@@ -1012,33 +1018,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let autoScrollTimer = null;
     const autoScrollDelay = 300; // 自動滾動延遲時間（毫秒）
     
-    // 左箭頭事件
-    leftArrow.addEventListener('mouseenter', () => {
-      if (leftArrow.classList.contains('disabled')) return;
-      
-      autoScrollTimer = setInterval(() => {
-        if (leftArrow.classList.contains('disabled')) {
-          clearInterval(autoScrollTimer);
-          return;
-        }
-        
-        const currentScroll = container.scrollLeft;
-        const cardWidth = 336; // 卡片寬度 + gap
-        const scrollAmount = Math.min(cardWidth * 2, currentScroll); // 一次滾動2個卡片或剩餘距離
-        
-        container.scrollTo({
-          left: currentScroll - scrollAmount,
-          behavior: 'smooth'
-        });
-      }, autoScrollDelay);
-    });
-    
-    leftArrow.addEventListener('mouseleave', () => {
-      if (autoScrollTimer) {
-        clearInterval(autoScrollTimer);
-        autoScrollTimer = null;
-      }
-    });
+    // 左箭頭已隱藏，不需要事件監聽器
     
     // 右箭頭事件
     rightArrow.addEventListener('mouseenter', () => {
@@ -1054,8 +1034,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const cardWidth = 336; // 卡片寬度 + gap
         const scrollAmount = cardWidth * 2; // 一次滾動2個卡片
         
+        // 確保不會滾動到現正播出卡片（第一個卡片）
+        const maxScroll = Math.max(0, currentScroll + scrollAmount);
+        
         container.scrollTo({
-          left: currentScroll + scrollAmount,
+          left: maxScroll,
           behavior: 'smooth'
         });
       }, autoScrollDelay);
@@ -1076,8 +1059,11 @@ document.addEventListener('DOMContentLoaded', () => {
       const cardWidth = 336;
       const scrollAmount = Math.min(cardWidth * 4, currentScroll);
       
+      // 確保不會滾動到現正播出卡片（第一個卡片）
+      const minScroll = Math.max(0, currentScroll - scrollAmount);
+      
       container.scrollTo({
-        left: currentScroll - scrollAmount,
+        left: minScroll,
         behavior: 'smooth'
       });
     });
@@ -1089,8 +1075,11 @@ document.addEventListener('DOMContentLoaded', () => {
       const cardWidth = 336;
       const scrollAmount = cardWidth * 4;
       
+      // 確保不會滾動到現正播出卡片（第一個卡片）
+      const maxScroll = Math.max(0, currentScroll + scrollAmount);
+      
       container.scrollTo({
-        left: currentScroll + scrollAmount,
+        left: maxScroll,
         behavior: 'smooth'
       });
     });

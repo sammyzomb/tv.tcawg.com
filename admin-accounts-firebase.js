@@ -34,8 +34,8 @@ class AdminAccountsFirebaseService {
     try {
       // 檢查 Firebase 9 模組是否已載入
       if (typeof window.firebase9Loaded === 'undefined' || !window.firebase9Loaded) {
-        console.warn('Firebase 9 未載入，使用本地模式');
-        this.startLocalMode();
+        console.warn('Firebase 9 未載入，純 Firebase 模式需要 Firebase 連接');
+        // 純 Firebase 模式，不進入本地模式
         return;
       }
 
@@ -43,12 +43,12 @@ class AdminAccountsFirebaseService {
       this.db = window.firebaseDb;
       this.auth = window.firebaseAuth;
       
-      console.log('Firebase 初始化成功，使用全域實例');
+      console.log('✅ Firebase 初始化成功，使用全域實例');
       this.startAutoSync();
       
     } catch (error) {
       console.error('Firebase 初始化失敗:', error);
-      this.startLocalMode();
+      // 純 Firebase 模式，不進入本地模式
     }
   }
 
@@ -75,7 +75,8 @@ class AdminAccountsFirebaseService {
     // 每 30 秒同步一次，確保跨裝置即時同步
     this.syncInterval = setInterval(async () => {
       try {
-        if (this.db) {
+        const db = this.db || window.firebaseDb;
+        if (db) {
           await this.syncToFirebase();
         } else {
           await this.syncToLocal();
@@ -126,47 +127,47 @@ class AdminAccountsFirebaseService {
   }
 
   /**
-   * 從 Firebase 獲取帳號資料
+   * 從 Firebase 獲取帳號資料（純 Firebase 模式）
    */
   async fetchAccountsData() {
     try {
-      if (this.db && window.firebase9Loaded) {
-        // 從 Firebase 獲取
-        const { collection, getDocs, doc, getDoc } = await import('https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js');
-        
-        const accountsSnapshot = await getDocs(collection(this.db, this.accountsCollection));
-        const accounts = [];
-        
-        accountsSnapshot.forEach(docSnapshot => {
-          accounts.push({
-            id: docSnapshot.id,
-            ...docSnapshot.data()
-          });
-        });
-
-        // 獲取設定
-        const settingsDoc = await getDoc(doc(this.db, this.settingsCollection, 'main'));
-        const settings = settingsDoc.exists() ? settingsDoc.data() : this.getDefaultSettings();
-
-        const data = {
-          last_updated: new Date().toISOString(),
-          version: "2.0",
-          accounts: accounts,
-          settings: settings
-        };
-
-        // 儲存本地備份
-        this.saveLocalBackup(data);
-        return data;
-
-      } else {
-        // 使用本地備份
-        return this.getLocalBackup();
+      // 使用全域 Firebase 實例，確保連接正常
+      const db = this.db || window.firebaseDb;
+      if (!db || !window.firebase9Loaded) {
+        throw new Error('Firebase 未初始化，無法獲取資料');
       }
 
+      // 強制從 Firebase 獲取，不使用本地備份
+      const { collection, getDocs, doc, getDoc } = await import('https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js');
+      
+      const accountsSnapshot = await getDocs(collection(db, this.accountsCollection));
+      const accounts = [];
+      
+      accountsSnapshot.forEach(docSnapshot => {
+        accounts.push({
+          id: docSnapshot.id,
+          ...docSnapshot.data()
+        });
+      });
+
+      // 獲取設定
+      const settingsDoc = await getDoc(doc(db, this.settingsCollection, 'main'));
+      const settings = settingsDoc.exists() ? settingsDoc.data() : this.getDefaultSettings();
+
+      const data = {
+        last_updated: new Date().toISOString(),
+        version: "2.0",
+        accounts: accounts,
+        settings: settings
+      };
+
+      // 不儲存本地備份，純 Firebase 模式
+      console.log(`✅ 從 Firebase 獲取到 ${accounts.length} 個管理員帳號`);
+      return data;
+
     } catch (error) {
-      console.error('獲取帳號資料失敗:', error);
-      return this.getLocalBackup();
+      console.error('從 Firebase 獲取帳號資料失敗:', error);
+      throw error; // 不返回本地備份，直接拋出錯誤
     }
   }
 
@@ -174,30 +175,36 @@ class AdminAccountsFirebaseService {
    * 同步到 Firebase
    */
   async syncToFirebase() {
-    if (!this.db || !window.firebase9Loaded) return false;
+    // 使用全域 Firebase 實例
+    const db = this.db || window.firebaseDb;
+    if (!db || !window.firebase9Loaded) {
+      console.error('Firebase 未初始化，無法同步');
+      return false;
+    }
 
     try {
-      const localData = this.getLocalBackup();
-      if (!localData) return false;
+      // 直接從 Firebase 獲取最新資料進行同步
+      const currentData = await this.fetchAccountsData();
+      if (!currentData) return false;
 
       // 使用 Firebase 9 模組化 API
       const { writeBatch, collection, doc, setDoc } = await import('https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js');
       
       // 批次更新
-      const batch = writeBatch(this.db);
+      const batch = writeBatch(db);
 
       // 更新帳號
-      for (const account of localData.accounts) {
-        const docRef = doc(this.db, this.accountsCollection, account.id);
+      for (const account of currentData.accounts) {
+        const docRef = doc(db, this.accountsCollection, account.id);
         batch.set(docRef, account, { merge: true });
       }
 
       // 更新設定
-      const settingsRef = doc(this.db, this.settingsCollection, 'main');
-      batch.set(settingsRef, localData.settings, { merge: true });
+      const settingsRef = doc(db, this.settingsCollection, 'main');
+      batch.set(settingsRef, currentData.settings, { merge: true });
 
       await batch.commit();
-      console.log('Firebase 同步成功');
+      console.log('✅ 資料已同步到 Firebase');
       return true;
 
     } catch (error) {
@@ -207,18 +214,19 @@ class AdminAccountsFirebaseService {
   }
 
   /**
-   * 同步到本地
+   * 從 Firebase 同步（純 Firebase 模式）
    */
   async syncToLocal() {
     try {
       const data = await this.fetchAccountsData();
       if (data) {
-        this.saveLocalBackup(data);
+        // 純 Firebase 模式，不儲存本地備份
+        console.log('✅ 已從 Firebase 同步最新資料');
         return true;
       }
       return false;
     } catch (error) {
-      console.error('本地同步失敗:', error);
+      console.error('從 Firebase 同步失敗:', error);
       return false;
     }
   }
@@ -236,20 +244,17 @@ class AdminAccountsFirebaseService {
   }
 
   /**
-   * 獲取本地備份
+   * 獲取資料（純 Firebase 模式）
    */
-  getLocalBackup() {
+  async getLocalBackup() {
     try {
-      const backup = localStorage.getItem('admin_accounts_backup');
-      if (backup) {
-        return JSON.parse(backup);
-      }
+      // 純 Firebase 模式，直接從 Firebase 獲取
+      return await this.fetchAccountsData();
     } catch (e) {
-      console.error('本地備份資料損壞:', e);
+      console.error('從 Firebase 獲取資料失敗:', e);
+      // 返回預設資料
+      return this.getDefaultData();
     }
-
-    // 返回預設資料
-    return this.getDefaultData();
   }
 
   /**
@@ -347,11 +352,11 @@ class AdminAccountsFirebaseService {
       if (account) {
         account.last_login = new Date().toISOString();
         
-        // 更新本地資料
-        this.saveLocalBackup(accountsData);
+        // 純 Firebase 模式，不儲存本地備份
         
         // 如果 Firebase 可用，同步到雲端
-        if (this.db) {
+        const db = this.db || window.firebaseDb;
+        if (db) {
           await this.syncToFirebase();
         }
       }
@@ -365,8 +370,6 @@ class AdminAccountsFirebaseService {
    */
   async addAdminAccount(accountData) {
     try {
-      const accountsData = await this.fetchAccountsData();
-      
       // 生成新 ID
       const newId = `admin_${Date.now()}`;
       
@@ -385,24 +388,20 @@ class AdminAccountsFirebaseService {
         password_hash: hashedPassword
       };
 
-      accountsData.accounts.push(newAccount);
-      accountsData.last_updated = new Date().toISOString();
-
-      // 儲存本地
-      this.saveLocalBackup(accountsData);
-
-      // 立即同步到 Firebase，確保跨裝置即時可用
-      if (this.db) {
-        console.log('立即同步新管理員到 Firebase...');
-        const syncResult = await this.syncToFirebase();
-        if (syncResult) {
-          console.log('新管理員已同步到 Firebase，其他裝置可以立即使用');
-        } else {
-          console.warn('新管理員同步到 Firebase 失敗，將在下一次自動同步時重試');
-        }
+      // 直接將新帳號寫入 Firebase
+      const db = this.db || window.firebaseDb;
+      if (!db || !window.firebase9Loaded) {
+        throw new Error('Firebase 未初始化，無法新增帳號');
       }
 
-      console.log('新增管理員帳號成功');
+      console.log('直接將新管理員寫入 Firebase...');
+      const { doc, setDoc } = await import('https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js');
+      
+      // 直接寫入新帳號到 Firebase
+      const accountRef = doc(db, this.accountsCollection, newId);
+      await setDoc(accountRef, newAccount);
+      
+      console.log('✅ 新管理員已直接寫入 Firebase:', newId);
       return newAccount;
 
     } catch (error) {
@@ -426,21 +425,34 @@ class AdminAccountsFirebaseService {
         return false;
       }
       
+      const accountToDelete = accountsData.accounts[accountIndex];
+      console.log('準備刪除帳號:', accountToDelete.name, accountToDelete.email, accountToDelete.id);
+      
       // 從陣列中移除
       accountsData.accounts.splice(accountIndex, 1);
       accountsData.last_updated = new Date().toISOString();
 
-      // 儲存本地
-      this.saveLocalBackup(accountsData);
+      // 純 Firebase 模式，不儲存本地備份
 
-      // 立即同步到 Firebase
-      if (this.db) {
-        console.log('立即同步刪除操作到 Firebase...');
-        const syncResult = await this.syncToFirebase();
-        if (syncResult) {
-          console.log('管理員刪除已同步到 Firebase');
-        } else {
-          console.warn('管理員刪除同步到 Firebase 失敗，將在下一次自動同步時重試');
+      // 立即從 Firebase 刪除特定文檔
+      const db = this.db || window.firebaseDb;
+      if (db) {
+        console.log('立即從 Firebase 刪除文檔:', accountToDelete.id);
+        try {
+          const { deleteDoc, doc } = await import('https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js');
+          const docRef = doc(db, this.accountsCollection, accountToDelete.id);
+          await deleteDoc(docRef);
+          console.log('✅ 管理員文檔已從 Firebase 刪除:', accountToDelete.id);
+        } catch (firebaseError) {
+          console.error('❌ 從 Firebase 刪除文檔失敗:', firebaseError);
+          // 如果 Firebase 刪除失敗，嘗試使用 syncToFirebase 作為備用方案
+          console.log('嘗試使用 syncToFirebase 作為備用方案...');
+          const syncResult = await this.syncToFirebase();
+          if (syncResult) {
+            console.log('✅ 使用備用方案同步刪除成功');
+          } else {
+            console.warn('⚠️ 備用方案同步失敗，將在下一次自動同步時重試');
+          }
         }
       }
 
@@ -475,11 +487,11 @@ class AdminAccountsFirebaseService {
       
       accountsData.last_updated = new Date().toISOString();
 
-      // 儲存本地
-      this.saveLocalBackup(accountsData);
+      // 純 Firebase 模式，不儲存本地備份
 
       // 立即同步到 Firebase
-      if (this.db) {
+      const db = this.db || window.firebaseDb;
+      if (db) {
         console.log('立即同步狀態更新到 Firebase...');
         const syncResult = await this.syncToFirebase();
         if (syncResult) {
@@ -503,24 +515,24 @@ class AdminAccountsFirebaseService {
    */
   async testConnection() {
     try {
-      if (this.db && window.firebase9Loaded) {
+      const db = this.db || window.firebaseDb;
+      if (db && window.firebase9Loaded) {
         // 測試 Firebase 連接
         const { collection, doc, getDoc } = await import('https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js');
         
-        const testDoc = await getDoc(doc(this.db, 'test', 'connection'));
+        const testDoc = await getDoc(doc(db, 'test', 'connection'));
         return {
           success: true,
           message: 'Firebase 連接正常',
           mode: 'firebase'
         };
       } else {
-        // 測試本地模式
-        const localData = this.getLocalBackup();
+        // 純 Firebase 模式，Firebase 未初始化
         return {
-          success: true,
-          message: '本地模式正常',
-          mode: 'local',
-          accounts_count: localData.accounts.length
+          success: false,
+          message: 'Firebase 未初始化，無法獲取資料',
+          mode: 'firebase_required',
+          accounts_count: 0
         };
       }
     } catch (error) {
@@ -537,7 +549,8 @@ class AdminAccountsFirebaseService {
    */
   async forceRefresh() {
     try {
-      if (this.db) {
+      const db = this.db || window.firebaseDb;
+      if (db) {
         // 從 Firebase 強制刷新
         console.log('強制從 Firebase 刷新資料...');
         const result = await this.syncToFirebase();
@@ -563,7 +576,8 @@ class AdminAccountsFirebaseService {
     try {
       console.log('開始手動強制同步...');
       
-      if (this.db) {
+      const db = this.db || window.firebaseDb;
+      if (db) {
         // 先從 Firebase 獲取最新資料
         console.log('從 Firebase 獲取最新資料...');
         const firebaseData = await this.fetchAccountsData();

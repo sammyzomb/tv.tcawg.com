@@ -54,7 +54,7 @@
 
 /* 現正播出卡片特殊寬度 */
 .schedule-item.current {
-  flex: 0 0 900px !important; /* 強制設定現正播出卡片寬度為普通卡片的三倍 */
+  flex: 0 0 750px !important; /* 強制設定現正播出卡片寬度縮小為 750px */
 }
 
 .schedule-item:hover {

@@ -802,7 +802,7 @@ body.dark-theme .schedule-nav-arrow.disabled svg {
   background: rgba(231, 76, 60, 0.02);
   transform: scale(1.01);
   flex: 0 0 900px; /* 現正播出卡片寬度為普通卡片的三倍 (300px × 3) */
-  height: 530px; /* 調整卡片高度以適應平衡的圖片和文字 */
+  height: 580px; /* 增加卡片總高度以配合增加的圖片高度 */
   position: relative; /* 回復為相對定位 */
 }
 
@@ -865,7 +865,7 @@ body.dark-theme .schedule-nav-arrow.disabled svg {
 
 /* 現正播出卡片的縮圖區域 - 放大版但保持原格式 */
 .schedule-item.current .schedule-thumbnail {
-  height: 350px; /* 調整圖片高度，平衡顯示效果 */
+  height: 400px; /* 增加圖片高度，讓圖片露出更多 */
   border-radius: 12px 12px 0 0; /* 保持原來的圓角 */
   width: 100% !important; /* 強制設定寬度 */
 }
@@ -876,7 +876,7 @@ body.dark-theme .schedule-nav-arrow.disabled svg {
   height: 100% !important;
   object-fit: cover !important; /* 改回 cover 避免左右白邊 */
   display: block !important;
-  object-position: center 70%; /* 進一步調整圖片位置，讓下方內容露出更多 */
+  object-position: center 60%; /* 調整圖片位置，讓上下都露出更多內容 */
 }
 
 .schedule-thumbnail img {
@@ -1001,7 +1001,7 @@ body.dark-theme .schedule-nav-arrow.disabled svg {
 
 /* 現正播出卡片的內容佈局調整 - 保持原格式但放大 */
 .schedule-item.current .schedule-content {
-  padding: 24px 30px; /* 增加內邊距，讓文字更舒適 */
+  padding: 10px 16px; /* 進一步減少內邊距，讓白色區塊更小 */
   position: relative; /* 改為相對定位，保持原格式 */
   background: white; /* 保持白色背景 */
   color: #333; /* 改回深色文字 */
@@ -1017,20 +1017,20 @@ body.dark-theme .schedule-nav-arrow.disabled svg {
 
 /* 現正播出卡片的標題樣式 - 保持原格式但放大 */
 .schedule-item.current .program-title {
-  font-size: 1.4rem; /* 放大字體 */
+  font-size: 1.2rem; /* 稍微減小字體 */
   font-weight: 700;
   color: #333 !important; /* 改回深色文字 */
   text-shadow: none; /* 移除文字陰影 */
-  margin-bottom: 12px;
+  margin-bottom: 4px; /* 進一步減少底部間距 */
   display: block !important;
 }
 
 /* 現正播出卡片的描述樣式 - 保持原格式但放大 */
 .schedule-item.current .program-description {
   color: #666 !important; /* 改回深色文字 */
-  font-size: 1rem; /* 放大字體 */
+  font-size: 0.9rem; /* 稍微減小字體 */
   text-shadow: none; /* 移除文字陰影 */
-  margin-bottom: 16px;
+  margin-bottom: 6px; /* 進一步減少底部間距 */
   display: block !important;
 }
 
@@ -1038,13 +1038,13 @@ body.dark-theme .schedule-nav-arrow.disabled svg {
 .schedule-item.current .schedule-meta {
   display: flex !important;
   align-items: center;
-  gap: 8px;
+  gap: 6px; /* 減少間距 */
 }
 
 .schedule-item.current .program-category {
   background: #007bff !important; /* 改回藍色背景 */
   color: white !important;
-  padding: 6px 16px; /* 增加內邊距 */
+  padding: 4px 12px; /* 減少內邊距 */
   border-radius: 12px;
   font-size: 0.9rem; /* 放大字體 */
   font-weight: 500;

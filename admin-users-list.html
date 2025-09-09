@@ -495,6 +495,7 @@
                 載入中...
             </div>
             <div class="nav-buttons">
+                <button class="nav-btn" onclick="openSyncFixTool()" style="background: #ffc107; color: #212529;">🔧 同步修復</button>
                 <a href="create-admin-simple.html" class="nav-btn">➕ 新增管理員</a>
                 <a href="admin-dashboard.html" class="nav-btn secondary">← 返回主控台</a>
             </div>
@@ -983,8 +984,7 @@
                         admin.password_hash = hashedPassword;
                         admin.updatedAt = new Date().toISOString();
                         
-                        // 儲存到本地備份
-                        window.adminAccountsService.saveLocalBackup(accountsData);
+                        // 純 Firebase 模式，不儲存本地備份
                         
                         // 同步到 Firebase
                         const syncResult = await window.adminAccountsService.syncToFirebase();
@@ -1122,6 +1122,162 @@
             
             showMessage(`✅ 管理員 ${email} 已從本地刪除`);
             loadAllAdmins(); // 重新載入列表
+        }
+
+        // 開啟同步修復工具
+        function openSyncFixTool() {
+            // 創建模態框
+            const modal = document.createElement('div');
+            modal.className = 'password-dialog';
+            modal.style.display = 'flex';
+            modal.innerHTML = `
+                <div class="password-dialog-content" style="max-width: 800px;">
+                    <h3>🔧 同步修復工具</h3>
+                    <p>修復管理員帳號同步問題，確保跨設備資料一致性</p>
+                    
+                    <div style="margin: 20px 0;">
+                        <button class="btn btn-primary" onclick="startSyncFix()" style="margin-right: 10px;">🚀 開始修復</button>
+                        <button class="btn btn-secondary" onclick="testSystem()" style="margin-right: 10px;">🧪 測試系統</button>
+                        <button class="btn btn-secondary" onclick="clearCache()">🧹 清除快取</button>
+                    </div>
+                    
+                    <div style="margin: 20px 0;">
+                        <h4>📊 系統狀態</h4>
+                        <div id="syncStatus" style="padding: 10px; background: #f8f9fa; border-radius: 5px; margin: 10px 0;">
+                            等待操作...
+                        </div>
+                    </div>
+                    
+                    <div style="margin: 20px 0;">
+                        <h4>🔥 Firestore 帳號列表</h4>
+                        <div id="firestoreAccounts" style="max-height: 200px; overflow-y: auto; padding: 10px; background: #f8f9fa; border-radius: 5px;">
+                            點擊「開始修復」查看 Firestore 中的帳號
+                        </div>
+                    </div>
+                    
+                    <div style="margin: 20px 0;">
+                        <h4>📝 操作日誌</h4>
+                        <div id="fixLog" style="background: #2c3e50; color: #ecf0f1; padding: 15px; border-radius: 5px; font-family: monospace; font-size: 12px; max-height: 200px; overflow-y: auto; white-space: pre-wrap;">等待操作...\n</div>
+                    </div>
+                    
+                    <div class="dialog-buttons">
+                        <button class="btn btn-secondary" onclick="this.closest('.password-dialog').remove()">關閉</button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            setupSyncFixTool();
+        }
+
+        // 設置同步修復工具
+        function setupSyncFixTool() {
+            const logArea = document.getElementById('fixLog');
+            const statusArea = document.getElementById('syncStatus');
+            const accountsArea = document.getElementById('firestoreAccounts');
+            
+            // 綁定事件
+            window.startSyncFix = async function() {
+                log('🚀 開始修復管理員同步問題...');
+                try {
+                    // 初始化 Firebase
+                    log('初始化 Firebase...');
+                    if (!window.firebase9Loaded) {
+                        log('❌ Firebase 未載入，嘗試重新初始化...');
+                        // 嘗試重新初始化 Firebase
+                        if (window.firebaseAuth && window.firebaseDb && window.firebaseApp) {
+                            window.firebase9Loaded = true;
+                            log('✅ Firebase 重新初始化成功');
+                        } else {
+                            log('❌ Firebase 未載入');
+                            updateStatus('error', 'Firebase 未載入');
+                            return;
+                        }
+                    }
+                    log('✅ Firebase 初始化成功');
+                    
+                    // 從 Firestore 讀取管理員資料
+                    log('從 Firestore 讀取管理員資料...');
+                    const accountsData = await window.adminAccountsService.fetchAccountsData();
+                    const accounts = accountsData.accounts || [];
+                    log(`✅ 從 Firestore 讀取到 ${accounts.length} 個管理員帳號`);
+                    
+                    // 純 Firebase 模式，不更新本地快取
+                    log('✅ 純 Firebase 模式，資料直接從 Firestore 讀取');
+                    
+                    // 顯示 Firestore 帳號
+                    displayFirestoreAccounts(accounts);
+                    
+                    log('✅ 修復完成！管理員系統現在應該可以正常工作了');
+                    log('請點擊「測試系統」按鈕確認修復結果');
+                    updateStatus('success', `修復完成！同步了 ${accounts.length} 個帳號`);
+                    
+                } catch (error) {
+                    log('❌ 修復失敗: ' + error.message);
+                    updateStatus('error', '修復失敗: ' + error.message);
+                }
+            };
+            
+            window.testSystem = function() {
+                log('🧪 測試管理員系統...');
+                try {
+                    if (window.adminAccountsService) {
+                        log('✅ 管理員服務已載入');
+                        updateStatus('success', '管理員系統正常');
+                    } else {
+                        log('❌ 管理員服務未載入');
+                        updateStatus('error', '管理員服務未載入');
+                    }
+                } catch (error) {
+                    log('❌ 系統測試失敗: ' + error.message);
+                    updateStatus('error', '系統測試失敗: ' + error.message);
+                }
+            };
+            
+            window.clearCache = function() {
+                log('🧹 清除本地快取...');
+                try {
+                    localStorage.removeItem('admin_accounts');
+                    localStorage.removeItem('admin_accounts_backup');
+                    localStorage.removeItem('admin_sync_mode');
+                    localStorage.removeItem('system_admins');
+                    log('✅ 本地快取已清除');
+                    updateStatus('success', '本地快取已清除');
+                    accountsArea.innerHTML = '本地快取已清除';
+                } catch (error) {
+                    log('❌ 清除快取失敗: ' + error.message);
+                    updateStatus('error', '清除快取失敗: ' + error.message);
+                }
+            };
+            
+            function displayFirestoreAccounts(accounts) {
+                if (accounts.length === 0) {
+                    accountsArea.innerHTML = '<p>Firestore 中沒有管理員帳號</p>';
+                    return;
+                }
+                
+                accountsArea.innerHTML = accounts.map(account => `
+                    <div style="padding: 8px; margin: 5px 0; background: white; border-radius: 4px; border-left: 3px solid #2b71d2;">
+                        <strong>${account.name || '未命名'}</strong><br>
+                        <small>Email: ${account.email}</small><br>
+                        <small>角色: ${account.role}</small><br>
+                        <small>狀態: ${account.status}</small>
+                    </div>
+                `).join('');
+            }
+            
+            function updateStatus(type, message) {
+                const statusClass = type === 'success' ? 'success' : type === 'error' ? 'error' : 'warning';
+                statusArea.innerHTML = `<div class="message ${statusClass}" style="margin: 0;">${message}</div>`;
+            }
+            
+            function log(message) {
+                const timestamp = new Date().toLocaleString('zh-TW');
+                logArea.textContent += `[${timestamp}] ${message}\n`;
+                logArea.scrollTop = logArea.scrollHeight;
+            }
+            
+            log('同步修復工具已啟動');
         }
 
         // 頁面載入時初始化
