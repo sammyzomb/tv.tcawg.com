@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>原格式放大版測試</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .test-title {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #333;
+        }
+        
+        .schedule-list {
+            display: flex;
+            gap: 20px;
+            overflow-x: auto;
+            padding: 20px 0;
+        }
+        
+        .schedule-item {
+            flex: 0 0 300px;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .schedule-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+        }
+        
+        .schedule-thumbnail {
+            position: relative;
+            width: 100%;
+            height: 180px;
+            overflow: hidden;
+            border-radius: 12px 12px 0 0;
+        }
+        
+        .schedule-thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .schedule-time {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: white;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 4px 8px;
+            border-radius: 6px;
+            z-index: 2;
+        }
+        
+        .schedule-content {
+            padding: 12px;
+        }
+        
+        .program-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 6px;
+        }
+        
+        .program-description {
+            color: #666;
+            font-size: 0.85rem;
+            margin-bottom: 8px;
+        }
+        
+        .schedule-meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .program-category {
+            background: #007bff;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        
+        .schedule-duration {
+            color: #666;
+            font-size: 0.75rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1 class="test-title">原格式放大版測試</h1>
+        
+        <div class="schedule-list">
+            <!-- 普通卡片 -->
+            <div class="schedule-item">
+                <div class="schedule-thumbnail">
+                    <img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=225&fit=crop" alt="普通節目">
+                    <div class="schedule-time">09:30</div>
+                </div>
+                <div class="schedule-content">
+                    <div class="program-title">2 Weeks In Italy : A Cinematic Travel Film</div>
+                    <div class="program-description">探索義大利的美麗風景和文化</div>
+                    <div class="schedule-meta">
+                        <div class="program-category">旅遊</div>
+                        <div class="schedule-duration">30分鐘</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 現正播出卡片 - 原格式放大版 -->
+            <div class="schedule-item current">
+                <div class="schedule-thumbnail">
+                    <img src="https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400&h=225&fit=crop" alt="現正播出節目">
+                    <div class="schedule-time">10:00</div>
+                    <div class="now-playing-badge">🔴 現正播放</div>
+                </div>
+                <div class="schedule-content">
+                    <div class="program-title">Forest 4K • Nature Relaxation Film • Peaceful Relaxing Music • 4k Video UltraHD</div>
+                    <div class="program-description">沉浸在大自然的寧靜中，享受森林的療癒力量</div>
+                    <div class="schedule-meta">
+                        <div class="program-category">旅遊</div>
+                        <div class="schedule-duration">30分鐘</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 即將播出卡片 -->
+            <div class="schedule-item upcoming">
+                <div class="schedule-thumbnail">
+                    <img src="https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=400&h=225&fit=crop" alt="即將播出節目">
+                    <div class="schedule-time">10:30</div>
+                </div>
+                <div class="schedule-content">
+                    <div class="program-title">4K Virtual Hike through Canadian Forest</div>
+                    <div class="program-description">虛擬徒步加拿大森林，體驗自然之美</div>
+                    <div class="schedule-meta">
+                        <div class="program-category">旅遊</div>
+                        <div class="schedule-duration">30分鐘</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div style="margin-top: 30px; padding: 20px; background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);">
+            <h3>原格式放大版特點：</h3>
+            <ul>
+                <li>✅ 保持原來的佈局：圖片在上方，文字在下方</li>
+                <li>✅ 現正播出卡片更大：寬度是普通卡片的兩倍</li>
+                <li>✅ 圖片高度增加：從 180px 增加到 240px</li>
+                <li>✅ 文字區域放大：更大的內邊距和字體</li>
+                <li>✅ 保持原來的顏色：深色文字，藍色標籤</li>
+                <li>✅ 「現正播出」標籤在右上角</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

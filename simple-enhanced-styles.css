@@ -49,6 +49,12 @@
 .schedule-item {
   border-left: 3px solid transparent;
   transition: all 0.3s ease;
+  flex: 0 0 300px !important; /* 強制設定普通卡片寬度 */
+}
+
+/* 現正播出卡片特殊寬度 */
+.schedule-item.current {
+  flex: 0 0 900px !important; /* 強制設定現正播出卡片寬度為普通卡片的三倍 */
 }
 
 .schedule-item:hover {

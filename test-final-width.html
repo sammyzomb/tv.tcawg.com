@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>最終寬度測試</title>
+    <link rel="stylesheet" href="style.css?v=20250909v2">
+    <link rel="stylesheet" href="simple-enhanced-styles.css?v=20250909v2">
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+            font-family: Arial, sans-serif;
+        }
+        
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .test-title {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #333;
+        }
+        
+        .schedule-list {
+            display: flex;
+            gap: 20px;
+            overflow-x: auto;
+            padding: 20px 0;
+            border: 2px dashed #ccc;
+            background: white;
+        }
+        
+        .schedule-item {
+            flex: 0 0 300px;
+            background: #e3f2fd;
+            border-radius: 12px;
+            height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #1976d2;
+            font-weight: bold;
+            border: 2px solid #1976d2;
+        }
+        
+        .schedule-item.current {
+            background: #ffebee;
+            color: #d32f2f;
+            border: 2px solid #d32f2f;
+        }
+        
+        .width-info {
+            margin-top: 20px;
+            padding: 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .success-message {
+            background: #e8f5e8;
+            border: 1px solid #4caf50;
+            color: #2e7d32;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1 class="test-title">現正播出卡片寬度最終測試</h1>
+        
+        <div class="success-message">
+            ✅ <strong>問題已修復！</strong><br>
+            發現問題：<code>simple-enhanced-styles.css</code> 中的 <code>!important</code> 規則覆蓋了設定<br>
+            解決方案：已將該檔案中的寬度從 600px 改為 900px
+        </div>
+        
+        <div class="schedule-list">
+            <div class="schedule-item">普通卡片<br>300px</div>
+            <div class="schedule-item current">現正播出卡片<br>900px (三倍寬度)</div>
+            <div class="schedule-item">普通卡片<br>300px</div>
+            <div class="schedule-item">普通卡片<br>300px</div>
+        </div>
+        
+        <div class="width-info">
+            <h3>修改內容：</h3>
+            <ul>
+                <li>✅ <code>style.css</code>：已設定為 900px</li>
+                <li>✅ <code>simple-enhanced-styles.css</code>：已設定為 900px !important</li>
+                <li>✅ 響應式設計：小螢幕 840px，更小螢幕 750px</li>
+            </ul>
+            
+            <h3>現在請：</h3>
+            <ol>
+                <li>重新整理 <code>index.html</code> 頁面</li>
+                <li>查看「現正播出」卡片是否變為三倍寬度</li>
+                <li>如果還是沒有改變，請強制重新整理（Ctrl+F5）</li>
+            </ol>
+        </div>
+    </div>
+</body>
+</html>

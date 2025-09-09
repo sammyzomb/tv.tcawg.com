@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contentful 診斷工具</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+    .container { max-width: 1200px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    .header { background: #2b71d2; color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+    .section { margin-bottom: 30px; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
+    .btn { background: #2b71d2; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin: 5px; }
+    .btn:hover { background: #1e5bb8; }
+    .btn-danger { background: #dc3545; }
+    .btn-danger:hover { background: #c82333; }
+    .btn-success { background: #28a745; }
+    .btn-success:hover { background: #218838; }
+    .result { background: #f8f9fa; padding: 15px; border-radius: 5px; margin-top: 10px; font-family: monospace; white-space: pre-wrap; }
+    .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+    .warning { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+    .status { padding: 10px; margin: 10px 0; border-radius: 5px; }
+    .status.success { background: #d4edda; color: #155724; }
+    .status.error { background: #f8d7da; color: #721c24; }
+    .status.warning { background: #fff3cd; color: #856404; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🔧 Contentful 診斷工具</h1>
+      <p>診斷統一節目管理上架失敗問題</p>
+    </div>
+
+    <div class="section">
+      <h2>📊 系統狀態檢查</h2>
+      <button class="btn" onclick="checkSystemStatus()">檢查系統狀態</button>
+      <div id="systemStatus" class="result"></div>
+    </div>
+
+    <div class="section">
+      <h2>🏗️ Contentful 內容模型檢查</h2>
+      <button class="btn" onclick="checkContentTypes()">檢查內容類型</button>
+      <div id="contentTypes" class="result"></div>
+    </div>
+
+    <div class="section">
+      <h2>🔑 API 權限檢查</h2>
+      <button class="btn" onclick="checkAPIPermissions()">檢查 API 權限</button>
+      <div id="apiPermissions" class="result"></div>
+    </div>
+
+    <div class="section">
+      <h2>🧪 測試上架功能</h2>
+      <button class="btn btn-success" onclick="testUpload()">測試上架</button>
+      <div id="testUpload" class="result"></div>
+    </div>
+
+    <div class="section">
+      <h2>🔧 修復建議</h2>
+      <button class="btn btn-danger" onclick="showFixSuggestions()">顯示修復建議</button>
+      <div id="fixSuggestions" class="result"></div>
+    </div>
+  </div>
+
+  <!-- 載入必要的腳本 -->
+  <script src="https://cdn.jsdelivr.net/npm/contentful@latest/dist/contentful.browser.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/contentful-management@10.0.0/dist/contentful-management.browser.min.js"></script>
+  <script src="browser-config.js"></script>
+
+  <script>
+    let managementClient = null;
+    let space = null;
+    let environment = null;
+
+    // 初始化 Management 客戶端
+    async function initManagementClient() {
+      try {
+        if (typeof contentfulManagement === 'undefined') {
+          throw new Error('Management SDK 未載入');
+        }
+
+        managementClient = contentfulManagement.createClient({
+          accessToken: window.CONTENTFUL_CONFIG?.MANAGEMENT_TOKEN || window.CONTENTFUL_MANAGEMENT_TOKEN
+        });
+
+        space = await managementClient.getSpace(window.CONTENTFUL_CONFIG?.SPACE_ID || 'os5wf90ljenp');
+        environment = await space.getEnvironment('master');
+
+        return true;
+      } catch (error) {
+        console.error('初始化 Management 客戶端失敗:', error);
+        return false;
+      }
+    }
+
+    // 檢查系統狀態
+    async function checkSystemStatus() {
+      const resultDiv = document.getElementById('systemStatus');
+      resultDiv.innerHTML = '正在檢查系統狀態...';
+      
+      const status = {
+        contentful: typeof contentful !== 'undefined',
+        contentfulManagement: typeof contentfulManagement !== 'undefined',
+        config: !!window.CONTENTFUL_CONFIG,
+        spaceId: window.CONTENTFUL_CONFIG?.SPACE_ID || '未設定',
+        managementToken: window.CONTENTFUL_CONFIG?.MANAGEMENT_TOKEN ? '已設定' : '未設定'
+      };
+
+      let statusHtml = '系統狀態檢查結果:\n\n';
+      statusHtml += `✅ Contentful SDK: ${status.contentful ? '已載入' : '❌ 未載入'}\n`;
+      statusHtml += `✅ Management SDK: ${status.contentfulManagement ? '已載入' : '❌ 未載入'}\n`;
+      statusHtml += `✅ 配置檔案: ${status.config ? '已載入' : '❌ 未載入'}\n`;
+      statusHtml += `✅ Space ID: ${status.spaceId}\n`;
+      statusHtml += `✅ Management Token: ${status.managementToken}\n\n`;
+
+      if (status.contentful && status.contentfulManagement && status.config) {
+        statusHtml += '🎉 系統狀態正常！';
+        resultDiv.className = 'result success';
+      } else {
+        statusHtml += '⚠️ 系統狀態異常，需要修復';
+        resultDiv.className = 'result error';
+      }
+
+      resultDiv.innerHTML = statusHtml;
+    }
+
+    // 檢查內容類型
+    async function checkContentTypes() {
+      const resultDiv = document.getElementById('contentTypes');
+      resultDiv.innerHTML = '正在檢查內容類型...';
+      
+      try {
+        const initialized = await initManagementClient();
+        if (!initialized) {
+          throw new Error('無法初始化 Management 客戶端');
+        }
+
+        const contentTypes = await environment.getContentTypes();
+        
+        let html = `找到 ${contentTypes.items.length} 個內容類型:\n\n`;
+        
+        contentTypes.items.forEach(ct => {
+          html += `📋 ${ct.name} (${ct.sys.id})\n`;
+          html += `   描述: ${ct.description || '無'}\n`;
+          html += `   欄位數量: ${ct.fields.length}\n`;
+          
+          // 檢查是否有 scheduleItem 相關的內容類型
+          if (ct.sys.id.includes('schedule') || ct.sys.id.includes('program')) {
+            html += `   🎯 這可能是節目相關的內容類型！\n`;
+            html += `   欄位列表:\n`;
+            ct.fields.forEach(field => {
+              html += `     - ${field.name} (${field.id}): ${field.type}\n`;
+            });
+          }
+          html += '\n';
+        });
+
+        resultDiv.innerHTML = html;
+        resultDiv.className = 'result success';
+        
+      } catch (error) {
+        resultDiv.innerHTML = `❌ 檢查內容類型失敗: ${error.message}`;
+        resultDiv.className = 'result error';
+      }
+    }
+
+    // 檢查 API 權限
+    async function checkAPIPermissions() {
+      const resultDiv = document.getElementById('apiPermissions');
+      resultDiv.innerHTML = '正在檢查 API 權限...';
+      
+      try {
+        const initialized = await initManagementClient();
+        if (!initialized) {
+          throw new Error('無法初始化 Management 客戶端');
+        }
+
+        // 嘗試獲取空間資訊
+        const spaceInfo = await space.get();
+        
+        let html = `✅ API 權限檢查通過！\n\n`;
+        html += `空間名稱: ${spaceInfo.name}\n`;
+        html += `空間 ID: ${spaceInfo.sys.id}\n`;
+        html += `環境: master\n\n`;
+
+        // 嘗試創建一個測試 Entry（不發布）
+        try {
+          const testEntry = await environment.createEntry('scheduleItem', {
+            fields: {
+              'title': { 'en-US': '測試節目' },
+              'airDate': { 'en-US': '2024-01-01' },
+              'block': { 'en-US': 'test' },
+              'slotIndex': { 'en-US': 0 },
+              'isPremiere': { 'en-US': false },
+              'notes': { 'en-US': '測試用' }
+            }
+          });
+          
+          html += `✅ 可以創建 scheduleItem Entry\n`;
+          html += `測試 Entry ID: ${testEntry.sys.id}\n`;
+          
+          // 刪除測試 Entry
+          await testEntry.delete();
+          html += `✅ 已清理測試 Entry\n`;
+          
+        } catch (entryError) {
+          html += `❌ 無法創建 scheduleItem Entry: ${entryError.message}\n`;
+          html += `這表示內容類型 'scheduleItem' 不存在或欄位不匹配\n`;
+        }
+
+        resultDiv.innerHTML = html;
+        resultDiv.className = 'result success';
+        
+      } catch (error) {
+        resultDiv.innerHTML = `❌ API 權限檢查失敗: ${error.message}`;
+        resultDiv.className = 'result error';
+      }
+    }
+
+    // 測試上架功能
+    async function testUpload() {
+      const resultDiv = document.getElementById('testUpload');
+      resultDiv.innerHTML = '正在測試上架功能...';
+      
+      try {
+        const initialized = await initManagementClient();
+        if (!initialized) {
+          throw new Error('無法初始化 Management 客戶端');
+        }
+
+        // 測試資料
+        const testProgramData = {
+          title: '測試節目 - 日本東京晨間漫步',
+          airDate: '2024-01-15',
+          airTime: '14:30',
+          duration: 30,
+          category: '亞洲旅遊',
+          description: '測試節目描述',
+          status: 'scheduled',
+          videoType: 'YouTube',
+          youtubeId: 'dQw4w9WgXcQ'
+        };
+
+        resultDiv.innerHTML += `\n測試資料: ${JSON.stringify(testProgramData, null, 2)}\n\n`;
+
+        // 嘗試上架
+        const result = await uploadProgramSimple(testProgramData);
+        
+        if (result.success) {
+          resultDiv.innerHTML += `✅ 測試上架成功！\n`;
+          resultDiv.innerHTML += `Entry ID: ${result.entryId}\n`;
+          resultDiv.className = 'result success';
+        } else {
+          resultDiv.innerHTML += `❌ 測試上架失敗: ${result.error}\n`;
+          resultDiv.className = 'result error';
+        }
+        
+      } catch (error) {
+        resultDiv.innerHTML += `❌ 測試上架異常: ${error.message}\n`;
+        resultDiv.className = 'result error';
+      }
+    }
+
+    // 顯示修復建議
+    function showFixSuggestions() {
+      const resultDiv = document.getElementById('fixSuggestions');
+      
+      const suggestions = `
+🔧 修復建議:
+
+1. 內容類型問題:
+   - 檢查 Contentful 中是否存在 'scheduleItem' 內容類型
+   - 如果不存在，需要創建或使用正確的內容類型名稱
+
+2. 欄位映射問題:
+   - 檢查欄位名稱是否正確 (title, airDate, block, slotIndex, isPremiere, notes, video)
+   - 確保所有必填欄位都已設定
+
+3. 權限問題:
+   - 確認 Management Token 有創建和發布 Entry 的權限
+   - 檢查 Space ID 是否正確
+
+4. 建議的修復步驟:
+   a) 先運行「檢查內容類型」功能
+   b) 根據結果創建或修改內容類型
+   c) 更新程式碼中的欄位映射
+   d) 重新測試上架功能
+
+5. 緊急修復方案:
+   - 如果急需上架節目，可以暫時使用現有的內容類型
+   - 修改 uploadProgramSimple 函數中的欄位映射
+      `;
+      
+      resultDiv.innerHTML = suggestions;
+      resultDiv.className = 'result warning';
+    }
+
+    // 簡化的上架功能（從 admin-calendar-unified.html 複製）
+    async function uploadProgramSimple(programData) {
+      try {
+        console.log('🚀 開始上架節目:', programData);
+        
+        // 檢查 Management SDK
+        if (typeof contentfulManagement === 'undefined') {
+          throw new Error('Management SDK 未載入');
+        }
+        console.log('✅ Management SDK 已載入');
+
+        // 檢查 API Token
+        const managementToken = window.CONTENTFUL_CONFIG?.MANAGEMENT_TOKEN || window.CONTENTFUL_MANAGEMENT_TOKEN;
+        if (!managementToken) {
+          throw new Error('Management Token 未設定');
+        }
+        console.log('✅ Management Token 已設定');
+
+        // 創建 Management 客戶端
+        const managementClient = contentfulManagement.createClient({
+          accessToken: managementToken
+        });
+
+        // 獲取 Space 和 Environment
+        const space = await managementClient.getSpace(window.CONTENTFUL_CONFIG?.SPACE_ID || 'os5wf90ljenp');
+        const environment = await space.getEnvironment('master');
+        console.log('✅ 已連接到 Contentful Space');
+
+        // 準備資料
+        const airDate = programData.airDate || new Date().toISOString().split('T')[0];
+        const block = programData.airTime ? programData.airTime.split(':')[0] + ':00' : '12:00';
+        const slotIndex = programData.airTime ? parseInt(programData.airTime.split(':')[1]) / 30 : 0;
+        const notes = programData.description || '';
+
+        // 創建或獲取影片 Entry
+        let videoEntry = null;
+        if (programData.videoType === 'YouTube' && programData.youtubeId) {
+          try {
+            // 嘗試創建 video entry
+            videoEntry = await environment.createEntry('video', {
+              fields: {
+                'title': { 'en-US': programData.title || '未命名影片' },
+                'youtubeId': { 'en-US': programData.youtubeId },
+                'category': { 'en-US': programData.category || '旅遊節目' },
+                'duration': { 'en-US': programData.duration || 30 }
+              }
+            });
+            await videoEntry.publish();
+            console.log('✅ 影片 Entry 創建成功:', videoEntry.sys.id);
+          } catch (error) {
+            console.error('創建 video entry 失敗:', error);
+            throw new Error('無法創建影片資料：' + error.message);
+          }
+        } else {
+          throw new Error('必須提供 YouTube ID 才能上架節目');
+        }
+
+        const entryData = {
+          fields: {
+            'title': { 'en-US': programData.title || '未命名節目' },
+            'airDate': { 'en-US': airDate },
+            'block': { 'en-US': block },
+            'slotIndex': { 'en-US': slotIndex },
+            'isPremiere': { 'en-US': programData.isFirstBroadcast || false },
+            'notes': { 'en-US': notes },
+            'video': { 
+              'en-US': { 
+                sys: { 
+                  type: 'Link', 
+                  linkType: 'Entry', 
+                  id: videoEntry.sys.id 
+                } 
+              } 
+            }
+          }
+        };
+        
+        console.log('準備上架的 Entry 資料:', entryData);
+
+        // 創建 Entry
+        const contentTypeId = programData.contentType || 'scheduleItem';
+        console.log('創建 Entry，Content Type:', contentTypeId);
+        const entry = await environment.createEntry(contentTypeId, entryData);
+        console.log('✅ Entry 創建成功:', entry.sys.id);
+        
+        // 發布 Entry
+        console.log('發布 Entry...');
+        await entry.publish();
+        console.log('✅ Entry 發布成功');
+        
+        return {
+          success: true,
+          entryId: entry.sys.id,
+          message: '節目已成功上架到 Contentful'
+        };
+        
+      } catch (error) {
+        console.error('❌ 上架失敗:', error);
+        
+        // 提供更詳細的錯誤訊息
+        let errorMessage = error.message;
+        if (error.message.includes('Management SDK')) {
+          errorMessage = 'Management SDK 未載入，請重新整理頁面';
+        } else if (error.message.includes('Token')) {
+          errorMessage = 'API Token 設定錯誤，請檢查配置';
+        } else if (error.message.includes('Space')) {
+          errorMessage = 'Space ID 錯誤或無權限存取';
+        } else if (error.message.includes('Content Type')) {
+          errorMessage = 'Content Type 不存在，請檢查 Contentful 設定';
+        }
+        
+        return {
+          success: false,
+          error: errorMessage,
+          message: '節目上架失敗: ' + errorMessage
+        };
+      }
+    }
+
+    // 頁面載入完成後自動檢查系統狀態
+    document.addEventListener('DOMContentLoaded', function() {
+      setTimeout(checkSystemStatus, 1000);
+    });
+  </script>
+</body>
+</html>

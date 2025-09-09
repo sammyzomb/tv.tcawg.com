@@ -781,7 +781,7 @@ body.dark-theme .schedule-nav-arrow.disabled svg {
 
 /* 極簡節目卡片樣式 */
 .schedule-item {
-  flex: 0 0 300px;
+  flex: 0 0 300px; /* 恢復普通卡片寬度為 300px */
   background: var(--card-bg);
   border-radius: 12px;
   border: 1px solid var(--card-border);
@@ -801,6 +801,9 @@ body.dark-theme .schedule-nav-arrow.disabled svg {
   border-left: 3px solid #e74c3c;
   background: rgba(231, 76, 60, 0.02);
   transform: scale(1.01);
+  flex: 0 0 900px; /* 現正播出卡片寬度為普通卡片的三倍 (300px × 3) */
+  height: 530px; /* 調整卡片高度以適應平衡的圖片和文字 */
+  position: relative; /* 回復為相對定位 */
 }
 
 .schedule-item.current::after {
@@ -853,17 +856,35 @@ body.dark-theme .schedule-nav-arrow.disabled svg {
 /* 節目縮圖區域 */
 .schedule-thumbnail {
   position: relative;
-  width: 100%;
+  width: 100% !important;
   height: 180px;
   overflow: hidden;
   border-radius: 12px 12px 0 0;
+  display: block !important;
+}
+
+/* 現正播出卡片的縮圖區域 - 放大版但保持原格式 */
+.schedule-item.current .schedule-thumbnail {
+  height: 350px; /* 調整圖片高度，平衡顯示效果 */
+  border-radius: 12px 12px 0 0; /* 保持原來的圓角 */
+  width: 100% !important; /* 強制設定寬度 */
+}
+
+/* 現正播出卡片的圖片設定 */
+.schedule-item.current .schedule-thumbnail img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important; /* 改回 cover 避免左右白邊 */
+  display: block !important;
+  object-position: center 70%; /* 進一步調整圖片位置，讓下方內容露出更多 */
 }
 
 .schedule-thumbnail img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
   transition: transform 0.3s ease;
+  display: block !important;
 }
 
 .schedule-item:hover .schedule-thumbnail img {
@@ -927,15 +948,7 @@ body.dark-theme .schedule-nav-arrow.disabled svg {
   background: rgba(231, 76, 60, 0.02);
 }
 
-.schedule-item.current::after {
-  content: '●';
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  color: #e74c3c;
-  font-size: 10px;
-  animation: pulse-dot 2s infinite;
-}
+/* 移除重複的 ::after 規則，使用上面的 "現正播出" 標籤 */
 
 /* 即將播出節目的樣式 */
 .schedule-item.upcoming {
@@ -950,9 +963,23 @@ body.dark-theme .schedule-nav-arrow.disabled svg {
 }
 
 /* 隱藏原有的徽章 */
-.now-playing-badge,
 .upcoming-badge {
   display: none !important;
+}
+
+/* 現正播出徽章樣式 */
+.now-playing-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: #e74c3c;
+  color: white;
+  padding: 3px 6px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  z-index: 10;
+  display: block !important;
 }
 
 /* 簡化的動畫效果 */
@@ -972,10 +999,64 @@ body.dark-theme .schedule-nav-arrow.disabled svg {
   padding: 12px;
 }
 
+/* 現正播出卡片的內容佈局調整 - 保持原格式但放大 */
+.schedule-item.current .schedule-content {
+  padding: 24px 30px; /* 增加內邊距，讓文字更舒適 */
+  position: relative; /* 改為相對定位，保持原格式 */
+  background: white; /* 保持白色背景 */
+  color: #333; /* 改回深色文字 */
+  border-radius: 0 0 12px 12px;
+  display: block !important; /* 強制顯示文字內容 */
+}
+
 /* 節目標題 */
 .program-title {
   font-size: 1rem;
   font-weight: 600;
+}
+
+/* 現正播出卡片的標題樣式 - 保持原格式但放大 */
+.schedule-item.current .program-title {
+  font-size: 1.4rem; /* 放大字體 */
+  font-weight: 700;
+  color: #333 !important; /* 改回深色文字 */
+  text-shadow: none; /* 移除文字陰影 */
+  margin-bottom: 12px;
+  display: block !important;
+}
+
+/* 現正播出卡片的描述樣式 - 保持原格式但放大 */
+.schedule-item.current .program-description {
+  color: #666 !important; /* 改回深色文字 */
+  font-size: 1rem; /* 放大字體 */
+  text-shadow: none; /* 移除文字陰影 */
+  margin-bottom: 16px;
+  display: block !important;
+}
+
+/* 現正播出卡片的元數據樣式 */
+.schedule-item.current .schedule-meta {
+  display: flex !important;
+  align-items: center;
+  gap: 8px;
+}
+
+.schedule-item.current .program-category {
+  background: #007bff !important; /* 改回藍色背景 */
+  color: white !important;
+  padding: 6px 16px; /* 增加內邊距 */
+  border-radius: 12px;
+  font-size: 0.9rem; /* 放大字體 */
+  font-weight: 500;
+  display: inline-block !important;
+}
+
+.schedule-item.current .schedule-duration {
+  color: #666 !important; /* 改回深色文字 */
+  font-size: 0.9rem; /* 放大字體 */
+  font-weight: 500;
+  display: inline-block !important;
+}
   color: var(--text-color);
   line-height: 1.3;
   margin-bottom: 6px;
@@ -984,6 +1065,8 @@ body.dark-theme .schedule-nav-arrow.disabled svg {
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+
+/* 移除重複的標題樣式規則 */
 
 /* 節目描述 */
 .program-description {
@@ -997,12 +1080,24 @@ body.dark-theme .schedule-nav-arrow.disabled svg {
   overflow: hidden;
 }
 
+/* 現正播出卡片的描述樣式 */
+.schedule-item.current .program-description {
+  font-size: 0.9rem; /* 稍大的字體 */
+  margin-bottom: 12px;
+  -webkit-line-clamp: 3; /* 允許更多行 */
+}
+
 /* 節目元數據區域 */
 .schedule-meta {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 6px;
+}
+
+/* 現正播出卡片的元數據樣式 */
+.schedule-item.current .schedule-meta {
+  gap: 12px; /* 增加間距 */
 }
 
 /* 節目分類 */
@@ -1017,6 +1112,13 @@ body.dark-theme .schedule-nav-arrow.disabled svg {
   flex-shrink: 0;
 }
 
+/* 現正播出卡片的分類樣式 */
+.schedule-item.current .program-category {
+  font-size: 0.8rem; /* 稍大的字體 */
+  padding: 6px 12px; /* 增加內邊距 */
+  font-weight: 600; /* 更粗的字體 */
+}
+
 /* 節目時長 */
 .schedule-duration {
   font-size: 0.75rem;
@@ -1026,6 +1128,12 @@ body.dark-theme .schedule-nav-arrow.disabled svg {
   align-items: center;
   gap: 3px;
   flex-shrink: 0;
+}
+
+/* 現正播出卡片的時長樣式 */
+.schedule-item.current .schedule-duration {
+  font-size: 0.85rem; /* 稍大的字體 */
+  font-weight: 600; /* 更粗的字體 */
 }
 
 .schedule-duration::before {
@@ -1321,12 +1429,14 @@ body.dark-theme .schedule-item:hover .program-category {
   font-size: 0.9rem;
 }
 
-.schedule-list {
+/* 節目表頁面專用的垂直排列樣式 - 僅在 schedule.html 頁面使用 */
+.schedule-page .schedule-list {
   display: flex;
   flex-direction: column;
 }
 
-.schedule-item {
+/* 節目表頁面專用的網格樣式 - 僅在 schedule.html 頁面使用 */
+.schedule-page .schedule-item {
   display: grid;
   grid-template-columns: 100px 1fr 80px;
   gap: 20px;
@@ -1337,23 +1447,27 @@ body.dark-theme .schedule-item:hover .program-category {
   position: relative;
 }
 
-.schedule-item:hover {
+/* 節目表頁面專用的懸停樣式 - 僅在 schedule.html 頁面使用 */
+.schedule-page .schedule-item:hover {
   background: var(--section-bg);
   transform: translateX(4px);
 }
 
-.schedule-item.current {
+/* 節目表頁面專用的當前節目樣式 - 僅在 schedule.html 頁面使用 */
+.schedule-page .schedule-item.current {
   background: linear-gradient(135deg, rgba(255, 215, 0, 0.1) 0%, rgba(255, 215, 0, 0.05) 100%);
   border-left: 4px solid var(--primary-color);
   transform: translateX(8px);
 }
 
-.schedule-item.next {
+/* 節目表頁面專用的下一個節目樣式 - 僅在 schedule.html 頁面使用 */
+.schedule-page .schedule-item.next {
   background: linear-gradient(135deg, rgba(255, 215, 0, 0.05) 0%, rgba(255, 215, 0, 0.02) 100%);
   border-left: 4px solid #ffd700;
 }
 
-.schedule-time {
+/* 節目表頁面專用的時間樣式 - 僅在 schedule.html 頁面使用 */
+.schedule-page .schedule-time {
   font-weight: 700;
   color: var(--text-color);
   font-size: 1rem;
@@ -1361,20 +1475,23 @@ body.dark-theme .schedule-item:hover .program-category {
   align-items: center;
 }
 
-.schedule-program {
+/* 節目表頁面專用的節目資訊樣式 - 僅在 schedule.html 頁面使用 */
+.schedule-page .schedule-program {
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 
-.program-title {
+/* 節目表頁面專用的標題樣式 - 僅在 schedule.html 頁面使用 */
+.schedule-page .program-title {
   font-weight: 600;
   color: var(--text-color);
   font-size: 1rem;
   line-height: 1.4;
 }
 
-.program-category {
+/* 節目表頁面專用的分類樣式 - 僅在 schedule.html 頁面使用 */
+.schedule-page .program-category {
   font-size: 0.8rem;
   color: var(--text-color-light);
   background: var(--section-bg);
@@ -1384,7 +1501,8 @@ body.dark-theme .schedule-item:hover .program-category {
   width: fit-content;
 }
 
-.schedule-duration {
+/* 節目表頁面專用的時長樣式 - 僅在 schedule.html 頁面使用 */
+.schedule-page .schedule-duration {
   font-size: 0.9rem;
   color: var(--text-color-light);
   display: flex;
@@ -1392,7 +1510,8 @@ body.dark-theme .schedule-item:hover .program-category {
   justify-content: center;
 }
 
-.program-status {
+/* 節目表頁面專用的狀態樣式 - 僅在 schedule.html 頁面使用 */
+.schedule-page .program-status {
   position: absolute;
   top: 12px;
   right: 12px;
@@ -1404,12 +1523,14 @@ body.dark-theme .schedule-item:hover .program-category {
   color: var(--cta-text-color);
 }
 
-.schedule-item.current .program-status {
+/* 節目表頁面專用的當前節目狀態樣式 - 僅在 schedule.html 頁面使用 */
+.schedule-page .schedule-item.current .program-status {
   background: #e74c3c;
   animation: pulse 2s infinite;
 }
 
-.schedule-item.next .program-status {
+/* 節目表頁面專用的下一個節目狀態樣式 - 僅在 schedule.html 頁面使用 */
+.schedule-page .schedule-item.next .program-status {
   background: #27ae60;
 }
 
@@ -1732,7 +1853,11 @@ body.dark-theme .schedule-item.next {
   }
   
   .schedule-item {
-    flex: 0 0 280px;
+    flex: 0 0 280px; /* 小螢幕普通卡片寬度 */
+  }
+  
+  .schedule-item.current {
+    flex: 0 0 840px; /* 小螢幕現正播出卡片寬度為普通卡片的三倍 (280px × 3) */
   }
   
   .schedule-thumbnail {
@@ -1813,8 +1938,12 @@ body.dark-theme .schedule-item.next {
   }
   
   .schedule-item {
-    flex: 0 0 200px;
+    flex: 0 0 250px; /* 更小螢幕普通卡片寬度 */
     padding: 14px;
+  }
+  
+  .schedule-item.current {
+    flex: 0 0 750px; /* 更小螢幕現正播出卡片寬度為普通卡片的三倍 (250px × 3) */
   }
   
   .schedule-time {

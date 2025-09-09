@@ -386,31 +386,49 @@ document.addEventListener('DOMContentLoaded', () => {
       console.log('🔧 強制清除快取，重新載入節目表');
       scheduleData = null;
       
+      // 清除所有可能的快取資料
+      try {
+        localStorage.removeItem('currentSchedule');
+        localStorage.removeItem('calendar_events');
+        localStorage.removeItem('scheduleData');
+        console.log('✅ 已清除所有 localStorage 快取資料');
+      } catch (e) {
+        console.log('清除 localStorage 快取時發生錯誤:', e);
+      }
+      
       // 優先從 Contentful 載入節目表
       try {
         console.log('🎯 優先從 Contentful 載入節目表...');
         const response = await contentfulClient.getEntries({
           content_type: 'scheduleItem',
+          'fields.airDate': today,
           order: 'fields.airDate,fields.slotIndex',
           include: 2,
           limit: 100
         });
         
         console.log('Contentful 回應:', response.items?.length || 0, '個項目');
+        console.log('查詢日期:', today);
         
         if (response.items && response.items.length > 0) {
-          // 過濾節目，並排除推薦節目
+          // 過濾節目：只顯示今天的節目，並排除推薦節目
           const todayPrograms = response.items.filter(item => {
             const fields = item.fields || {};
             const title = fields.title || '';
+            const airDate = fields.airDate || '';
+            
+            // 只顯示今天的節目
+            const isToday = airDate === today;
+            if (!isToday) {
+              console.log('跳過非今日節目:', airDate, title);
+              return false;
+            }
             
             // 排除推薦節目（包含特定關鍵字的節目）
             const isRecommendedProgram = title.includes('加拿大的寒冰生活') || 
                                        title.includes('加拿大捕魚') || 
-                                       title.includes('加拿大的極光晚餐') ||
-                                       title.includes('2025-08-19'); // 舊日期
+                                       title.includes('加拿大的極光晚餐');
             
-            // 顯示所有節目，不管日期
             return !isRecommendedProgram;
           }).map(item => {
             // 從備註中提取具體時間，格式為 [時間:XX:XX]
@@ -483,6 +501,22 @@ document.addEventListener('DOMContentLoaded', () => {
             return a.time.localeCompare(b.time);
           });
           
+          // 去重：移除重複的節目（基於時段，每個時段只保留第一個節目）
+          const uniquePrograms = [];
+          const seenTimes = new Set();
+          
+          for (const program of todayPrograms) {
+            if (!seenTimes.has(program.time)) {
+              seenTimes.add(program.time);
+              uniquePrograms.push(program);
+            } else {
+              console.log('移除重複時段節目:', program.time, program.title);
+            }
+          }
+          
+          console.log('去重前節目數量:', todayPrograms.length);
+          console.log('去重後節目數量:', uniquePrograms.length);
+          
           // 設定全域 scheduleData 變數
           window.scheduleData = {
             today: {
@@ -490,7 +524,7 @@ document.addEventListener('DOMContentLoaded', () => {
               dayOfWeek: getDayOfWeek(taiwanTime),
               month: `${taiwanTime.getMonth() + 1}月`,
               day: `${taiwanTime.getDate()}日`,
-              schedule: todayPrograms
+              schedule: uniquePrograms
             }
           };
           
@@ -513,8 +547,32 @@ document.addEventListener('DOMContentLoaded', () => {
           console.log('Contentful 中沒有找到節目，使用預設節目表');
         }
       } catch (contentfulError) {
-        console.log('Contentful 載入失敗，使用預設節目表:', contentfulError.message);
-        // 使用預設數據
+        console.log('Contentful 載入失敗，嘗試本地 schedule.json:', contentfulError.message);
+        
+        // 嘗試從本地 schedule.json 載入節目表作為備用
+        try {
+          console.log('🔄 嘗試從本地 schedule.json 載入備用節目表...');
+          const response = await fetch('schedule.json');
+          if (response.ok) {
+            const localScheduleData = await response.json();
+            if (localScheduleData.today && localScheduleData.today.schedule) {
+              console.log('✅ 成功從本地 schedule.json 載入備用節目表，共', localScheduleData.today.schedule.length, '個節目');
+              
+              // 設定全域 scheduleData 變數
+              window.scheduleData = localScheduleData;
+              scheduleData = window.scheduleData;
+              
+              updateScheduleDisplay();
+              startTimeUpdates();
+              return;
+            }
+          }
+        } catch (localError) {
+          console.log('本地 schedule.json 也載入失敗:', localError.message);
+        }
+        
+        // 如果所有載入都失敗，使用預設數據
+        console.log('⚠️ 所有數據載入都失敗，使用預設節目表');
         window.scheduleData = {
           today: {
             date: today,
@@ -1305,7 +1363,53 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 頁面載入時初始化節目時間表
   addScheduleStyles();
+  
+  // 強制重新載入節目表，確保使用最新資料
+  console.log('🚀 頁面載入，強制重新載入節目表');
   loadScheduleData();
+  
+  // 添加調試函數到全域
+  window.debugScheduleData = function() {
+    console.log('=== 節目表調試資訊 ===');
+    console.log('當前 scheduleData:', scheduleData);
+    console.log('window.scheduleData:', window.scheduleData);
+    console.log('localStorage currentSchedule:', localStorage.getItem('currentSchedule'));
+    console.log('localStorage calendar_events:', localStorage.getItem('calendar_events'));
+    console.log('localStorage scheduleData:', localStorage.getItem('scheduleData'));
+    
+    if (scheduleData && scheduleData.today && scheduleData.today.schedule) {
+      console.log('節目列表:');
+      scheduleData.today.schedule.forEach((program, index) => {
+        console.log(`${index + 1}. ${program.time} - ${program.title} (${program.youtubeId})`);
+      });
+    }
+  };
+  
+  // 添加日期調試函數
+  window.debugDateSchedule = async function(date) {
+    const targetDate = date || getTaiwanTime().toISOString().split('T')[0];
+    console.log(`=== ${targetDate} 節目表調試 ===`);
+    
+    try {
+      const response = await contentfulClient.getEntries({
+        content_type: 'scheduleItem',
+        'fields.airDate': targetDate,
+        order: 'fields.airDate,fields.slotIndex',
+        include: 2,
+        limit: 100
+      });
+      
+      console.log(`${targetDate} 的節目數量:`, response.items?.length || 0);
+      if (response.items && response.items.length > 0) {
+        response.items.forEach((item, index) => {
+          const fields = item.fields || {};
+          console.log(`${index + 1}. ${fields.airDate} - ${fields.title}`);
+        });
+      }
+    } catch (error) {
+      console.error('查詢日期節目表時發生錯誤:', error);
+    }
+  };
 
   // 頁面卸載時清理定時器
   window.addEventListener('beforeunload', () => {

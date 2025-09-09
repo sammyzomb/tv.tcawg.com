@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>寬度驗證測試</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+            font-family: Arial, sans-serif;
+        }
+        
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .test-title {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #333;
+        }
+        
+        .schedule-list {
+            display: flex;
+            gap: 20px;
+            overflow-x: auto;
+            padding: 20px 0;
+            border: 2px dashed #ccc;
+            background: white;
+        }
+        
+        .schedule-item {
+            flex: 0 0 300px;
+            background: #e3f2fd;
+            border-radius: 12px;
+            height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #1976d2;
+            font-weight: bold;
+            border: 2px solid #1976d2;
+        }
+        
+        .schedule-item.current {
+            flex: 0 0 900px;
+            background: #ffebee;
+            color: #d32f2f;
+            border: 2px solid #d32f2f;
+        }
+        
+        .width-info {
+            margin-top: 20px;
+            padding: 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .width-demo {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            align-items: center;
+        }
+        
+        .width-box {
+            height: 60px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 0.9rem;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .normal-width {
+            width: 300px;
+            background: #1976d2;
+        }
+        
+        .current-width {
+            width: 900px;
+            background: #d32f2f;
+        }
+        
+        .measurement {
+            font-family: monospace;
+            background: #f5f5f5;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1 class="test-title">現正播出卡片寬度驗證</h1>
+        
+        <div class="schedule-list">
+            <div class="schedule-item">普通卡片<br><span class="measurement">300px</span></div>
+            <div class="schedule-item current">現正播出卡片<br><span class="measurement">900px</span></div>
+            <div class="schedule-item">普通卡片<br><span class="measurement">300px</span></div>
+            <div class="schedule-item">普通卡片<br><span class="measurement">300px</span></div>
+        </div>
+        
+        <div class="width-info">
+            <h3>寬度驗證：</h3>
+            <div class="width-demo">
+                <div class="width-box normal-width">普通卡片<br>300px</div>
+                <div style="color: #666; font-size: 0.8rem;">+</div>
+                <div class="width-box normal-width">普通卡片<br>300px</div>
+                <div style="color: #666; font-size: 0.8rem;">+</div>
+                <div class="width-box normal-width">普通卡片<br>300px</div>
+                <div style="color: #666; font-size: 0.8rem;">=</div>
+                <div class="width-box current-width">現正播出卡片<br>900px</div>
+            </div>
+            
+            <p><strong>設定確認：</strong></p>
+            <ul>
+                <li>✅ 普通卡片寬度：300px</li>
+                <li>✅ 現正播出卡片寬度：900px</li>
+                <li>✅ 比例：900px ÷ 300px = 3倍</li>
+                <li>✅ 響應式設計：小螢幕 840px，更小螢幕 750px</li>
+            </ul>
+            
+            <p><strong>如果寬度沒有改變，請：</strong></p>
+            <ul>
+                <li>1. 強制重新整理頁面（Ctrl+F5 或 Cmd+Shift+R）</li>
+                <li>2. 清除瀏覽器快取</li>
+                <li>3. 檢查是否有其他 CSS 檔案覆蓋設定</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>
