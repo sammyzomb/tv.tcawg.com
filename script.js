@@ -887,12 +887,18 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
         `;
         
-        // 添加點擊事件
+        // 添加點擊事件 - 只有現正播出的節目可以播放
         scheduleItem.addEventListener('click', () => {
-          console.log('播放節目:', program.title);
+          console.log('點擊節目:', program.title, '狀態:', status);
           
-          if (program.youtubeId) {
+          // 只有現正播出的節目才能播放
+          if (isCurrent && program.youtubeId) {
+            console.log('播放現正播出節目:', program.title);
             openFullscreenPlayer(program.youtubeId);
+          } else {
+            console.log('此節目不可播放，僅顯示縮圖');
+            // 可以添加提示訊息
+            showNonPlayableMessage(program.title, status);
           }
         });
         
@@ -1341,6 +1347,20 @@ document.addEventListener('DOMContentLoaded', () => {
         box-shadow: 0 0 20px rgba(255, 68, 68, 0.3);
       }
       
+      .schedule-item:not(.current) {
+        opacity: 0.7;
+        filter: grayscale(0.3);
+      }
+      
+      .schedule-item:not(.current):hover {
+        opacity: 0.8;
+        transform: none;
+      }
+      
+      .schedule-item:not(.current) .play-button {
+        display: none;
+      }
+      
       @keyframes pulse {
         0% { opacity: 1; }
         50% { opacity: 0.7; }
@@ -1668,6 +1688,54 @@ function showErrorMessage(message) {
       errorDiv.parentNode.removeChild(errorDiv);
     }
   }, 3000);
+}
+
+function showNonPlayableMessage(programTitle, status) {
+  // 創建不可播放提示訊息
+  const messageDiv = document.createElement('div');
+  messageDiv.style.cssText = `
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #2b71d2;
+    color: white;
+    padding: 20px 30px;
+    border-radius: 12px;
+    z-index: 10000;
+    font-size: 16px;
+    max-width: 400px;
+    text-align: center;
+    box-shadow: 0 8px 25px rgba(43, 113, 210, 0.3);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+  `;
+  
+  let statusText = '';
+  switch(status) {
+    case 'upcoming':
+      statusText = '即將播出';
+      break;
+    case 'ended':
+      statusText = '已結束';
+      break;
+    default:
+      statusText = '非現正播出';
+  }
+  
+  messageDiv.innerHTML = `
+    <div style="font-size: 18px; font-weight: bold; margin-bottom: 8px;">📺 ${escapeHtml(programTitle)}</div>
+    <div style="font-size: 14px; opacity: 0.9;">此節目為 ${statusText}，僅顯示縮圖</div>
+    <div style="font-size: 12px; opacity: 0.7; margin-top: 8px;">只有現正播出的節目才能播放</div>
+  `;
+  
+  document.body.appendChild(messageDiv);
+
+  // 2秒後自動移除
+  setTimeout(() => {
+    if (messageDiv.parentNode) {
+      messageDiv.parentNode.removeChild(messageDiv);
+    }
+  }, 2000);
 }
 
 function requestFullscreen() {
