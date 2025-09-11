@@ -1,36 +1,134 @@
 {
-  "today": {
-    "date": "2025-01-09",
+  "thursday": {
+    "date": "2025-09-11",
     "dayOfWeek": "四",
-    "month": "1",
-    "day": "9",
+    "month": "9",
+    "day": "11",
     "schedule": [
       {
-        "time": "01:00",
-        "title": "Marvel at Sea Animal in The Best 4K ULTRA HD Aquarium - Dive Into The Mesmerizing Underwater Realm #2",
+        "time": "11:00",
+        "title": "How to Spend 4 Days in SEVILLE Spain | The Perfect Travel Guide",
         "duration": "30",
         "category": "旅遊節目",
-        "description": "探索海底世界的奇妙生物，4K 超高清畫質帶來身臨其境的體驗",
-        "thumbnail": "https://img.youtube.com/vi/HAzZH6wccew/maxresdefault.jpg",
-        "youtubeId": "HAzZH6wccew",
+        "description": "How to Spend 4 Days in SEVILLE Spain | The Perfect Travel Guide",
+        "thumbnail": "https://img.youtube.com/vi/kcalkfcK6ZA/maxresdefault.jpg",
+        "youtubeId": "kcalkfcK6ZA",
         "status": "published"
       },
       {
-        "time": "01:30",
-        "title": "目前暫無節目",
-        "duration": "30",
-        "category": "空檔",
-        "description": "此時段暫無節目安排",
-        "thumbnail": "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop",
-        "youtubeId": "",
-        "status": "空檔"
-      },
-      {
-        "time": "02:00",
-        "title": "脳がとろけるような川のせせらぎ、小鳥のさえずり 【大自然,勉強,作業,集中、睡眠、癒し、瞑想",
+        "time": "11:30",
+        "title": "Kyrgyzstan 4K - Scenic Relaxation Film With Calming Music",
         "duration": "30",
         "category": "旅遊節目",
-        "description": "大自然療癒音樂，河流聲與鳥鳴聲的完美結合，適合學習、工作、冥想和睡眠",
+        "description": "Kyrgyzstan 4K - Scenic Relaxation Film With Calming Music",
+        "thumbnail": "https://img.youtube.com/vi/Qp37q2-Gjvw/maxresdefault.jpg",
+        "youtubeId": "Qp37q2-Gjvw",
+        "status": "published"
+      },
+      {
+        "time": "12:00",
+        "title": "MONTANA 4K Scenic Relaxation Film with Country Music | Glacier National Park",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "MONTANA 4K Scenic Relaxation Film with Country Music | Glacier National Park",
+        "thumbnail": "https://img.youtube.com/vi/QMCa79JZQBg/maxresdefault.jpg",
+        "youtubeId": "QMCa79JZQBg",
+        "status": "published"
+      },
+      {
+        "time": "12:30",
+        "title": "Lofoten islands, Norway – 4K Relaxation Film with Calming Music",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "Lofoten islands, Norway – 4K Relaxation Film with Calming Music",
+        "thumbnail": "https://img.youtube.com/vi/6owNUyDlHVg/maxresdefault.jpg",
+        "youtubeId": "6owNUyDlHVg",
+        "status": "published"
+      },
+      {
+        "time": "13:00",
+        "title": "Denmark 8K UHD - Land of Fairytales, Coastal Beauty and Timeless Nordic Charm - VIDEO 8K UHD",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "Denmark 8K UHD - Land of Fairytales, Coastal Beauty and Timeless Nordic Charm - VIDEO 8K UHD",
+        "thumbnail": "https://img.youtube.com/vi/_m1IHB7OGpI/maxresdefault.jpg",
+        "youtubeId": "_m1IHB7OGpI",
+        "status": "published"
+      },
+      {
+        "time": "13:30",
+        "title": "Finland 8K UHD – Discover Lakes, Forests, and Northern Lights | Travel Video",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "Finland 8K UHD – Discover Lakes, Forests, and Northern Lights | Travel Video",
+        "thumbnail": "https://img.youtube.com/vi/lkX1bslmRs0/maxresdefault.jpg",
+        "youtubeId": "lkX1bslmRs0",
+        "status": "published"
+      },
+      {
+        "time": "14:00",
+        "title": "Switzerland Beyond Seasons 4K ✨ A Landscape That Soothes All Year Round",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "Switzerland Beyond Seasons 4K ✨ A Landscape That Soothes All Year Round",
+        "thumbnail": "https://img.youtube.com/vi/pcdZ1isvr_E/maxresdefault.jpg",
+        "youtubeId": "pcdZ1isvr_E",
+        "status": "published"
+      },
+      {
+        "time": "14:30",
+        "title": "Wales 8K UHD - Discover the Natural Beauty of this Breathtaking Country - VIDEO 8K UHD",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "Wales 8K UHD - Discover the Natural Beauty of this Breathtaking Country - VIDEO 8K UHD",
+        "thumbnail": "https://img.youtube.com/vi/NWKQkCZ-NLQ/maxresdefault.jpg",
+        "youtubeId": "NWKQkCZ-NLQ",
+        "status": "published"
+      },
+      {
+        "time": "15:00",
+        "title": "Austria 8K UHD | Silent Villages, Hidden Courtyards & Alpine Calm in the Heart of Europe",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "Austria 8K UHD | Silent Villages, Hidden Courtyards & Alpine Calm in the Heart of Europe",
+        "thumbnail": "https://img.youtube.com/vi/5ZQ7uJikim4/maxresdefault.jpg",
+        "youtubeId": "5ZQ7uJikim4",
+        "status": "published"
+      },
+      {
+        "time": "15:30",
+        "title": "Italy 4K • Scenic Nature Relaxation Film with Peaceful Music | Nature 4K Ultra HD",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "Italy 4K • Scenic Nature Relaxation Film with Peaceful Music | Nature 4K Ultra HD",
+        "thumbnail": "https://img.youtube.com/vi/4088CV88CdQ/maxresdefault.jpg",
+        "youtubeId": "4088CV88CdQ",
+        "status": "published"
+      },
+      {
+        "time": "16:00",
+        "title": "[4K] SARDINIA 🇮🇹 Sardegna Drone Aerial, The Miracle Island of Italy | 4 Hour Ambient Relaxation Film",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "[4K] SARDINIA 🇮🇹 Sardegna Drone Aerial, The Miracle Island of Italy | 4 Hour Ambient Relaxation Film",
+        "thumbnail": "https://img.youtube.com/vi/KpCVQcSqB0Q/maxresdefault.jpg",
+        "youtubeId": "KpCVQcSqB0Q",
+        "status": "published"
+      }
+    ]
+  },
+  "tuesday": {
+    "date": "2025-09-09",
+    "dayOfWeek": "二",
+    "month": "9",
+    "day": "9",
+    "schedule": [
+      {
+        "time": "02:00",
+        "title": "脳がとろけるような川のせせらぎ,小鳥のさえずり【大自然,勉強,作業,集中,睡眠,癒し,瞑想,リラックス,赤ちゃん寝かしつけ,高音質,落ち着くBGM,自律神経を整える,ASMR】",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "脳がとろけるような川のせせらぎ,小鳥のさえずり【大自然,勉強,作業,集中,睡眠,癒し,瞑想,リラックス,赤ちゃん寝かしつけ,高音質,落ち着くBGM,自律神経を整える,ASMR】",
         "thumbnail": "https://img.youtube.com/vi/HAzZH6wccew/maxresdefault.jpg",
         "youtubeId": "HAzZH6wccew",
         "status": "published"
@@ -40,20 +138,446 @@
         "title": "Green Summer Ride in Nagano / 8K 60fps HDR / Calm Piano + Natural Ambience",
         "duration": "30",
         "category": "旅遊節目",
-        "description": "長野夏季綠色之旅，8K 60fps HDR 畫質，搭配平靜的鋼琴音樂與自然環境音",
-        "thumbnail": "https://img.youtube.com/vi/vFH2IGROU18/maxresdefault.jpg",
-        "youtubeId": "vFH2IGROU18",
+        "description": "Green Summer Ride in Nagano / 8K 60fps HDR / Calm Piano + Natural Ambience",
+        "thumbnail": "https://img.youtube.com/vi/vFH2lGROUI8/maxresdefault.jpg",
+        "youtubeId": "vFH2lGROUI8",
         "status": "published"
       },
       {
         "time": "03:00",
-        "title": "目前暫無節目",
+        "title": "Relaxing Nature Ambience & Soft Melodies 🍃 Heal the Soul, Stress Relief & Deep Sleep",
         "duration": "30",
-        "category": "空檔",
-        "description": "此時段暫無節目安排",
+        "category": "旅遊節目",
+        "description": "Relaxing Nature Ambience & Soft Melodies 🍃 Heal the Soul, Stress Relief & Deep Sleep",
+        "thumbnail": "https://img.youtube.com/vi/VA8WZR95BM4/maxresdefault.jpg",
+        "youtubeId": "VA8WZR95BM4",
+        "status": "published"
+      },
+      {
+        "time": "10:00",
+        "title": "Forest 4K • Nature Relaxation Film • Peaceful Relaxing Music • 4k Video UltraHD",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "Forest 4K • Nature Relaxation Film • Peaceful Relaxing Music • 4k Video UltraHD",
+        "thumbnail": "https://img.youtube.com/vi/RzVvThhjAKw/maxresdefault.jpg",
+        "youtubeId": "RzVvThhjAKw",
+        "status": "published"
+      },
+      {
+        "time": "10:30",
+        "title": "4K Virtual Hike through Canadian Forest (with Nature Sounds) - Incredible Nature of British Columbia",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "4K Virtual Hike through Canadian Forest (with Nature Sounds) - Incredible Nature of British Columbia",
+        "thumbnail": "https://img.youtube.com/vi/PyFN_FYwqvc/maxresdefault.jpg",
+        "youtubeId": "PyFN_FYwqvc",
+        "status": "published"
+      },
+      {
+        "time": "11:00",
+        "title": "青く美しく透き通る清流の川の音,小鳥のさえずり【勉強,作業,集中,睡眠,癒し,瞑想,リラックス,ASMR】",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "青く美しく透き通る清流の川の音,小鳥のさえずり【勉強,作業,集中,睡眠,癒し,瞑想,リラックス,ASMR】",
+        "thumbnail": "https://img.youtube.com/vi/z8GtS4JDEfI/maxresdefault.jpg",
+        "youtubeId": "z8GtS4JDEfI",
+        "status": "published"
+      },
+      {
+        "time": "11:30",
+        "title": "【癒し】広大な大地と大自然！北海道の絶景で心身の疲れを癒してください。／リラックス効果・上映用、目覚めの朝や眠れない夜にもどうぞ。",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "【癒し】広大な大地と大自然！北海道の絶景で心身の疲れを癒してください。／リラックス効果・上映用、目覚めの朝や眠れない夜にもどうぞ。",
+        "thumbnail": "https://img.youtube.com/vi/4nhXi4YlYOY/maxresdefault.jpg",
+        "youtubeId": "4nhXi4YlYOY",
+        "status": "published"
+      },
+      {
+        "time": "12:00",
+        "title": "【睡眠用BGM】日本一の清流「仁淀ブルー」優しい川の音でぐっすり眠れる【4K映像】",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "【睡眠用BGM】日本一の清流「仁淀ブルー」優しい川の音でぐっすり眠れる【4K映像】",
+        "thumbnail": "https://img.youtube.com/vi/c-IqG4ZZAOY/maxresdefault.jpg",
+        "youtubeId": "c-IqG4ZZAOY",
+        "status": "published"
+      },
+      {
+        "time": "12:00",
+        "title": "2025-08-19_12-18 加拿大的寒冰生活",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "2025-08-19_12-18 加拿大的寒冰生活",
         "thumbnail": "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop",
         "youtubeId": "",
-        "status": "空檔"
+        "status": "published"
+      },
+      {
+        "time": "12:00",
+        "title": "2025-08-19_12-18 加拿大捕魚",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "2025-08-19_12-18 加拿大捕魚",
+        "thumbnail": "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop",
+        "youtubeId": "",
+        "status": "published"
+      },
+      {
+        "time": "12:00",
+        "title": "2025-08-19_12-18 加拿大的極光晚餐",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "2025-08-19_12-18 加拿大的極光晚餐",
+        "thumbnail": "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop",
+        "youtubeId": "",
+        "status": "published"
+      },
+      {
+        "time": "12:30",
+        "title": "【4K】日本の美しい紅葉と癒しサウンド - VOL.2／疲れた心身の回復・リラックス効果・勉強中や作業用、目覚めの朝に、または眠れない夜にもどうぞ。natural sound 3 hours",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "【4K】日本の美しい紅葉と癒しサウンド - VOL.2／疲れた心身の回復・リラックス効果・勉強中や作業用、目覚めの朝に、または眠れない夜にもどうぞ。natural sound 3 hours",
+        "thumbnail": "https://img.youtube.com/vi/WO5G7wk7NzA/maxresdefault.jpg",
+        "youtubeId": "WO5G7wk7NzA",
+        "status": "published"
+      },
+      {
+        "time": "13:00",
+        "title": "【疲れを癒す波の音】ハワイの海の音を聴くだけで日常からエスケープ＆リラックスして疲労回復｜海の映像・自然音３時間 Tropical Beach Sounds for Relaxation",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "【疲れを癒す波の音】ハワイの海の音を聴くだけで日常からエスケープ＆リラックスして疲労回復｜海の映像・自然音３時間 Tropical Beach Sounds for Relaxation",
+        "thumbnail": "https://img.youtube.com/vi/emEL5MNO3zY/maxresdefault.jpg",
+        "youtubeId": "emEL5MNO3zY",
+        "status": "published"
+      },
+      {
+        "time": "13:30",
+        "title": "Wonders of Ireland | Most Amazing Places in Ireland | 4K Travel Guide",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "Wonders of Ireland | Most Amazing Places in Ireland | 4K Travel Guide",
+        "thumbnail": "https://img.youtube.com/vi/fb0NQAx6E1k/maxresdefault.jpg",
+        "youtubeId": "fb0NQAx6E1k",
+        "status": "published"
+      },
+      {
+        "time": "14:00",
+        "title": "Wonders of Scandinavia | The Most Amazing Places in Scandinavia | Travel Video 4K",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "Wonders of Scandinavia | The Most Amazing Places in Scandinavia | Travel Video 4K",
+        "thumbnail": "https://img.youtube.com/vi/29-g3J0jA40/maxresdefault.jpg",
+        "youtubeId": "29-g3J0jA40",
+        "status": "published"
+      },
+      {
+        "time": "14:30",
+        "title": "Wonders of Norway – Discover Majestic Fjords and Arctic Wonders | 4K Travel Video",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "Wonders of Norway – Discover Majestic Fjords and Arctic Wonders | 4K Travel Video",
+        "thumbnail": "https://img.youtube.com/vi/wPrPxnfJs10/maxresdefault.jpg",
+        "youtubeId": "wPrPxnfJs10",
+        "status": "published"
+      },
+      {
+        "time": "15:00",
+        "title": "Scotland in 4K: Breathtaking Landscapes and Hidden Gems",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "Scotland in 4K: Breathtaking Landscapes and Hidden Gems",
+        "thumbnail": "https://img.youtube.com/vi/CGIOpHr6JfY/maxresdefault.jpg",
+        "youtubeId": "CGIOpHr6JfY",
+        "status": "published"
+      },
+      {
+        "time": "17:00",
+        "title": "Couple Travel Vlog | Our Dream Romantic Escape 💭💕 | First Glamping Experience Together 🏕️✨",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "Couple Travel Vlog | Our Dream Romantic Escape 💭💕 | First Glamping Experience Together 🏕️✨",
+        "thumbnail": "https://img.youtube.com/vi/XLjXccLHmIs/maxresdefault.jpg",
+        "youtubeId": "XLjXccLHmIs",
+        "status": "published"
+      },
+      {
+        "time": "17:30",
+        "title": "Italy Travel Vlog: exploring Florence, Tuscany and Venice (2022)",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "Italy Travel Vlog: exploring Florence, Tuscany and Venice (2022)",
+        "thumbnail": "https://img.youtube.com/vi/uYFtWVv5F3E/maxresdefault.jpg",
+        "youtubeId": "uYFtWVv5F3E",
+        "status": "published"
+      },
+      {
+        "time": "18:00",
+        "title": "Autumn in Norway 4K | Stunning Fall Foliage, Majestic Fjords, and Scenic Landscapes",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "Autumn in Norway 4K | Stunning Fall Foliage, Majestic Fjords, and Scenic Landscapes",
+        "thumbnail": "https://img.youtube.com/vi/azwGLHJThPY/maxresdefault.jpg",
+        "youtubeId": "azwGLHJThPY",
+        "status": "published"
+      },
+      {
+        "time": "18:30",
+        "title": "Brazil 8K UHD - Wild beauty of the rainforest, beautiful beaches of the city - VIDEO 8K UHD",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "Brazil 8K UHD - Wild beauty of the rainforest, beautiful beaches of the city - VIDEO 8K UHD",
+        "thumbnail": "https://img.youtube.com/vi/ab4eIeiMZJA/maxresdefault.jpg",
+        "youtubeId": "ab4eIeiMZJA",
+        "status": "published"
+      },
+      {
+        "time": "19:00",
+        "title": "中亞烏茲別克斯坦國民美食 手抓飯",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "塔什干-手抓飯源自中亞地區，是烏茲別克斯坦和吉爾吉斯斯坦的傳統美食之一。在當地，這道菜被稱為“plov”或“osh”，是中亞地區人民的日常飲食之一。",
+        "thumbnail": "https://img.youtube.com/vi/r5kAuBuJLmo/maxresdefault.jpg",
+        "youtubeId": "r5kAuBuJLmo",
+        "status": "published"
+      },
+      {
+        "time": "22:00",
+        "title": "UNSEEN NORWAY | Hidden Places Even Locals Can't Believe Exist | 4K Travel Documentary",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "UNSEEN NORWAY | Hidden Places Even Locals Can't Believe Exist | 4K Travel Documentary",
+        "thumbnail": "https://img.youtube.com/vi/k30_dQ1tn_M/maxresdefault.jpg",
+        "youtubeId": "k30_dQ1tn_M",
+        "status": "published"
+      }
+    ]
+  },
+  "monday": {
+    "date": "2025-09-08",
+    "dayOfWeek": "一",
+    "month": "9",
+    "day": "8",
+    "schedule": [
+      {
+        "time": "01:00",
+        "title": "Marvel at Sea Animal in The Best 4K ULTRA HD Aquarium -Dive Into The Mesmerizing Underwater Realm #2",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "Marvel at Sea Animal in The Best 4K ULTRA HD Aquarium -Dive Into The Mesmerizing Underwater Realm #2",
+        "thumbnail": "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop",
+        "youtubeId": "",
+        "status": "published"
+      },
+      {
+        "time": "09:30",
+        "title": "2 Weeks In Italy : A Cinematic Travel Film",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "2 Weeks In Italy : A Cinematic Travel Film",
+        "thumbnail": "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop",
+        "youtubeId": "",
+        "status": "published"
+      },
+      {
+        "time": "10:30",
+        "title": "How to Spend 4 Days in SEVILLE Spain | The Perfect Travel Guide",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "How to Spend 4 Days in SEVILLE Spain | The Perfect Travel Guide",
+        "thumbnail": "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop",
+        "youtubeId": "",
+        "status": "published"
+      },
+      {
+        "time": "11:00",
+        "title": "Seville, Spain Itinerary | The Best Things To Do In 3 Days",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "Seville, Spain Itinerary | The Best Things To Do In 3 Days",
+        "thumbnail": "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop",
+        "youtubeId": "",
+        "status": "published"
+      },
+      {
+        "time": "11:30",
+        "title": "6 Hour 4K Beautiful places Aerial Views",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "6 Hour 4K Beautiful places Aerial Views",
+        "thumbnail": "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop",
+        "youtubeId": "",
+        "status": "published"
+      },
+      {
+        "time": "12:00",
+        "title": "A PERFECT Trip to SEVILLE, SPAIN (We Fell in LOVE!) 🇪🇸 Things to Do + Eat!",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "A PERFECT Trip to SEVILLE, SPAIN (We Fell in LOVE!) 🇪🇸 Things to Do + Eat!",
+        "thumbnail": "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop",
+        "youtubeId": "",
+        "status": "published"
+      },
+      {
+        "time": "12:30",
+        "title": "Relaxing Photography in Japan's Countryside",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "Relaxing Photography in Japan's Countryside",
+        "thumbnail": "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop",
+        "youtubeId": "",
+        "status": "published"
+      },
+      {
+        "time": "13:00",
+        "title": "Taiwan Explained in 13 Minutes (History, Geography, And Culture)",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "Taiwan Explained in 13 Minutes (History, Geography, And Culture)",
+        "thumbnail": "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop",
+        "youtubeId": "",
+        "status": "published"
+      },
+      {
+        "time": "13:30",
+        "title": "Top 10 Best Places to Visit in Spain - Travel Video",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "Top 10 Best Places to Visit in Spain - Travel Video",
+        "thumbnail": "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop",
+        "youtubeId": "",
+        "status": "published"
+      },
+      {
+        "time": "14:00",
+        "title": "Driving the Amalfi Coast: The Most Beautiful Road in the World 🇮🇹 | 4K Scenic Journey",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "Driving the Amalfi Coast: The Most Beautiful Road in the World 🇮🇹 | 4K Scenic Journey",
+        "thumbnail": "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop",
+        "youtubeId": "",
+        "status": "published"
+      },
+      {
+        "time": "14:30",
+        "title": "【白川郷 春夏秋冬】日本三大秘境の絶景を訪ねて - JAPAN in 8K",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "【白川郷 春夏秋冬】日本三大秘境の絶景を訪ねて - JAPAN in 8K",
+        "thumbnail": "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop",
+        "youtubeId": "",
+        "status": "published"
+      },
+      {
+        "time": "15:00",
+        "title": "★ 4K 🇦🇹  Bludenz - Arlberg - Giselabahn - St. Pölten - Tulln, cab ride across Austria [02.2021]",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "★ 4K 🇦🇹  Bludenz - Arlberg - Giselabahn - St. Pölten - Tulln, cab ride across Austria [02.2021]",
+        "thumbnail": "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop",
+        "youtubeId": "",
+        "status": "published"
+      },
+      {
+        "time": "15:30",
+        "title": "Wonders of Autumn Switzerland 🍁 From Zermatt to Lauterbrunnen Valley & Lake Geneva Autumn Vibes",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "Wonders of Autumn Switzerland 🍁 From Zermatt to Lauterbrunnen Valley & Lake Geneva Autumn Vibes",
+        "thumbnail": "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop",
+        "youtubeId": "",
+        "status": "published"
+      },
+      {
+        "time": "16:00",
+        "title": "Relaxing Nature Ambience & Soft Melodies 🍃 Heal the Soul, Stress Relief & Deep Sleep",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "Relaxing Nature Ambience & Soft Melodies 🍃 Heal the Soul, Stress Relief & Deep Sleep",
+        "thumbnail": "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop",
+        "youtubeId": "",
+        "status": "published"
+      },
+      {
+        "time": "16:30",
+        "title": "UNREAL PLACES - The Most Unbelievable Wonders of Planet Earth",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "UNREAL PLACES - The Most Unbelievable Wonders of Planet Earth",
+        "thumbnail": "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop",
+        "youtubeId": "",
+        "status": "published"
+      },
+      {
+        "time": "17:00",
+        "title": "Alaska in 4K UHD 🌲 | Breathtaking Nature Views with Cinematic Relaxing Music",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "Alaska in 4K UHD 🌲 | Breathtaking Nature Views with Cinematic Relaxing Music",
+        "thumbnail": "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop",
+        "youtubeId": "",
+        "status": "published"
+      },
+      {
+        "time": "22:00",
+        "title": "How to Spend 4 Days in SEVILLE Spain | The Perfect Travel Guide",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "How to Spend 4 Days in SEVILLE Spain | The Perfect Travel Guide",
+        "thumbnail": "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop",
+        "youtubeId": "",
+        "status": "published"
+      },
+      {
+        "time": "22:30",
+        "title": "Argentina 4K - Scenic Relaxation Film With Calming Music",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "Argentina 4K - Scenic Relaxation Film With Calming Music",
+        "thumbnail": "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop",
+        "youtubeId": "",
+        "status": "published"
+      }
+    ]
+  },
+  "sunday": {
+    "date": "2025-09-07",
+    "dayOfWeek": "日",
+    "month": "9",
+    "day": "7",
+    "schedule": [
+      {
+        "time": "12:00",
+        "title": "Wonders of Japan | The Hidden Places No One Talks About! | Travel Video 4K",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "Wonders of Japan | The Hidden Places No One Talks About! | Travel Video 4K",
+        "thumbnail": "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop",
+        "youtubeId": "",
+        "status": "published"
+      },
+      {
+        "time": "22:00",
+        "title": "Wonders of Japan | The Hidden Places No One Talks About! | Travel Video 4K",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "Wonders of Japan | The Hidden Places No One Talks About! | Travel Video 4K",
+        "thumbnail": "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop",
+        "youtubeId": "",
+        "status": "published"
+      },
+      {
+        "time": "23:30",
+        "title": "FLYING OVER SWITZERLAND (4K UHD) - Relaxing Music & Amazing Beautiful Nature Scenery For Stress",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "FLYING OVER SWITZERLAND (4K UHD) - Relaxing Music & Amazing Beautiful Nature Scenery For Stress",
+        "thumbnail": "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop",
+        "youtubeId": "",
+        "status": "published"
       }
     ]
   }

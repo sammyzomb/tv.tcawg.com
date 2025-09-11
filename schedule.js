@@ -23,8 +23,33 @@ document.addEventListener('DOMContentLoaded', () => {
   // 載入節目數據
   async function loadScheduleData() {
     try {
+      // 優先嘗試從 Contentful 載入
+      if (typeof contentful !== 'undefined') {
+        console.log('🎯 從 Contentful 載入節目數據...');
+        
+        const client = contentful.createClient({
+          space: 'os5wf90ljenp',
+          accessToken: 'lODH-WLwHwVZv7O4rFdBWjSnrzaQWGD4koeOZ1Dypj0'
+        });
+        
+        const response = await client.getEntries({
+          content_type: 'scheduleItem',
+          include: 2,
+          limit: 1000
+        });
+        
+        if (response.items && response.items.length > 0) {
+          console.log(`✅ 從 Contentful 載入 ${response.items.length} 個節目`);
+          scheduleData = convertContentfulToScheduleFormat(response.items);
+          return;
+        }
+      }
+      
+      // 如果 Contentful 失敗，嘗試載入本地 JSON
       const response = await fetch('schedule.json');
       scheduleData = await response.json();
+      console.log('✅ 從本地 schedule.json 載入節目數據');
+      
     } catch (error) {
       console.error('載入節目數據失敗:', error);
       // 使用預設數據
@@ -34,6 +59,74 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       };
     }
+  }
+  
+  // 將 Contentful 數據轉換為節目表格式
+  function convertContentfulToScheduleFormat(items) {
+    const scheduleData = {};
+    
+    items.forEach(item => {
+      const fields = item.fields;
+      const airDate = fields.airDate;
+      const title = fields.title;
+      const notes = fields.notes || '';
+      
+      // 從備註中提取具體時間，格式為 [時間:XX:XX]
+      const timeMatch = notes.match(/\[時間:(\d{2}:\d{2})\]/);
+      const actualTime = timeMatch ? timeMatch[1] : '12:00';
+      
+      // 從備註中提取 YouTube ID，格式為 [YouTube:XXXXX]
+      const youtubeMatch = notes.match(/\[YouTube:([^\]]+)\]/);
+      const youtubeId = youtubeMatch ? youtubeMatch[1] : '';
+      
+      // 計算日期對應的星期幾
+      const date = new Date(airDate);
+      const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+      const dayName = dayNames[date.getDay()];
+      
+      // 初始化日期數據
+      if (!scheduleData[dayName]) {
+        scheduleData[dayName] = {
+          date: airDate,
+          dayOfWeek: ['日', '一', '二', '三', '四', '五', '六'][date.getDay()],
+          month: (date.getMonth() + 1).toString(),
+          day: date.getDate().toString(),
+          schedule: []
+        };
+      }
+      
+      // 清理描述文字，移除時間和 YouTube 標記
+      let cleanDescription = notes
+        .replace(/\[時間:\d{2}:\d{2}\]/g, '')
+        .replace(/\[YouTube:[^\]]+\]/g, '')
+        .trim();
+      
+      // 如果沒有描述，使用標題
+      if (!cleanDescription) {
+        cleanDescription = title;
+      }
+      
+      // 添加節目到對應日期
+      const program = {
+        time: actualTime,
+        title: title,
+        duration: '30', // 預設 30 分鐘
+        category: '旅遊節目',
+        description: cleanDescription,
+        thumbnail: youtubeId ? `https://img.youtube.com/vi/${youtubeId}/maxresdefault.jpg` : 'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop',
+        youtubeId: youtubeId,
+        status: 'published'
+      };
+      
+      scheduleData[dayName].schedule.push(program);
+    });
+    
+    // 按時間排序每個日期的節目
+    Object.keys(scheduleData).forEach(day => {
+      scheduleData[day].schedule.sort((a, b) => a.time.localeCompare(b.time));
+    });
+    
+    return scheduleData;
   }
 
   // 設置事件監聽器
@@ -106,6 +199,14 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     weekDateRange.textContent = `${formatDate(weekStart)} - ${formatDate(weekEnd)}`;
+    
+    // 更新當前日期標籤
+    const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    const currentDayIndex = taiwanTime.getUTCDay();
+    currentDay = dayNames[currentDayIndex]; // 直接使用當天的索引
+    
+    // 更新活動標籤
+    updateActiveTab();
   }
 
   // 更新活動標籤
@@ -121,8 +222,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const contentEl = document.getElementById('schedule-day-content');
     if (!contentEl) return;
 
-    // 使用今天的節目數據作為範例（實際應用中會根據日期載入不同數據）
-    const programs = scheduleData?.today?.schedule || [];
+    // 根據選擇的日期載入對應的節目數據
+    const programs = scheduleData?.[day]?.schedule || [];
     
     if (programs.length === 0) {
       contentEl.innerHTML = `
@@ -151,11 +252,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 創建節目表
     const scheduleHTML = `
-      <div class="schedule-header">
-        <div class="time-header">時間</div>
-        <div class="program-header">節目</div>
-        <div class="duration-header">時長</div>
-      </div>
       <div class="schedule-list">
         ${filteredPrograms.map(program => createProgramItem(program)).join('')}
       </div>
@@ -189,13 +285,19 @@ document.addEventListener('DOMContentLoaded', () => {
     
     return `
       <div class="schedule-item ${statusClass}">
-        <div class="schedule-time">${program.time}</div>
-        <div class="schedule-program">
-          <div class="program-title">${escapeHtml(program.title)}</div>
-          <div class="program-category">${escapeHtml(program.category)}</div>
+        <div class="schedule-thumbnail">
+          <img src="${program.thumbnail}" alt="${escapeHtml(program.title)}" loading="lazy">
+          <div class="schedule-time">${program.time}</div>
         </div>
-        <div class="schedule-duration">${program.duration}分</div>
-        ${statusText ? `<div class="program-status">${statusText}</div>` : ''}
+        <div class="schedule-content">
+          <div class="program-title">${escapeHtml(program.title)}</div>
+          <div class="program-description">${escapeHtml(program.description)}</div>
+          <div class="schedule-meta">
+            <div class="program-category">${escapeHtml(program.category)}</div>
+            <div class="schedule-duration">${program.duration}分</div>
+          </div>
+          ${statusText ? `<div class="program-status">${statusText}</div>` : ''}
+        </div>
       </div>
     `;
   }
@@ -233,7 +335,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const programStartTime = programHour * 60 + programMinute;
     
     // 找到當前節目
-    const programs = scheduleData?.today?.schedule || [];
+    const programs = scheduleData?.[currentDay]?.schedule || [];
     const currentProgram = programs.find(p => isCurrentProgram(p));
     
     if (!currentProgram) {

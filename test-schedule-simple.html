@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>簡單節目表測試</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .schedule-header {
+            display: grid;
+            grid-template-columns: 100px 1fr 80px;
+            gap: 20px;
+            padding: 16px 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #ddd;
+            font-weight: 600;
+            color: #333;
+            font-size: 0.9rem;
+        }
+        .schedule-list {
+            display: flex;
+            flex-direction: column;
+        }
+        .schedule-item {
+            display: grid;
+            grid-template-columns: 100px 1fr 80px;
+            gap: 20px;
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .schedule-item:hover {
+            background: #f8f9fa;
+        }
+        .schedule-time {
+            font-weight: 700;
+            color: #007bff;
+            font-size: 1rem;
+        }
+        .program-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        .program-category {
+            font-size: 0.8rem;
+            color: #666;
+            background: #e9ecef;
+            padding: 2px 8px;
+            border-radius: 4px;
+            display: inline-block;
+        }
+        .schedule-duration {
+            font-size: 0.9rem;
+            color: #666;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 簡單節目表測試</h1>
+        
+        <div class="schedule-header">
+            <div>時間</div>
+            <div>節目</div>
+            <div>時長</div>
+        </div>
+        
+        <div class="schedule-list" id="scheduleList">
+            <div>載入中...</div>
+        </div>
+    </div>
+
+    <!-- 載入 Contentful SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/contentful@latest/dist/contentful.browser.min.js"></script>
+    
+    <script>
+        async function loadSchedule() {
+            const scheduleList = document.getElementById('scheduleList');
+            
+            try {
+                // 從 Contentful 載入數據
+                const client = contentful.createClient({
+                    space: 'os5wf90ljenp',
+                    accessToken: 'lODH-WLwHwVZv7O4rFdBWjSnrzaQWGD4koeOZ1Dypj0'
+                });
+                
+                const response = await client.getEntries({
+                    content_type: 'scheduleItem',
+                    include: 2,
+                    limit: 1000
+                });
+                
+                // 轉換數據
+                const scheduleData = convertContentfulToScheduleFormat(response.items);
+                
+                // 顯示星期四的節目
+                const thursdayPrograms = scheduleData.thursday?.schedule || [];
+                
+                if (thursdayPrograms.length === 0) {
+                    scheduleList.innerHTML = '<div>沒有找到星期四的節目</div>';
+                    return;
+                }
+                
+                let html = '';
+                thursdayPrograms.forEach(program => {
+                    html += `
+                        <div class="schedule-item">
+                            <div class="schedule-time">${program.time}</div>
+                            <div class="schedule-program">
+                                <div class="program-title">${program.title}</div>
+                                <div class="program-category">${program.category}</div>
+                            </div>
+                            <div class="schedule-duration">${program.duration}分</div>
+                        </div>
+                    `;
+                });
+                
+                scheduleList.innerHTML = html;
+                
+            } catch (error) {
+                scheduleList.innerHTML = `<div style="color: red;">❌ 錯誤: ${error.message}</div>`;
+            }
+        }
+        
+        // 將 Contentful 數據轉換為節目表格式
+        function convertContentfulToScheduleFormat(items) {
+            const scheduleData = {};
+            
+            items.forEach(item => {
+                const fields = item.fields;
+                const airDate = fields.airDate;
+                const title = fields.title;
+                const notes = fields.notes || '';
+                
+                // 從備註中提取具體時間，格式為 [時間:XX:XX]
+                const timeMatch = notes.match(/\[時間:(\d{2}:\d{2})\]/);
+                const actualTime = timeMatch ? timeMatch[1] : '12:00';
+                
+                // 從備註中提取 YouTube ID，格式為 [YouTube:XXXXX]
+                const youtubeMatch = notes.match(/\[YouTube:([^\]]+)\]/);
+                const youtubeId = youtubeMatch ? youtubeMatch[1] : '';
+                
+                // 計算日期對應的星期幾
+                const date = new Date(airDate);
+                const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+                const dayName = dayNames[date.getDay()];
+                
+                // 初始化日期數據
+                if (!scheduleData[dayName]) {
+                    scheduleData[dayName] = {
+                        date: airDate,
+                        dayOfWeek: ['日', '一', '二', '三', '四', '五', '六'][date.getDay()],
+                        month: (date.getMonth() + 1).toString(),
+                        day: date.getDate().toString(),
+                        schedule: []
+                    };
+                }
+                
+                // 清理描述文字，移除時間和 YouTube 標記
+                let cleanDescription = notes
+                    .replace(/\[時間:\d{2}:\d{2}\]/g, '')
+                    .replace(/\[YouTube:[^\]]+\]/g, '')
+                    .trim();
+                
+                // 如果沒有描述，使用標題
+                if (!cleanDescription) {
+                    cleanDescription = title;
+                }
+                
+                // 添加節目到對應日期
+                const program = {
+                    time: actualTime,
+                    title: title,
+                    duration: '30', // 預設 30 分鐘
+                    category: '旅遊節目',
+                    description: cleanDescription,
+                    thumbnail: youtubeId ? `https://img.youtube.com/vi/${youtubeId}/maxresdefault.jpg` : 'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop',
+                    youtubeId: youtubeId,
+                    status: 'published'
+                };
+                
+                scheduleData[dayName].schedule.push(program);
+            });
+            
+            // 按時間排序每個日期的節目
+            Object.keys(scheduleData).forEach(day => {
+                scheduleData[day].schedule.sort((a, b) => a.time.localeCompare(b.time));
+            });
+            
+            return scheduleData;
+        }
+        
+        // 頁面載入時執行
+        document.addEventListener('DOMContentLoaded', loadSchedule);
+    </script>
+</body>
+</html>
