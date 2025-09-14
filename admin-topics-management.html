@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>主題探索管理系統 | 航向世界旅遊頻道</title>
+  
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  
+  <style>
+    :root {
+      --admin-bg: #f8fafc;
+      --admin-card: #ffffff;
+      --admin-border: #e2e8f0;
+      --admin-primary: #3b82f6;
+      --admin-success: #10b981;
+      --admin-warning: #f59e0b;
+      --admin-danger: #ef4444;
+      --admin-text: #1e293b;
+      --admin-text-light: #64748b;
+    }
+    
+    body {
+      background: var(--admin-bg);
+      color: var(--admin-text);
+      font-family: 'Noto Sans TC', sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    
+    .admin-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    
+    .admin-header {
+      background: var(--admin-card);
+      border: 1px solid var(--admin-border);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .admin-title {
+      font-size: 28px;
+      font-weight: 700;
+      margin: 0 0 8px 0;
+      color: var(--admin-text);
+    }
+    
+    .admin-subtitle {
+      color: var(--admin-text-light);
+      margin: 0;
+    }
+    
+    .admin-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+    }
+    
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .btn-primary {
+      background: var(--admin-primary);
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      background: #2563eb;
+    }
+    
+    .btn-success {
+      background: var(--admin-success);
+      color: white;
+    }
+    
+    .btn-success:hover {
+      background: #059669;
+    }
+    
+    .btn-warning {
+      background: var(--admin-warning);
+      color: white;
+    }
+    
+    .btn-warning:hover {
+      background: #d97706;
+    }
+    
+    .btn-danger {
+      background: var(--admin-danger);
+      color: white;
+    }
+    
+    .btn-danger:hover {
+      background: #dc2626;
+    }
+    
+    .topics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+      gap: 24px;
+      margin-bottom: 24px;
+    }
+    
+    .topic-admin-card {
+      background: var(--admin-card);
+      border: 1px solid var(--admin-border);
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .topic-preview {
+      width: 100%;
+      height: 200px;
+      background-size: cover;
+      background-position: center;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .topic-preview::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.7) 100%);
+    }
+    
+    .topic-preview-content {
+      position: absolute;
+      bottom: 16px;
+      left: 16px;
+      right: 16px;
+      z-index: 2;
+      color: white;
+    }
+    
+    .topic-preview-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin: 0 0 4px 0;
+    }
+    
+    .topic-preview-desc {
+      font-size: 14px;
+      opacity: 0.9;
+      margin: 0;
+    }
+    
+    .form-group {
+      margin-bottom: 16px;
+    }
+    
+    .form-label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: var(--admin-text);
+    }
+    
+    .form-input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--admin-border);
+      border-radius: 6px;
+      font-size: 14px;
+      transition: border-color 0.3s ease;
+    }
+    
+    .form-input:focus {
+      outline: none;
+      border-color: var(--admin-primary);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    
+    .form-textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+    
+    .form-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 6px;
+    }
+    
+    .tag {
+      background: #e2e8f0;
+      color: var(--admin-text);
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    
+    .tag-remove {
+      cursor: pointer;
+      color: var(--admin-danger);
+    }
+    
+    .image-upload {
+      border: 2px dashed var(--admin-border);
+      border-radius: 8px;
+      padding: 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    .image-upload:hover {
+      border-color: var(--admin-primary);
+      background: rgba(59, 130, 246, 0.05);
+    }
+    
+    .image-upload input {
+      display: none;
+    }
+    
+    .image-upload-text {
+      color: var(--admin-text-light);
+      font-size: 14px;
+    }
+    
+    .topic-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 16px;
+    }
+    
+    .status-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    
+    .status-active {
+      background: #dcfce7;
+      color: #166534;
+    }
+    
+    .status-draft {
+      background: #fef3c7;
+      color: #92400e;
+    }
+    
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .modal.active {
+      display: flex;
+    }
+    
+    .modal-content {
+      background: var(--admin-card);
+      border-radius: 12px;
+      padding: 24px;
+      max-width: 500px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+    
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    
+    .modal-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin: 0;
+    }
+    
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: var(--admin-text-light);
+    }
+    
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--admin-primary);
+      text-decoration: none;
+      margin-bottom: 20px;
+    }
+    
+    .back-link:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="admin-container">
+    <a href="admin-dashboard.html" class="back-link">
+      ← 返回管理後台
+    </a>
+    
+    <!-- 登入狀態檢查 -->
+    <div id="login-status" style="display: none; background: #fee; color: #c33; padding: 10px; border-radius: 8px; margin-bottom: 20px;">
+      ⚠️ 請先登入管理系統
+    </div>
+    
+    <div class="admin-header">
+      <h1 class="admin-title">主題探索管理系統</h1>
+      <p class="admin-subtitle">管理主題探索頁面的內容、圖片和設定</p>
+      
+      <div class="admin-actions">
+        <button class="btn btn-primary" onclick="addNewTopic()">
+          ➕ 新增主題
+        </button>
+        <button class="btn btn-success" onclick="saveAllTopics()">
+          💾 儲存所有變更
+        </button>
+        <button class="btn btn-warning" onclick="previewTopics()">
+          👁️ 預覽效果
+        </button>
+        <button class="btn btn-danger" onclick="resetToDefault()">
+          🔄 重置為預設
+        </button>
+        <button class="btn btn-primary" onclick="testNotification()" style="background: #8b5cf6;">
+          🧪 測試通知
+        </button>
+      </div>
+    </div>
+    
+    <div class="topics-grid" id="topics-grid">
+      <!-- 主題管理卡片將由 JavaScript 動態載入 -->
+    </div>
+  </div>
+  
+  <!-- 新增/編輯主題的模態框 -->
+  <div class="modal" id="topic-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modal-title">新增主題</h3>
+        <button class="modal-close" onclick="closeModal()">&times;</button>
+      </div>
+      
+      <form id="topic-form">
+        <div class="form-group">
+          <label class="form-label">主題 ID</label>
+          <input type="text" class="form-input" id="topic-id" required>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">主題標題</label>
+          <input type="text" class="form-input" id="topic-title" required>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">主題描述</label>
+          <textarea class="form-input form-textarea" id="topic-description" required></textarea>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">圖示 (Emoji)</label>
+          <input type="text" class="form-input" id="topic-icon" placeholder="🏙️">
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">背景圖片 URL</label>
+          <input type="url" class="form-input" id="topic-background-image" placeholder="https://example.com/image.jpg">
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">標籤 (用逗號分隔)</label>
+          <input type="text" class="form-input" id="topic-tags" placeholder="小眾景點, 在地生活, 夜市">
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">節目數量</label>
+          <input type="number" class="form-input" id="topic-video-count" min="0" value="0">
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">狀態</label>
+          <select class="form-input" id="topic-status">
+            <option value="active">啟用</option>
+            <option value="draft">草稿</option>
+          </select>
+        </div>
+        
+        <div class="topic-actions">
+          <button type="submit" class="btn btn-primary">儲存主題</button>
+          <button type="button" class="btn btn-danger" onclick="closeModal()">取消</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  
+  <script type="module">
+    // Firebase 初始化
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+    
+    // Firebase 配置
+    const firebaseConfig = {
+      apiKey: "AIzaSyB5MLyG5H1sCflHFU7WeKQCmC0Ft5TIqjM",
+      authDomain: "tv-tcawg-com.firebaseapp.com",
+      projectId: "tv-tcawg-com",
+      storageBucket: "tv-tcawg-com.firebasestorage.app",
+      messagingSenderId: "313251141126",
+      appId: "1:313251141126:web:88ef97ce28798c0a2e9587",
+      measurementId: "G-83Z5VTRTZH"
+    };
+    
+    // 初始化 Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    
+    // 將 Firebase 實例設為全域變數
+    window.firebaseAuth = auth;
+    
+    // 主題資料管理
+    let topicsData = [];
+    let currentEditingTopic = null;
+    
+    // 預設主題資料
+    const defaultTopics = [
+      {
+        id: 'city-secrets',
+        title: '城市秘境',
+        description: '《繞著地球跑/城市秘境 City Secrets》- 深入城市角落、市集、文化景點，用實地體驗呈現城市故事',
+        icon: '🏙️',
+        tags: ['小眾景點', '在地生活', '夜市', '特色咖啡館'],
+        videoCount: 28,
+        backgroundImage: 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+        status: 'active'
+      },
+      {
+        id: 'taste-journal',
+        title: '味覺日誌',
+        description: '《味覺日誌 Taste Journal》- 品嘗當地料理與街頭小吃，訪問餐廳老闆或廚師，分享食物背後的故事',
+        icon: '🍽️',
+        tags: ['美食故事', '街頭小吃', '在地料理', '文化背景'],
+        videoCount: 35,
+        backgroundImage: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+        status: 'active'
+      },
+      {
+        id: 'travel-talk',
+        title: '旅途談',
+        description: '《旅途談 Travel Talk》- 邀請旅遊達人、部落客、在地人，分享旅行心得、技巧與趣聞',
+        icon: '💬',
+        tags: ['旅遊技巧', '節省預算', '互動討論', '實用資訊'],
+        videoCount: 22,
+        backgroundImage: 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+        status: 'active'
+      },
+      {
+        id: 'slow-town',
+        title: '慢遊小鎮',
+        description: '《慢遊小鎮 Slow Town》- 走訪小鎮或鄉村，介紹當地文化、手作工藝、市場與特色美食',
+        icon: '🏘️',
+        tags: ['慢節奏', '輕旅行', '手作工藝', '在地生活'],
+        videoCount: 18,
+        backgroundImage: 'https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+        status: 'active'
+      },
+      {
+        id: 'food-talk',
+        title: '食話實說',
+        description: '《食話實說 Food Talk》- 討論特定食材、料理或美食文化，結合討論與實地示範',
+        icon: '🍳',
+        tags: ['食材討論', '料理文化', '教育性', '實地示範'],
+        videoCount: 25,
+        backgroundImage: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+        status: 'active'
+      },
+      {
+        id: 'fun-for-kids',
+        title: '童趣旅程',
+        description: '《童趣旅程 Fun for Kids》- 專為家庭設計，探索適合親子活動的景點、遊樂園、動物園',
+        icon: '👨‍👩‍👧‍👦',
+        tags: ['親子活動', '遊樂園', '動物園', '手作體驗'],
+        videoCount: 20,
+        backgroundImage: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+        status: 'active'
+      },
+      {
+        id: 'time-walk',
+        title: '時光漫遊',
+        description: '《時光漫遊 Time Walk》- 走訪古蹟、博物館、傳統村落，透過歷史故事呈現深度文化旅程',
+        icon: '🏛️',
+        tags: ['古蹟', '博物館', '歷史故事', '文化旅程'],
+        videoCount: 30,
+        backgroundImage: 'https://images.unsplash.com/photo-1520637836862-4d197d17c93a?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+        status: 'active'
+      },
+      {
+        id: 'nature-secrets',
+        title: '自然秘境',
+        description: '《自然秘境 Nature Secrets》- 探索自然景觀、野生動植物、生態保育，感受地球之美',
+        icon: '🌿',
+        tags: ['自然景觀', '野生動物', '生態保育', '環境保護'],
+        videoCount: 26,
+        backgroundImage: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+        status: 'active'
+      }
+    ];
+    
+    // 初始化
+    document.addEventListener('DOMContentLoaded', () => {
+      // 等待 Firebase 認證狀態初始化
+      onAuthStateChanged(auth, (user) => {
+        if (user) {
+          console.log('Firebase 用戶已登入:', user.email);
+          window.firebaseAuth = auth;
+        } else {
+          console.log('Firebase 用戶未登入');
+        }
+        
+        // 檢查登入狀態
+        checkLoginStatus();
+      });
+      
+      loadTopicsData();
+      renderTopicsGrid();
+      setupEventListeners();
+      
+      // 測試函數是否正確定義
+      console.log('函數測試:', {
+        updateTopic: typeof updateTopic,
+        saveTopic: typeof saveTopic,
+        testNotification: typeof testNotification
+      });
+    });
+    
+    // 檢查登入狀態
+    function checkLoginStatus() {
+      // 檢查 Firebase 認證狀態
+      let isLoggedIn = false;
+      
+      if (window.firebaseAuth) {
+        const currentUser = window.firebaseAuth.currentUser;
+        if (currentUser) {
+          isLoggedIn = true;
+        }
+      }
+      
+      // 檢查 sessionStorage 中的登入狀態（向後兼容）
+      if (!isLoggedIn) {
+        const user = sessionStorage.getItem('adminUser');
+        const loginTime = sessionStorage.getItem('loginTime');
+        
+        if (user && loginTime) {
+          // 檢查登入是否超過 8 小時
+          const loginDate = new Date(loginTime);
+          const now = new Date();
+          const hoursDiff = (now - loginDate) / (1000 * 60 * 60);
+          
+          if (hoursDiff < 8) {
+            isLoggedIn = true;
+          } else {
+            // 登入已過期，清除 session
+            sessionStorage.removeItem('adminUser');
+            sessionStorage.removeItem('loginTime');
+          }
+        }
+      }
+      
+      const loginStatus = document.getElementById('login-status');
+      
+      if (!isLoggedIn) {
+        loginStatus.style.display = 'block';
+        // 3秒後自動跳轉到登入頁面
+        setTimeout(() => {
+          window.location.href = 'admin-login.html';
+        }, 3000);
+      } else {
+        loginStatus.style.display = 'none';
+      }
+    }
+    
+    // 載入主題資料
+    function loadTopicsData() {
+      const saved = localStorage.getItem('admin-topics-data');
+      if (saved) {
+        topicsData = JSON.parse(saved);
+      } else {
+        topicsData = [...defaultTopics];
+        saveTopicsData();
+      }
+    }
+    
+    // 儲存主題資料
+    function saveTopicsData() {
+      localStorage.setItem('admin-topics-data', JSON.stringify(topicsData));
+    }
+    
+    // 渲染主題網格
+    function renderTopicsGrid() {
+      const container = document.getElementById('topics-grid');
+      if (!container) return;
+      
+      container.innerHTML = topicsData.map(topic => `
+        <div class="topic-admin-card">
+          <div class="topic-preview" style="background-image: url('${topic.backgroundImage.replace(/'/g, '&#39;').replace(/"/g, '&quot;')}')">
+            <div class="topic-preview-content">
+              <div class="topic-preview-title">${topic.title.replace(/'/g, '&#39;').replace(/"/g, '&quot;')}</div>
+              <div class="topic-preview-desc">${topic.description.substring(0, 60).replace(/'/g, '&#39;').replace(/"/g, '&quot;')}...</div>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">主題標題</label>
+            <input type="text" class="form-input" value="${topic.title.replace(/'/g, '&#39;').replace(/"/g, '&quot;')}" 
+                   onchange="updateTopic('${topic.id.replace(/'/g, '&#39;')}', 'title', this.value)"
+                   onblur="updateTopic('${topic.id.replace(/'/g, '&#39;')}', 'title', this.value)">
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">背景圖片 URL</label>
+            <input type="url" class="form-input" value="${topic.backgroundImage.replace(/'/g, '&#39;').replace(/"/g, '&quot;')}" 
+                   onchange="updateTopic('${topic.id.replace(/'/g, '&#39;')}', 'backgroundImage', this.value); updatePreview('${topic.id.replace(/'/g, '&#39;')}')"
+                   onblur="updateTopic('${topic.id.replace(/'/g, '&#39;')}', 'backgroundImage', this.value); updatePreview('${topic.id.replace(/'/g, '&#39;')}')">
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">節目數量</label>
+            <input type="number" class="form-input" value="${topic.videoCount}" 
+                   onchange="updateTopic('${topic.id.replace(/'/g, '&#39;')}', 'videoCount', parseInt(this.value))"
+                   onblur="updateTopic('${topic.id.replace(/'/g, '&#39;')}', 'videoCount', parseInt(this.value))">
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">狀態</label>
+            <select class="form-input" onchange="updateTopic('${topic.id.replace(/'/g, '&#39;')}', 'status', this.value)">
+              <option value="active" ${topic.status === 'active' ? 'selected' : ''}>啟用</option>
+              <option value="draft" ${topic.status === 'draft' ? 'selected' : ''}>草稿</option>
+            </select>
+          </div>
+          
+          <div class="topic-actions">
+            <button class="btn btn-success" onclick="saveTopic('${topic.id.replace(/'/g, '&#39;')}')" title="儲存此主題的變更">
+              💾 儲存
+            </button>
+            <button class="btn btn-primary" onclick="editTopic('${topic.id.replace(/'/g, '&#39;')}')">編輯</button>
+            <button class="btn btn-warning" onclick="duplicateTopic('${topic.id.replace(/'/g, '&#39;')}')">複製</button>
+            <button class="btn btn-danger" onclick="deleteTopic('${topic.id.replace(/'/g, '&#39;')}')">刪除</button>
+            <span class="status-indicator status-${topic.status}">
+              ${topic.status === 'active' ? '✅ 啟用' : '📝 草稿'}
+            </span>
+          </div>
+        </div>
+      `).join('');
+    }
+    
+    // 更新主題
+    function updateTopic(topicId, field, value) {
+      try {
+        const topic = topicsData.find(t => t.id === topicId);
+        if (topic) {
+          topic[field] = value;
+          saveTopicsData();
+          
+          // 顯示儲存成功提示
+          showSaveNotification(`已儲存 ${topic.title} 的 ${getFieldDisplayName(field)}`);
+          console.log(`已更新主題 ${topicId} 的 ${field} 為: ${value}`);
+        }
+      } catch (error) {
+        console.error('updateTopic 錯誤:', error);
+      }
+    }
+    
+    // 取得欄位顯示名稱
+    function getFieldDisplayName(field) {
+      const fieldNames = {
+        'title': '標題',
+        'description': '描述',
+        'icon': '圖示',
+        'backgroundImage': '背景圖片',
+        'tags': '標籤',
+        'videoCount': '節目數量',
+        'status': '狀態'
+      };
+      return fieldNames[field] || field;
+    }
+    
+    // 顯示儲存通知
+    function showSaveNotification(message) {
+      console.log('顯示儲存通知:', message);
+      
+      // 移除現有的通知
+      const existingNotification = document.querySelector('.save-notification');
+      if (existingNotification) {
+        existingNotification.remove();
+      }
+      
+      // 建立新的通知
+      const notification = document.createElement('div');
+      notification.className = 'save-notification';
+      notification.innerHTML = `
+        <div style="
+          position: fixed;
+          top: 20px;
+          right: 20px;
+          background: #10b981;
+          color: white;
+          padding: 12px 20px;
+          border-radius: 8px;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+          z-index: 10000;
+          font-size: 14px;
+          font-weight: 600;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          max-width: 300px;
+          word-wrap: break-word;
+        ">
+          <span style="font-size: 16px;">✅</span>
+          <span>${message}</span>
+        </div>
+      `;
+      
+      document.body.appendChild(notification);
+      
+      // 3秒後自動移除
+      setTimeout(() => {
+        if (notification.parentNode) {
+          notification.remove();
+        }
+      }, 3000);
+    }
+    
+    // 編輯主題
+    function editTopic(topicId) {
+      const topic = topicsData.find(t => t.id === topicId);
+      if (topic) {
+        currentEditingTopic = topicId;
+        document.getElementById('modal-title').textContent = '編輯主題';
+        document.getElementById('topic-id').value = topic.id;
+        document.getElementById('topic-title').value = topic.title;
+        document.getElementById('topic-description').value = topic.description;
+        document.getElementById('topic-icon').value = topic.icon;
+        document.getElementById('topic-background-image').value = topic.backgroundImage;
+        document.getElementById('topic-tags').value = topic.tags.join(', ');
+        document.getElementById('topic-video-count').value = topic.videoCount;
+        document.getElementById('topic-status').value = topic.status;
+        
+        document.getElementById('topic-modal').classList.add('active');
+      }
+    }
+    
+    // 複製主題
+    function duplicateTopic(topicId) {
+      const topic = topicsData.find(t => t.id === topicId);
+      if (topic) {
+        const newTopic = {
+          ...topic,
+          id: topic.id + '-copy-' + Date.now(),
+          title: topic.title + ' (複製)',
+          status: 'draft'
+        };
+        topicsData.push(newTopic);
+        saveTopicsData();
+        renderTopicsGrid();
+      }
+    }
+    
+    // 儲存單一主題
+    function saveTopic(topicId) {
+      try {
+        console.log('儲存主題:', topicId);
+        const topic = topicsData.find(t => t.id === topicId);
+        if (topic) {
+          saveTopicsData();
+          showSaveNotification(`已儲存「${topic.title}」的所有變更`);
+          console.log('主題儲存成功:', topic.title);
+        } else {
+          console.error('找不到主題:', topicId);
+          showSaveNotification('儲存失敗：找不到主題');
+        }
+      } catch (error) {
+        console.error('saveTopic 錯誤:', error);
+        showSaveNotification('儲存失敗：發生錯誤');
+      }
+    }
+    
+    // 儲存所有變更
+    function saveAllTopics() {
+      console.log('儲存所有主題');
+      saveTopicsData();
+      showSaveNotification('所有主題變更已儲存！');
+      console.log('所有主題儲存成功');
+    }
+    
+    // 預覽效果
+    function previewTopics() {
+      window.open('topics.html', '_blank');
+    }
+    
+    // 重置為預設
+    function resetToDefault() {
+      if (confirm('確定要重置為預設設定嗎？這將清除所有自訂內容。')) {
+        topicsData = [...defaultTopics];
+        saveTopicsData();
+        renderTopicsGrid();
+        showSaveNotification('已重置為預設設定！');
+      }
+    }
+    
+    // 測試通知功能
+    function testNotification() {
+      try {
+        console.log('測試通知功能');
+        showSaveNotification('測試通知：如果您看到這個訊息，表示通知功能正常！');
+      } catch (error) {
+        console.error('testNotification 錯誤:', error);
+        alert('測試通知功能發生錯誤');
+      }
+    }
+    
+    // 設定事件監聽器
+    function setupEventListeners() {
+      // 表單提交
+      document.getElementById('topic-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        saveTopicFromForm();
+      });
+      
+      // 模態框背景點擊關閉
+      document.getElementById('topic-modal').addEventListener('click', (e) => {
+        if (e.target.id === 'topic-modal') {
+          closeModal();
+        }
+      });
+    }
+    
+    // 從表單儲存主題
+    function saveTopicFromForm() {
+      const formData = {
+        id: document.getElementById('topic-id').value,
+        title: document.getElementById('topic-title').value,
+        description: document.getElementById('topic-description').value,
+        icon: document.getElementById('topic-icon').value,
+        backgroundImage: document.getElementById('topic-background-image').value,
+        tags: document.getElementById('topic-tags').value.split(',').map(tag => tag.trim()).filter(tag => tag),
+        videoCount: parseInt(document.getElementById('topic-video-count').value),
+        status: document.getElementById('topic-status').value
+      };
+      
+      if (currentEditingTopic) {
+        // 編輯現有主題
+        const index = topicsData.findIndex(t => t.id === currentEditingTopic);
+        if (index !== -1) {
+          topicsData[index] = formData;
+        }
+      } else {
+        // 新增主題
+        topicsData.push(formData);
+      }
+      
+      saveTopicsData();
+      renderTopicsGrid();
+      closeModal();
+    }
+    
+    // 刪除主題
+    function deleteTopic(topicId) {
+      const topic = topicsData.find(t => t.id === topicId);
+      if (topic && confirm(`確定要刪除主題「${topic.title}」嗎？`)) {
+        topicsData = topicsData.filter(t => t.id !== topicId);
+        saveTopicsData();
+        renderTopicsGrid();
+        showSaveNotification(`已刪除主題「${topic.title}」`);
+      }
+    }
+    
+    // 新增主題
+    function addNewTopic() {
+      currentEditingTopic = null;
+      document.getElementById('modal-title').textContent = '新增主題';
+      document.getElementById('topic-form').reset();
+      document.getElementById('topic-modal').classList.add('active');
+    }
+    
+    // 關閉模態框
+    function closeModal() {
+      document.getElementById('topic-modal').classList.remove('active');
+    }
+    
+    // 更新預覽
+    function updatePreview(topicId) {
+      const topic = topicsData.find(t => t.id === topicId);
+      if (topic) {
+        const card = document.querySelector(`[data-topic-id="${topicId}"]`);
+        if (card) {
+          const preview = card.querySelector('.topic-preview');
+          if (preview) {
+            preview.style.backgroundImage = `url('${topic.backgroundImage.replace(/'/g, '&#39;')}')`;
+          }
+        }
+      }
+    }
+  </script>
+</body>
+</html>

@@ -165,13 +165,34 @@
     .simple-page-title{ font-weight:900; font-size:24px; margin:0 0 6px 0; color:var(--text); }
     .page-head h1 { writing-mode: horizontal-tb !important; transform:none !important; rotate:none !important; }
     .page-head { position: relative; }
+    
+    /* 修復版面問題 */
+    .header-row {
+      display: flex !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+      margin-bottom: 20px !important;
+      gap: 20px !important;
+    }
+    
+    .header-left {
+      flex: 0 0 auto !important;
+      text-align: left !important;
+    }
+    
+    .header-right {
+      flex: 1 1 auto !important;
+      display: flex !important;
+      justify-content: flex-end !important;
+    }
+    
+    .header-right .search-box {
+      width: 100% !important;
+      max-width: 400px !important;
+      margin: 0 !important;
+    }
 
-    /* 新增：頂部標題+搜尋橫列 */
-    .header-row{ display:grid; grid-auto-flow: column; align-items:end; justify-content:center; column-gap:24px; margin-bottom: 12px; }
-    .header-left{ flex: 0 1 420px; text-align: center; }
-    .header-right{ flex: 1 1 auto; display:flex; justify-content:center; }
-    .header-right .search-box{ width:100%; max-width: 680px; margin:0 !important; }
-    .hint{ margin:0 0 10px 0 !important; }
+    /* 響應式設計修復 - 將在下方合併到主要媒體查詢中 */
 
     .topics-grid {
       display: grid;
@@ -184,16 +205,20 @@
       background: var(--card);
       border: 1px solid var(--card-border);
       border-radius: 16px;
-      padding: 30px;
+      padding: 0;
       transition: all 0.3s ease;
       cursor: pointer;
       position: relative;
       overflow: hidden;
-      min-height: 200px;
+      min-height: 280px;
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
+      justify-content: flex-end;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
     }
+
 
     .topic-card:hover {
       transform: translateY(-4px);
@@ -207,44 +232,55 @@
       top: 0;
       left: 0;
       right: 0;
-      height: 4px;
-      background: linear-gradient(90deg, var(--accent), #f59e0b);
+      bottom: 0;
+      background: linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.7) 100%);
+      z-index: 1;
+    }
+
+    .topic-content {
+      position: relative;
+      z-index: 2;
+      padding: 24px;
+      color: white;
     }
 
     .topic-icon {
-      width: 56px;
-      height: 56px;
-      background: linear-gradient(135deg, var(--accent), #f59e0b);
+      width: 48px;
+      height: 48px;
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(10px);
       border-radius: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
-      margin-bottom: 20px;
+      margin-bottom: 16px;
       color: white;
-      font-size: 28px;
+      font-size: 24px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
     }
 
     .topic-title {
-      font-size: 22px;
+      font-size: 20px;
       font-weight: 700;
-      margin-bottom: 12px;
-      color: var(--text);
+      margin-bottom: 8px;
+      color: white;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.5);
     }
 
     .topic-desc {
-      color: #6b7280;
-      font-size: 15px;
-      line-height: 1.5;
-      margin-bottom: 20px;
-      flex-grow: 1;
+      color: rgba(255, 255, 255, 0.9);
+      font-size: 14px;
+      line-height: 1.4;
+      margin-bottom: 16px;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.5);
     }
 
     .topic-stats {
       display: flex;
       align-items: center;
       gap: 16px;
-      font-size: 13px;
-      color: #8aa4c2;
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.8);
     }
 
     .topic-stats span {
@@ -329,6 +365,24 @@
     @media (max-width: 768px) {
       .page-wrap {
         padding: 16px 4% !important;
+      }
+      
+      .header-row {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 16px !important;
+      }
+      
+      .header-left {
+        text-align: center !important;
+      }
+      
+      .header-right {
+        justify-content: center !important;
+      }
+      
+      .header-right .search-box {
+        max-width: 100% !important;
       }
       
       .topics-grid {
@@ -497,61 +551,84 @@
     // 主題分類資料
     const TOPICS_DATA = [
       {
-        id: 'asia',
-        title: '亞洲風情',
-        description: '探索亞洲各國的獨特文化、美食與自然景觀',
-        icon: '🌏',
-        tags: ['日本', '韓國', '泰國', '越南'],
-        videoCount: 45
+        id: 'city-secrets',
+        title: '城市秘境',
+        description: '《繞著地球跑/城市秘境 City Secrets》- 深入城市角落、市集、文化景點，用實地體驗呈現城市故事',
+        icon: '🏙️',
+        tags: ['小眾景點', '在地生活', '夜市', '特色咖啡館'],
+        videoCount: 28,
+        backgroundImage: 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
       },
       {
-        id: 'europe',
-        title: '歐洲經典',
-        description: '體驗歐洲的歷史文化、藝術建築與浪漫風情',
+        id: 'taste-journal',
+        title: '味覺日誌',
+        description: '《味覺日誌 Taste Journal》- 品嘗當地料理與街頭小吃，訪問餐廳老闆或廚師，分享食物背後的故事',
+        icon: '🍽️',
+        tags: ['美食故事', '街頭小吃', '在地料理', '文化背景'],
+        videoCount: 35,
+        backgroundImage: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
+      },
+      {
+        id: 'travel-talk',
+        title: '旅途談',
+        description: '《旅途談 Travel Talk》- 邀請旅遊達人、部落客、在地人，分享旅行心得、技巧與趣聞',
+        icon: '💬',
+        tags: ['旅遊技巧', '節省預算', '互動討論', '實用資訊'],
+        videoCount: 22,
+        backgroundImage: 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
+      },
+      {
+        id: 'slow-town',
+        title: '慢遊小鎮',
+        description: '《慢遊小鎮 Slow Town》- 走訪小鎮或鄉村，介紹當地文化、手作工藝、市場與特色美食',
+        icon: '🏘️',
+        tags: ['慢節奏', '輕旅行', '手作工藝', '在地生活'],
+        videoCount: 18,
+        backgroundImage: 'https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
+      },
+      {
+        id: 'food-talk',
+        title: '食話實說',
+        description: '《食話實說 Food Talk》- 討論特定食材、料理或美食文化，結合討論與實地示範',
+        icon: '🍳',
+        tags: ['食材討論', '料理文化', '教育性', '實地示範'],
+        videoCount: 25,
+        backgroundImage: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
+      },
+      {
+        id: 'fun-for-kids',
+        title: '童趣旅程',
+        description: '《童趣旅程 Fun for Kids》- 專為家庭設計，探索適合親子活動的景點、遊樂園、動物園',
+        icon: '👨‍👩‍👧‍👦',
+        tags: ['親子活動', '遊樂園', '動物園', '手作體驗'],
+        videoCount: 20,
+        backgroundImage: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
+      },
+      {
+        id: 'time-walk',
+        title: '時光漫遊',
+        description: '《時光漫遊 Time Walk》- 走訪古蹟、博物館、傳統村落，透過歷史故事呈現深度文化旅程',
         icon: '🏛️',
-        tags: ['法國', '義大利', '德國', '西班牙'],
-        videoCount: 38
+        tags: ['古蹟', '博物館', '歷史故事', '文化旅程'],
+        videoCount: 30,
+        backgroundImage: 'https://images.unsplash.com/photo-1520637836862-4d197d17c93a?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
       },
       {
-        id: 'americas',
-        title: '美洲奇景',
-        description: '從北極到南極，探索美洲大陸的自然奇觀',
-        icon: '🗽',
-        tags: ['美國', '加拿大', '巴西', '阿根廷'],
-        videoCount: 32
-      },
-      {
-        id: 'nature',
-        title: '自然探索',
-        description: '深入世界各地的自然奇景與野生動物',
-        icon: '🏔️',
-        tags: ['山脈', '海洋', '森林', '沙漠'],
-        videoCount: 28
-      },
-      {
-        id: 'culture',
-        title: '文化遺產',
-        description: '探索世界各地的歷史遺跡與文化傳統',
-        icon: '🏺',
-        tags: ['古蹟', '博物館', '傳統', '節慶'],
-        videoCount: 35
-      },
-      {
-        id: 'food',
-        title: '美食之旅',
-        description: '環遊世界，品嚐各地特色美食與料理',
-        icon: '🍜',
-        tags: ['拉麵', '披薩', '海鮮', '甜點'],
-        videoCount: 42
+        id: 'nature-secrets',
+        title: '自然秘境',
+        description: '《自然秘境 Nature Secrets》- 探索自然景觀、野生動植物、生態保育，感受地球之美',
+        icon: '🌿',
+        tags: ['自然景觀', '野生動物', '生態保育', '環境保護'],
+        videoCount: 26,
+        backgroundImage: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
       }
     ];
 
     // 熱門搜尋標籤
     const POPULAR_TAGS = [
-      '日本', '韓國', '台灣', '中國', '泰國', '越南', '馬來西亞', '印尼',
-      '歐洲', '法國', '德國', '義大利', '西班牙', '英國', '荷蘭',
-      '美國', '加拿大', '澳洲', '紐西蘭', '非洲', '南美洲',
-      '自然', '文化', '美食', '冒險', '城市', '度假', '歷史', '藝術'
+      '城市秘境', '味覺日誌', '旅途談', '慢遊小鎮', '食話實說', '童趣旅程', '時光漫遊', '自然秘境',
+      '小眾景點', '在地生活', '美食故事', '旅遊技巧', '慢節奏', '親子活動', '古蹟', '自然景觀',
+      '街頭小吃', '手作工藝', '歷史故事', '生態保育', '夜市', '咖啡館', '博物館', '野生動物'
     ];
 
     // HTML 轉義函數
@@ -582,13 +659,15 @@
       if (!container) return;
 
       container.innerHTML = TOPICS_DATA.map(topic => `
-        <div class="topic-card" data-topic-id="${topic.id}">
-          <div class="topic-icon">${topic.icon}</div>
-          <div class="topic-title">${escapeHtml(topic.title)}</div>
-          <div class="topic-desc">${escapeHtml(topic.description)}</div>
-          <div class="topic-stats">
-            <span>📺 ${topic.videoCount} 個節目</span>
-            <span>🏷️ ${topic.tags.slice(0, 2).join('、')}</span>
+        <div class="topic-card" data-topic-id="${topic.id}" style="background-image: url('${topic.backgroundImage}')">
+          <div class="topic-content">
+            <div class="topic-icon">${topic.icon}</div>
+            <div class="topic-title">${escapeHtml(topic.title)}</div>
+            <div class="topic-desc">${escapeHtml(topic.description)}</div>
+            <div class="topic-stats">
+              <span>📺 ${topic.videoCount} 個節目</span>
+              <span>🏷️ ${topic.tags.slice(0, 2).join('、')}</span>
+            </div>
           </div>
         </div>
       `).join('');
@@ -681,10 +760,28 @@
       });
     }
 
+    // 漢堡選單功能
+    function initHamburgerMenu() {
+      const hamburgerBtn = document.getElementById('hamburger-btn');
+      const sideMenu = document.getElementById('side-menu');
+      const menuOverlay = document.getElementById('menu-overlay');
+      const body = document.body;
+      
+      function toggleMenu() {
+        sideMenu?.classList.toggle('active');
+        menuOverlay?.classList.toggle('active');
+        body.classList.toggle('menu-open');
+      }
+      
+      hamburgerBtn?.addEventListener('click', toggleMenu);
+      menuOverlay?.addEventListener('click', toggleMenu);
+    }
+
     // 頁面載入完成後初始化
     document.addEventListener('DOMContentLoaded', () => {
       dbg('DOM 載入完成');
       initThemeToggle(); dbg('主題切換初始化完成');
+      initHamburgerMenu(); dbg('漢堡選單初始化完成');
       renderSearchTags(); dbg('已渲染搜尋標籤');
       renderTopicsGrid(); dbg('已渲染主題卡片：'+TOPICS_DATA.length);
       setupSearchEvents(); dbg('已綁定搜尋事件');

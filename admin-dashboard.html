@@ -413,6 +413,33 @@
         <button class="enter-btn">進入用戶管理</button>
       </div>
       
+      <!-- 主題館管理 -->
+      <div class="module-card" onclick="navigateToModule('admin-topics-management.html')">
+        <svg class="module-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          <path d="M8 2v4"/>
+          <path d="M16 2v4"/>
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+          <path d="M8 14h.01"/>
+          <path d="M12 14h.01"/>
+          <path d="M16 14h.01"/>
+          <path d="M8 18h.01"/>
+          <path d="M12 18h.01"/>
+          <path d="M16 18h.01"/>
+        </svg>
+        <h2 class="module-title">主題館管理</h2>
+        <p class="module-description">
+          管理主題探索頁面的內容、圖片和設定。
+          支援主題新增、編輯、背景圖片設定和狀態管理。
+        </p>
+        <div class="module-stats">
+          <span class="status-indicator status-online"></span>
+          系統狀態：正常運作
+        </div>
+        <button class="enter-btn">進入主題館管理</button>
+      </div>
+      
       <!-- 登入日誌管理 -->
       <div class="module-card" onclick="navigateToModule('admin-login-logs.html')">
         <svg class="module-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -494,6 +521,13 @@
             <line x1="23" y1="11" x2="17" y2="11"/>
           </svg>
           創建管理員
+        </a>
+        <a href="admin-topics-management.html" class="action-btn">
+          <svg class="action-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          主題館管理
         </a>
         <a href="admin-login-logs.html" class="action-btn">
           <svg class="action-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
