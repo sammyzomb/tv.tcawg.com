@@ -455,14 +455,13 @@
           <label>節目分類：</label>
           <select id="category" required>
             <option value="">-- 選擇分類 --</option>
-            <option value="亞洲旅遊">亞洲旅遊</option>
-            <option value="歐洲旅遊">歐洲旅遊</option>
-            <option value="美洲旅遊">美洲旅遊</option>
-            <option value="美食旅遊">美食旅遊</option>
-            <option value="極地旅遊">極地旅遊</option>
-            <option value="自然旅遊">自然旅遊</option>
-            <option value="文化旅遊">文化旅遊</option>
-            <option value="冒險旅遊">冒險旅遊</option>
+            <option value="亞洲">亞洲</option>
+            <option value="歐洲">歐洲</option>
+            <option value="北美洲">北美洲</option>
+            <option value="南美洲">南美洲</option>
+            <option value="非洲">非洲</option>
+            <option value="大洋洲">大洋洲</option>
+            <option value="南極洲">南極洲</option>
           </select>
         </div>
 
@@ -629,10 +628,71 @@
     let currentView = 'month';
     let events = {};
 
+    // 主題探索分類資料
+    const TOPICS_DATA = [
+      {
+        id: 'city-secrets',
+        title: '城市秘境',
+        description: '深入城市角落、市集、文化景點，用實地體驗呈現城市故事'
+      },
+      {
+        id: 'taste-journal',
+        title: '味覺日誌',
+        description: '品嘗當地料理與街頭小吃，訪問餐廳老闆或廚師，分享食物背後的故事'
+      },
+      {
+        id: 'travel-talk',
+        title: '旅途談',
+        description: '邀請旅遊達人、部落客、在地人，分享旅行心得、技巧與趣聞'
+      },
+      {
+        id: 'slow-town',
+        title: '慢遊小鎮',
+        description: '走訪小鎮或鄉村，介紹當地文化、手作工藝、市場與特色美食'
+      },
+      {
+        id: 'food-talk',
+        title: '食話實說',
+        description: '討論特定食材、料理或美食文化，結合討論與實地示範'
+      },
+      {
+        id: 'fun-for-kids',
+        title: '童趣旅程',
+        description: '專為家庭設計，探索適合親子活動的景點、遊樂園、動物園'
+      },
+      {
+        id: 'time-walk',
+        title: '時光漫遊',
+        description: '走訪古蹟、博物館、傳統村落，透過歷史故事呈現深度文化旅程'
+      },
+      {
+        id: 'nature-secrets',
+        title: '自然秘境',
+        description: '探索自然景觀、野生動植物、生態保育，感受地球之美'
+      }
+    ];
+
+    // 載入主題探索分類
+    function loadTopics() {
+      const container = document.getElementById('topicsCheckboxes');
+      if (!container) return;
+
+      container.innerHTML = TOPICS_DATA.map(topic => `
+        <label style="display: flex; align-items: center; gap: 8px; padding: 8px; border: 1px solid #ddd; border-radius: 6px; cursor: pointer; transition: all 0.2s ease;">
+          <input type="checkbox" name="topics" value="${topic.id}" style="margin: 0;">
+          <div>
+            <div style="font-weight: 600; font-size: 14px;">${topic.title}</div>
+            <div style="font-size: 12px; color: #666; margin-top: 2px;">${topic.description}</div>
+          </div>
+        </label>
+      `).join('');
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
       loadEvents();
       renderCurrentView();
       updateCurrentDateDisplay();
+      loadTopics();
     });
 
     function switchView(view) {

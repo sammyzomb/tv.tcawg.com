@@ -704,12 +704,35 @@
           try {
             const response = await fetch('schedule.json');
             const data = await response.json();
-            const schedulePrograms = data.today.schedule || [];
-            console.log('從 schedule.json 載入節目成功:', schedulePrograms.length, '個節目');
+            
+            // 獲取台灣時間並確定今天是星期幾
+            const now = new Date();
+            const taiwanTime = new Date(now.getTime() + (8 * 60 * 60 * 1000));
+            const dayOfWeek = taiwanTime.getUTCDay(); // 0=日, 1=一, 2=二, ...
+            const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+            const todayKey = dayNames[dayOfWeek];
+            
+            // 獲取今天的日期字串 (YYYY-MM-DD)
+            const todayDate = taiwanTime.toISOString().split('T')[0];
+            
+            console.log('今天是:', todayKey, '星期', ['日', '一', '二', '三', '四', '五', '六'][dayOfWeek]);
+            console.log('今天日期:', todayDate);
+            
+            // 檢查對應星期幾的資料是否存在，且日期是否匹配
+            const dayData = data[todayKey];
+            let schedulePrograms = [];
+            
+            if (dayData && dayData.date === todayDate) {
+              // 日期匹配，載入節目資料
+              schedulePrograms = dayData.schedule || [];
+              console.log('找到匹配的節目資料:', schedulePrograms.length, '個節目');
+            } else {
+              // 日期不匹配或沒有資料，顯示空節目表
+              console.log('今天沒有節目安排，將顯示空節目表');
+              schedulePrograms = [];
+            }
             
           // 生成完整的節目表（從當前時間開始的24個時段）
-          const now = new Date();
-          const taiwanTime = new Date(now.getTime() + (8 * 60 * 60 * 1000));
           const currentHour = taiwanTime.getUTCHours();
           const currentMinute = taiwanTime.getUTCMinutes();
           
