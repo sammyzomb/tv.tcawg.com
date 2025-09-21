@@ -391,6 +391,14 @@
               <button class="btn btn-secondary" onclick="checkOnline()" style="margin: 2px;">檢查線上</button>
             </div>
             
+            <!-- YouTube 檢查 -->
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #ff6b6b;">
+              <h4 style="margin: 0 0 10px 0; color: #ff6b6b;">🎬 YouTube 檢查</h4>
+              <button class="btn btn-danger" onclick="checkHeroVideos()" style="margin: 2px;">檢查 HERO 影片</button>
+              <button class="btn btn-warning" onclick="checkContentfulVideos()" style="margin: 2px;">檢查 Contentful 影片</button>
+              <button class="btn btn-info" onclick="openYouTubeChecker()" style="margin: 2px;">開啟檢查器</button>
+            </div>
+            
             <!-- 日誌管理 -->
             <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #dc3545;">
               <h4 style="margin: 0 0 10px 0; color: #dc3545;">📋 日誌管理</h4>
@@ -1047,6 +1055,169 @@
       log('success', '日誌已匯出');
     }
     
+    // === YouTube 檢查功能 ===
+    
+    // HERO 影片資料 - 從 hero.json 載入
+    let heroVideos = [];
+    
+    // 載入 HERO 影片資料 - 優先使用 Contentful
+    async function loadHeroVideosForConsole() {
+      // 首先嘗試從 Contentful 載入
+      try {
+        if (window.contentfulRealOnly) {
+          const client = window.contentfulRealOnly.deliveryClient;
+          const response = await client.getEntries({
+            content_type: 'video',
+            'fields.isHero': true,
+            order: '-sys.updatedAt',
+            limit: 1000
+          });
+          
+          const contentfulVideos = response.items.map(item => ({
+            id: item.fields.youTubeId || item.fields.youtubeId || item.fields.YouTubeID || '',
+            title: item.fields.heroTitle || item.fields.title || '',
+            desc: item.fields.heroText || item.fields.description || ''
+          })).filter(v => v.id);
+          
+          if (contentfulVideos.length > 0) {
+            heroVideos = contentfulVideos;
+            log('success', `✅ 從 Contentful 載入 ${heroVideos.length} 個 HERO 影片`);
+            return;
+          }
+        }
+      } catch (error) {
+        log('warning', `Contentful 載入失敗: ${error.message}`);
+      }
+      
+      // 只使用 Contentful 資料，不提供備用資料
+      log('error', '無法從 Contentful 載入 HERO 影片資料');
+      log('info', '請檢查 Contentful 連線設定或在 Contentful 中設定 HERO 影片 (isHero: true)');
+      heroVideos = [];
+    }
+    
+    async function checkHeroVideos() {
+      log('info', '開始檢查 HERO 影片狀態...');
+      log('info', `將檢查 ${heroVideos.length} 個 HERO 影片`);
+      
+      let availableCount = 0;
+      let unavailableCount = 0;
+      const unavailableVideos = [];
+      
+      for (let i = 0; i < heroVideos.length; i++) {
+        const video = heroVideos[i];
+        log('info', `檢查影片 ${i + 1}/${heroVideos.length}: ${video.title} (${video.id})`);
+        
+        try {
+          const isAvailable = await checkVideoAvailability(video.id);
+          if (isAvailable) {
+            availableCount++;
+            log('success', `✅ ${video.title} - 可播放`);
+          } else {
+            unavailableCount++;
+            unavailableVideos.push(video);
+            log('error', `❌ ${video.title} - 無法播放`);
+          }
+        } catch (error) {
+          unavailableCount++;
+          unavailableVideos.push(video);
+          log('error', `❌ ${video.title} - 檢查失敗: ${error.message}`);
+        }
+        
+        // 延遲避免請求過於頻繁
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+      
+      // 顯示檢查結果摘要
+      const availabilityRate = Math.round((availableCount / heroVideos.length) * 100);
+      log('success', `HERO 影片檢查完成！`);
+      log('info', `總數: ${heroVideos.length}, 可用: ${availableCount}, 不可用: ${unavailableCount}, 可用率: ${availabilityRate}%`);
+      
+      if (unavailableVideos.length > 0) {
+        log('warning', '無法播放的影片:');
+        unavailableVideos.forEach(video => {
+          log('error', `- ${video.title} (${video.id})`);
+        });
+      }
+    }
+    
+    async function checkContentfulVideos() {
+      log('info', '開始檢查 Contentful 中的 HERO 影片...');
+      
+      try {
+        if (!window.contentfulRealOnly) {
+          log('error', 'Contentful 系統未載入');
+          return;
+        }
+        
+        const client = window.contentfulRealOnly.getClient();
+        const response = await client.getEntries({
+          content_type: 'video',
+          'fields.isHero': true,
+          order: '-sys.updatedAt',
+          limit: 1000
+        });
+        
+        const contentfulVideos = response.items.map(item => ({
+          id: item.fields.youTubeId || item.fields.youtubeId || '',
+          title: item.fields.heroTitle || item.fields.title || '',
+          desc: item.fields.heroText || item.fields.description || ''
+        })).filter(v => v.id);
+        
+        log('info', `找到 ${contentfulVideos.length} 個 Contentful HERO 影片`);
+        
+        let availableCount = 0;
+        let unavailableCount = 0;
+        
+        for (let i = 0; i < contentfulVideos.length; i++) {
+          const video = contentfulVideos[i];
+          log('info', `檢查 Contentful 影片 ${i + 1}/${contentfulVideos.length}: ${video.title} (${video.id})`);
+          
+          try {
+            const isAvailable = await checkVideoAvailability(video.id);
+            if (isAvailable) {
+              availableCount++;
+              log('success', `✅ ${video.title} - 可播放`);
+            } else {
+              unavailableCount++;
+              log('error', `❌ ${video.title} - 無法播放`);
+            }
+          } catch (error) {
+            unavailableCount++;
+            log('error', `❌ ${video.title} - 檢查失敗: ${error.message}`);
+          }
+          
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+        
+        const availabilityRate = Math.round((availableCount / contentfulVideos.length) * 100);
+        log('success', `Contentful HERO 影片檢查完成！`);
+        log('info', `總數: ${contentfulVideos.length}, 可用: ${availableCount}, 不可用: ${unavailableCount}, 可用率: ${availabilityRate}%`);
+        
+      } catch (error) {
+        log('error', `檢查 Contentful 影片失敗: ${error.message}`);
+      }
+    }
+    
+    async function checkVideoAvailability(videoId) {
+      return new Promise((resolve) => {
+        const thumbnailUrl = `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
+        const img = new Image();
+        
+        img.onload = () => resolve(true);
+        img.onerror = () => resolve(false);
+        
+        // 設定超時
+        setTimeout(() => resolve(false), 5000);
+        
+        img.src = thumbnailUrl;
+      });
+    }
+    
+    function openYouTubeChecker() {
+      log('info', '開啟 YouTube 檢查器...');
+      window.open('check-hero-videos.html', '_blank');
+    }
+    
     
     // 初始化 Management Ultimate 載入器
     function initializeManagementUltimate() {
@@ -1071,6 +1242,9 @@
     document.addEventListener('DOMContentLoaded', async function() {
       log('info', '主控台載入完成');
       loadStats();
+      
+      // 載入 HERO 影片資料
+      await loadHeroVideosForConsole();
       
       // 初始化 Management Ultimate 載入器
       initializeManagementUltimate();

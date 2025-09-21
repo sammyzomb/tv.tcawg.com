@@ -7,49 +7,7 @@
   let heroPos = 0;        // 目前指向
   let lastPlayedId = null;
 
-  // 備用 Hero 影片資料（當 Contentful 無法連接時使用）
-  const fallbackHeroVideos = [
-    {
-      id: "3GZCJfIOg_k",
-      title: "雅加達 千島群島 浮潛",
-      desc: "潛入海洋，探索繽紛的熱帶生態"
-    },
-    {
-      id: "LcdGhVwS3gw",
-      title: "雅加達 火山",
-      desc: "走訪壯觀的活火山與地熱奇景"
-    },
-    {
-      id: "25Fmx1G-C3k",
-      title: "俄羅斯 莫斯科 紅場",
-      desc: "走進俄羅斯歷史心臟，宏偉紅場"
-    },
-    {
-      id: "u4XvG8jkToY",
-      title: "極光",
-      desc: "追尋極地夜空中最美的奇幻光芒"
-    },
-    {
-      id: "jLNBKAFgtNU",
-      title: "挪威峽灣郵輪",
-      desc: "郵輪穿越冰河峽灣，壯闊如畫"
-    },
-    {
-      id: "QoHTSSS3DwQ",
-      title: "祕魯 馬丘比丘",
-      desc: "攀上神秘古城，領略印加文明"
-    },
-    {
-      id: "BDnpjQmGRqY",
-      title: "阿根廷 伊瓜蘇瀑布",
-      desc: "感受壯闊奔騰的南美大瀑布"
-    },
-    {
-      id: "8YFLi5hZ2lc",
-      title: "非洲 獵豹",
-      desc: "非洲原野，見證速度與野性"
-    }
-  ];
+  // 只使用 Contentful 資料，不提供備用資料
 
   // 初始化 Contentful client
   const contentfulClient = contentful.createClient({
@@ -59,20 +17,26 @@
 
   document.addEventListener('DOMContentLoaded', () => {
     // 抓 Hero 影片
+    // 先獲取所有影片，然後過濾 HERO 影片
     contentfulClient.getEntries({
       content_type: 'video',
-      'fields.isHero': true,
       order: '-sys.updatedAt',
       limit: 1000
     }).then(response => {
-      const mapped = response.items.map(item => ({
-        sysId: item.sys.id,
-        updatedAt: item.sys.updatedAt,
-        id: item.fields.youTubeId || item.fields.youtubeId || '',
-        title: item.fields.heroTitle || item.fields.title || '',
-        desc: item.fields.heroText || item.fields.description || '',
-        thumb: item.fields.thumbnail?.fields?.file?.url || ''
-      })).filter(v => v.id);
+      const mapped = response.items
+        .filter(item => {
+          // 只保留 HERO 影片
+          const isHero = item.fields.isHero || item.fields.首頁HERO || false;
+          return isHero === true;
+        })
+        .map(item => ({
+          sysId: item.sys.id,
+          updatedAt: item.sys.updatedAt,
+          id: item.fields.youTubeId || item.fields.youtubeId || item.fields.YouTubeID || '',
+          title: item.fields.heroTitle || item.fields.title || '',
+          desc: item.fields.heroText || item.fields.description || '',
+          thumb: item.fields.thumbnail?.fields?.file?.url || ''
+        })).filter(v => v.id);
 
       // 去重（同一 YouTube ID 保留較新）
       const byId = new Map();
@@ -82,10 +46,17 @@
       }
       let data = Array.from(byId.values());
 
-      // 如果 Contentful 沒有資料，使用備用資料
+      console.log(`從 Contentful 獲取到 ${response.items.length} 個影片`);
+      console.log(`過濾後找到 ${data.length} 個 HERO 影片`);
+      
+      // 只使用 Contentful 資料
       if (!data.length) {
-        console.log('Contentful 中沒有 Hero 影片，使用備用資料');
-        data = fallbackHeroVideos;
+        console.error('❌ Contentful 中沒有 Hero 影片');
+        console.log('請在 Contentful 中設定 HERO 影片 (isHero: true)');
+        console.log('或者檢查影片的 isHero 欄位是否設為 true');
+        return; // 直接返回，不初始化播放器
+      } else {
+        console.log(`✅ 成功從 Contentful 載入 ${data.length} 個 HERO 影片`);
       }
 
       // 洗牌
@@ -108,19 +79,10 @@
       }
       initializeHeroPlayer();
     }).catch(err => {
-      console.error('處理 Hero 影片時發生錯誤:', err);
-      console.log('Contentful 連線失敗，使用備用 Hero 影片');
-      
-      // 使用備用資料
-      heroVideos = fallbackHeroVideos;
-      heroOrder = heroVideos.map(v => v.id);
-      heroPos = 0;
-      ytIdToIndex = {};
-      heroVideos.forEach((v, idx) => ytIdToIndex[v.id] = idx);
-      
-      if (heroOrder.length) {
-        initializeHeroPlayer();
-      }
+      console.error('❌ Contentful 載入失敗:', err);
+      console.log('請檢查 Contentful 連線設定或網路連線');
+      console.log('HERO 影片系統無法啟動，因為無法從 Contentful 載入資料');
+      // 不提供備用資料，直接結束
     });
   });
 
