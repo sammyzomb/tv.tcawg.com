@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>節目表版型測試 - 網格版型</title>
+  <link rel="stylesheet" href="style.css?v=20250909v2">
+  <link rel="stylesheet" href="simple-enhanced-styles.css?v=20250909v2">
+  <style>
+    /* 網格版型樣式 */
+    .schedule-section {
+      padding: 40px 4%;
+      background: var(--section-bg);
+    }
+
+    .schedule-container {
+      background: var(--card-bg);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 8px 32px var(--shadow-color);
+      border: 1px solid var(--card-border);
+    }
+
+    .schedule-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      padding: 20px;
+    }
+
+    .schedule-item {
+      background: var(--card-bg);
+      border-radius: 12px;
+      border: 1px solid var(--card-border);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      transition: all 0.3s ease;
+      cursor: pointer;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .schedule-item:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    }
+
+    .schedule-item.current {
+      border: 2px solid #e74c3c;
+      background: rgba(231, 76, 60, 0.05);
+      transform: scale(1.05);
+    }
+
+    .schedule-item.upcoming {
+      border: 2px solid #3498db;
+      opacity: 0.9;
+    }
+
+    .schedule-thumbnail {
+      position: relative;
+      width: 100%;
+      height: 180px;
+      overflow: hidden;
+    }
+
+    .schedule-thumbnail img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.3s ease;
+    }
+
+    .schedule-item:hover .schedule-thumbnail img {
+      transform: scale(1.05);
+    }
+
+    .schedule-time {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      font-size: 1rem;
+      font-weight: 700;
+      color: white;
+      background: rgba(0, 0, 0, 0.7);
+      padding: 6px 12px;
+      border-radius: 6px;
+      z-index: 2;
+    }
+
+    .program-status {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 6px;
+      z-index: 2;
+    }
+
+    .program-status.current {
+      background: #e74c3c;
+      color: white;
+    }
+
+    .program-status.upcoming {
+      background: #3498db;
+      color: white;
+    }
+
+    .schedule-content {
+      padding: 16px;
+    }
+
+    .program-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--text-color);
+      margin-bottom: 8px;
+      line-height: 1.3;
+    }
+
+    .program-description {
+      font-size: 0.9rem;
+      color: var(--text-color-light);
+      line-height: 1.4;
+      margin-bottom: 12px;
+    }
+
+    .schedule-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .program-category {
+      font-size: 0.8rem;
+      color: var(--text-color-light);
+      background: rgba(0, 0, 0, 0.05);
+      padding: 4px 8px;
+      border-radius: 4px;
+    }
+
+    .schedule-duration {
+      font-size: 0.8rem;
+      color: var(--text-color-light);
+      font-weight: 500;
+    }
+
+    .section-title-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+    }
+
+    .title-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .title-icon {
+      width: 24px;
+      height: 24px;
+      stroke: var(--primary-color);
+    }
+
+    .title-left h2 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--text-color);
+      margin: 0;
+    }
+
+    .current-datetime-text {
+      font-size: 1rem;
+      color: var(--text-color-light);
+      font-weight: 500;
+    }
+
+    .back-btn {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      background: var(--primary-color);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      z-index: 1000;
+    }
+
+    .back-btn:hover {
+      background: var(--primary-color-hover);
+    }
+
+    /* 響應式設計 */
+    @media (max-width: 768px) {
+      .schedule-list {
+        grid-template-columns: 1fr;
+        gap: 16px;
+        padding: 16px;
+      }
+    }
+
+    @media (min-width: 1200px) {
+      .schedule-list {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+  <button class="back-btn" onclick="window.history.back()">← 返回</button>
+
+  <div class="container">
+    <section class="schedule-section">
+      <div class="section-title-container">
+        <div class="title-left">
+          <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+            <line x1="16" y1="2" x2="16" y2="6"/>
+            <line x1="8" y1="2" x2="8" y2="6"/>
+            <line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
+          <h2>今日節目表 - 網格版型</h2>
+        </div>
+        <div class="current-datetime-text" id="currentDateTime">台灣時間 9月16日 星期一 現在時間 09:43</div>
+      </div>
+
+      <div class="schedule-container">
+        <div class="schedule-list" id="schedule-list">
+          <!-- 節目表項目將由 JavaScript 動態載入 -->
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    // 模擬節目數據
+    const mockPrograms = [
+      {
+        time: "09:30",
+        title: "目前暫無節目",
+        duration: "30",
+        category: "空檔",
+        description: "此時段暫無節目安排",
+        thumbnail: "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop",
+        youtubeId: "",
+        status: "current"
+      },
+      {
+        time: "10:00",
+        title: "目前暫無節目",
+        duration: "30",
+        category: "空檔",
+        description: "此時段暫無節目安排",
+        thumbnail: "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop",
+        youtubeId: "",
+        status: "upcoming"
+      },
+      {
+        time: "10:30",
+        title: "目前暫無節目",
+        duration: "30",
+        category: "空檔",
+        description: "此時段暫無節目安排",
+        thumbnail: "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop",
+        youtubeId: "",
+        status: "upcoming"
+      },
+      {
+        time: "11:00",
+        title: "目前暫無節目",
+        duration: "30",
+        category: "空檔",
+        description: "此時段暫無節目安排",
+        thumbnail: "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop",
+        youtubeId: "",
+        status: "upcoming"
+      },
+      {
+        time: "11:30",
+        title: "目前暫無節目",
+        duration: "30",
+        category: "空檔",
+        description: "此時段暫無節目安排",
+        thumbnail: "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop",
+        youtubeId: "",
+        status: "upcoming"
+      },
+      {
+        time: "12:00",
+        title: "目前暫無節目",
+        duration: "30",
+        category: "空檔",
+        description: "此時段暫無節目安排",
+        thumbnail: "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop",
+        youtubeId: "",
+        status: "upcoming"
+      }
+    ];
+
+    function renderSchedule() {
+      const scheduleList = document.getElementById('schedule-list');
+      scheduleList.innerHTML = '';
+
+      mockPrograms.forEach(program => {
+        const scheduleItem = document.createElement('div');
+        scheduleItem.className = `schedule-item ${program.status}`;
+        
+        scheduleItem.innerHTML = `
+          <div class="schedule-thumbnail">
+            <img src="${program.thumbnail}" alt="${program.title}">
+            <div class="schedule-time">${program.time}</div>
+            <div class="program-status ${program.status}">
+              ${program.status === 'current' ? '現正播出' : '即將播出'}
+            </div>
+          </div>
+          <div class="schedule-content">
+            <div class="program-title">${program.title}</div>
+            <div class="program-description">${program.description}</div>
+            <div class="schedule-meta">
+              <div class="program-category">${program.category}</div>
+              <div class="schedule-duration">${program.duration}分鐘</div>
+            </div>
+          </div>
+        `;
+
+        scheduleList.appendChild(scheduleItem);
+      });
+    }
+
+    // 頁面載入時渲染節目表
+    document.addEventListener('DOMContentLoaded', renderSchedule);
+  </script>
+</body>
+</html>
+

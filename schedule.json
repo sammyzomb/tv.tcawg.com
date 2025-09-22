@@ -543,6 +543,131 @@
       }
     ]
   },
+  "wednesday": {
+    "date": "2025-09-10",
+    "dayOfWeek": "三",
+    "month": "9",
+    "day": "10",
+    "schedule": [
+      {
+        "time": "09:30",
+        "title": "How to Spend 4 Days in SEVILLE Spain | The Perfect Travel Guide",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "How to Spend 4 Days in SEVILLE Spain | The Perfect Travel Guide",
+        "thumbnail": "https://img.youtube.com/vi/kcalkfcK6ZA/maxresdefault.jpg",
+        "youtubeId": "kcalkfcK6ZA",
+        "status": "published"
+      },
+      {
+        "time": "10:00",
+        "title": "Kyrgyzstan 4K - Scenic Relaxation Film With Calming Music",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "Kyrgyzstan 4K - Scenic Relaxation Film With Calming Music",
+        "thumbnail": "https://img.youtube.com/vi/Qp37q2-Gjvw/maxresdefault.jpg",
+        "youtubeId": "Qp37q2-Gjvw",
+        "status": "published"
+      },
+      {
+        "time": "10:30",
+        "title": "MONTANA 4K Scenic Relaxation Film with Country Music | Glacier National Park",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "MONTANA 4K Scenic Relaxation Film with Country Music | Glacier National Park",
+        "thumbnail": "https://img.youtube.com/vi/QMCa79JZQBg/maxresdefault.jpg",
+        "youtubeId": "QMCa79JZQBg",
+        "status": "published"
+      },
+      {
+        "time": "11:00",
+        "title": "Lofoten islands, Norway – 4K Relaxation Film with Calming Music",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "Lofoten islands, Norway – 4K Relaxation Film with Calming Music",
+        "thumbnail": "https://img.youtube.com/vi/6owNUyDlHVg/maxresdefault.jpg",
+        "youtubeId": "6owNUyDlHVg",
+        "status": "published"
+      },
+      {
+        "time": "11:30",
+        "title": "Denmark 8K UHD - Land of Fairytales, Coastal Beauty and Timeless Nordic Charm - VIDEO 8K UHD",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "Denmark 8K UHD - Land of Fairytales, Coastal Beauty and Timeless Nordic Charm - VIDEO 8K UHD",
+        "thumbnail": "https://img.youtube.com/vi/_m1IHB7OGpI/maxresdefault.jpg",
+        "youtubeId": "_m1IHB7OGpI",
+        "status": "published"
+      },
+      {
+        "time": "12:00",
+        "title": "Finland 8K UHD – Discover Lakes, Forests, and Northern Lights | Travel Video",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "Finland 8K UHD – Discover Lakes, Forests, and Northern Lights | Travel Video",
+        "thumbnail": "https://img.youtube.com/vi/lkX1bslmRs0/maxresdefault.jpg",
+        "youtubeId": "lkX1bslmRs0",
+        "status": "published"
+      },
+      {
+        "time": "12:30",
+        "title": "Switzerland Beyond Seasons 4K ✨ A Landscape That Soothes All Year Round",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "Switzerland Beyond Seasons 4K ✨ A Landscape That Soothes All Year Round",
+        "thumbnail": "https://img.youtube.com/vi/pcdZ1isvr_E/maxresdefault.jpg",
+        "youtubeId": "pcdZ1isvr_E",
+        "status": "published"
+      },
+      {
+        "time": "13:00",
+        "title": "Wales 8K UHD - Discover the Natural Beauty of this Breathtaking Country - VIDEO 8K UHD",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "Wales 8K UHD - Discover the Natural Beauty of this Breathtaking Country - VIDEO 8K UHD",
+        "thumbnail": "https://img.youtube.com/vi/NWKQkCZ-NLQ/maxresdefault.jpg",
+        "youtubeId": "NWKQkCZ-NLQ",
+        "status": "published"
+      },
+      {
+        "time": "13:30",
+        "title": "Austria 8K UHD | Silent Villages, Hidden Courtyards & Alpine Calm in the Heart of Europe",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "Austria 8K UHD | Silent Villages, Hidden Courtyards & Alpine Calm in the Heart of Europe",
+        "thumbnail": "https://img.youtube.com/vi/5ZQ7uJikim4/maxresdefault.jpg",
+        "youtubeId": "5ZQ7uJikim4",
+        "status": "published"
+      },
+      {
+        "time": "14:00",
+        "title": "Italy 4K • Scenic Nature Relaxation Film with Peaceful Music | Nature 4K Ultra HD",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "Italy 4K • Scenic Nature Relaxation Film with Peaceful Music | Nature 4K Ultra HD",
+        "thumbnail": "https://img.youtube.com/vi/4088CV88CdQ/maxresdefault.jpg",
+        "youtubeId": "4088CV88CdQ",
+        "status": "published"
+      },
+      {
+        "time": "14:30",
+        "title": "[4K] SARDINIA 🇮🇹 Sardegna Drone Aerial, The Miracle Island of Italy | 4 Hour Ambient Relaxation Film",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "[4K] SARDINIA 🇮🇹 Sardegna Drone Aerial, The Miracle Island of Italy | 4 Hour Ambient Relaxation Film",
+        "thumbnail": "https://img.youtube.com/vi/KpCVQcSqB0Q/maxresdefault.jpg",
+        "youtubeId": "KpCVQcSqB0Q",
+        "status": "published"
+      }
+    ]
+  },
+  "monday_today": {
+    "date": "2025-09-16",
+    "dayOfWeek": "一",
+    "month": "9",
+    "day": "16",
+    "schedule": []
+  },
   "sunday": {
     "date": "2025-09-07",
     "dayOfWeek": "日",

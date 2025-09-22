@@ -563,11 +563,31 @@ document.addEventListener('DOMContentLoaded', () => {
           const response = await fetch('schedule.json');
           if (response.ok) {
             const localScheduleData = await response.json();
-            if (localScheduleData.today && localScheduleData.today.schedule) {
-              console.log('✅ 成功從本地 schedule.json 載入備用節目表，共', localScheduleData.today.schedule.length, '個節目');
+            
+            // 根據今天的日期找到對應的節目表
+            const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+            const todayDayName = dayNames[taiwanTime.getDay()];
+            
+            // 檢查是否有今天的特定節目表（monday_today）
+            let todaySchedule = localScheduleData['monday_today'];
+            if (!todaySchedule) {
+              // 如果沒有今天的特定節目表，使用一般星期幾的節目表
+              todaySchedule = localScheduleData[todayDayName];
+            }
+            
+            if (todaySchedule && todaySchedule.schedule) {
+              console.log('✅ 成功從本地 schedule.json 載入今日節目表，共', todaySchedule.schedule.length, '個節目');
               
               // 設定全域 scheduleData 變數
-              window.scheduleData = localScheduleData;
+              window.scheduleData = {
+                today: {
+                  date: today,
+                  dayOfWeek: getDayOfWeek(taiwanTime),
+                  month: `${taiwanTime.getMonth() + 1}月`,
+                  day: `${taiwanTime.getDate()}日`,
+                  schedule: todaySchedule.schedule
+                }
+              };
               scheduleData = window.scheduleData;
               
               updateScheduleDisplay();
@@ -780,6 +800,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 更新日期顯示（使用台灣時間）
     const currentDateTimeEl = document.getElementById('currentDateTime');
     const scheduleListEl = document.getElementById('schedule-list');
+    const programListEl = document.getElementById('program-list');
 
     // 獲取台灣時間的日期信息
     const taiwanTime = getTaiwanTime();
@@ -789,7 +810,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const timeString = getCurrentTimeString();
 
     if (currentDateTimeEl) {
-      currentDateTimeEl.textContent = `${currentMonth}月${currentDay}日 ${currentDayOfWeek} ${timeString}`;
+      currentDateTimeEl.textContent = `台灣時間 ${currentMonth}月${currentDay}日 ${currentDayOfWeek} 現在時間 ${timeString}`;
+    }
+
+    // 檢查是否為TLC風格版型
+    const scheduleContainer = document.querySelector('.schedule-container.tlc-style');
+    if (scheduleContainer) {
+      // TLC風格版型渲染
+      renderTLCStyleSchedule(today.schedule);
+      return;
     }
 
     // 更新節目列表（現代電視台設計）
@@ -1105,21 +1134,6 @@ document.addEventListener('DOMContentLoaded', () => {
     return taiwanTime;
   }
 
-  // 獲取當前時間字符串（台灣時間）
-  function getCurrentTimeString() {
-    const taiwanTime = getTaiwanTime();
-    const hours = taiwanTime.getHours().toString().padStart(2, '0');
-    const minutes = taiwanTime.getMinutes().toString().padStart(2, '0');
-    return `${hours}:${minutes}`;
-  }
-
-  // 獲取星期幾（台灣時間）
-  function getDayOfWeek(date) {
-    const days = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
-    return days[date.getDay()];
-  }
-
-  // 判斷節目狀態（使用台灣時間）
   function getProgramStatus(program) {
     const taiwanTime = getTaiwanTime();
     const currentTime = taiwanTime.getHours() * 60 + taiwanTime.getMinutes();
@@ -1143,6 +1157,21 @@ document.addEventListener('DOMContentLoaded', () => {
       return 'ended'; // 已結束
     }
   }
+
+  // 獲取當前時間字符串（台灣時間）
+  function getCurrentTimeString() {
+    const taiwanTime = getTaiwanTime();
+    const hours = taiwanTime.getHours().toString().padStart(2, '0');
+    const minutes = taiwanTime.getMinutes().toString().padStart(2, '0');
+    return `${hours}:${minutes}`;
+  }
+
+  // 獲取星期幾（台灣時間）
+  function getDayOfWeek(date) {
+    const days = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+    return days[date.getDay()];
+  }
+
 
   // 判斷是否為當前正在播出的節目（向後兼容）
   function isCurrentProgram(program) {
@@ -1868,4 +1897,232 @@ document.addEventListener('click', function(e) {
     closeFullscreenPlayer();
   }
 });
+
+// === TLC風格版型渲染函數 ===
+function renderTLCStyleSchedule(programs) {
+  console.log('🎯 開始渲染TLC風格版型節目表，節目數量:', programs ? programs.length : 0);
+  
+  // 如果沒有節目數據，生成預設節目
+  if (!programs || programs.length === 0) {
+    console.log('📝 沒有節目數據，生成預設節目卡片');
+    programs = generateDefaultProgramCards();
+    console.log('✅ 已生成預設節目，數量:', programs.length);
+  }
+  
+  // 找到當前節目
+  const currentProgram = programs.find(p => {
+    try {
+      return getProgramStatus(p) === 'now-playing';
+    } catch (error) {
+      // 如果 getProgramStatus 函數未定義，使用節目的 status 屬性
+      return p.status === 'now-playing';
+    }
+  });
+  console.log('🔍 當前節目:', currentProgram ? currentProgram.title : '無');
+  
+  // 更新主節目區域 - 顯示當前時段的節目
+  if (currentProgram) {
+    updateMainProgramArea(currentProgram);
+  } else {
+    // 如果沒有當前節目，顯示第一個節目（當前時段）
+    const firstProgram = programs[0] || {
+      time: "09:30",
+      title: "目前暫無節目",
+      duration: "30",
+      category: "空檔",
+      description: "此時段暫無節目安排",
+      thumbnail: "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=800&h=450&fit=crop",
+      youtubeId: "",
+      status: "now-playing"
+    };
+    console.log('📺 更新主節目區域:', firstProgram.title);
+    updateMainProgramArea(firstProgram);
+  }
+
+  // 渲染節目列表 - 從第二個節目開始（下一個時段）
+  const upcomingPrograms = programs.slice(1); // 從第二個節目開始
+  console.log('📋 開始渲染節目列表，節目數量:', upcomingPrograms.length);
+  renderProgramList(upcomingPrograms);
+}
+
+function updateMainProgramArea(program) {
+  const mainProgramImage = document.getElementById('main-program-image');
+  const mainProgramTitle = document.getElementById('main-program-title');
+  const mainProgramDescription = document.getElementById('main-program-description');
+  const mainProgramTime = document.getElementById('main-program-time');
+  const mainProgramStatus = document.getElementById('main-program-status');
+  const mainProgramDuration = document.getElementById('main-program-duration');
+  const playButton = document.getElementById('play-button');
+
+  if (mainProgramImage) {
+    mainProgramImage.src = program.thumbnail;
+  }
+  if (mainProgramTitle) {
+    mainProgramTitle.textContent = program.title;
+  }
+  if (mainProgramDescription) {
+    mainProgramDescription.textContent = program.description;
+  }
+  if (mainProgramTime) {
+    mainProgramTime.textContent = program.time;
+  }
+  if (mainProgramStatus) {
+    let status = 'upcoming'; // 預設狀態
+    try {
+      status = getProgramStatus(program);
+      console.log('🎯 主節目狀態檢查結果:', status, '節目時間:', program.time);
+    } catch (error) {
+      console.log('⚠️ getProgramStatus 函數未定義，使用預設狀態');
+      status = program.status || 'upcoming';
+    }
+    mainProgramStatus.textContent = status === 'now-playing' ? '現正播出' : '即將播出';
+    console.log('📺 主節目狀態顯示:', mainProgramStatus.textContent);
+  }
+  if (mainProgramDuration) {
+    mainProgramDuration.textContent = program.duration + '分鐘';
+  }
+
+  // 播放按鈕事件
+  if (playButton) {
+    playButton.onclick = () => {
+      let status = program.status || 'upcoming'; // 使用節目的 status 屬性
+      try {
+        status = getProgramStatus(program);
+      } catch (error) {
+        console.log('⚠️ getProgramStatus 函數未定義，使用節目的 status 屬性:', status);
+      }
+      
+      if (program.youtubeId && status === 'now-playing') {
+        openFullscreenPlayer(program.youtubeId);
+      } else {
+        showNonPlayableMessage(program.title, status);
+      }
+    };
+  }
+}
+
+function renderProgramList(programs) {
+  console.log('🔧 renderProgramList 被調用，節目數量:', programs ? programs.length : 0);
+  
+  const programList = document.getElementById('program-list');
+  console.log('🎯 找到節目列表容器:', programList ? '是' : '否');
+  
+  if (!programList) {
+    console.error('❌ 找不到 program-list 元素！');
+    return;
+  }
+
+  programList.innerHTML = '';
+  console.log('🧹 已清空節目列表容器');
+
+  // 如果沒有節目，顯示預設的「目前暫無節目」卡片
+  if (!programs || programs.length === 0) {
+    console.log('📝 沒有節目數據，生成預設節目卡片');
+    const defaultPrograms = generateDefaultProgramCards();
+    console.log('✅ 已生成預設節目，數量:', defaultPrograms.length);
+    
+    defaultPrograms.forEach((program, index) => {
+      console.log(`📋 渲染第 ${index + 1} 個節目:`, program.title, program.time);
+      renderProgramListItem(program, programList);
+    });
+    console.log('🎉 所有預設節目卡片已渲染完成');
+    return;
+  }
+
+  console.log('📋 渲染現有節目列表');
+  programs.forEach((program, index) => {
+    console.log(`📋 渲染第 ${index + 1} 個節目:`, program.title, program.time);
+    renderProgramListItem(program, programList);
+  });
+  console.log('🎉 所有節目卡片已渲染完成');
+}
+
+function renderProgramListItem(program, programList) {
+  console.log('🎨 渲染節目列表項目:', program.title, program.time);
+  
+  let status = program.status || 'upcoming'; // 使用節目的 status 屬性
+  try {
+    status = getProgramStatus(program);
+  } catch (error) {
+    console.log('⚠️ getProgramStatus 函數未定義，使用節目的 status 屬性:', status);
+  }
+  
+  const listItem = document.createElement('div');
+  listItem.className = `program-list-item ${status === 'now-playing' ? 'current' : status === 'upcoming' ? 'upcoming' : ''}`;
+  
+  listItem.innerHTML = `
+    <div class="program-list-thumbnail">
+      <img src="${program.thumbnail}" alt="${escapeHtml(program.title)}">
+    </div>
+    <div class="program-list-info">
+      <div class="program-list-title-text">${escapeHtml(program.title)}</div>
+      <div class="program-list-meta">
+        <span class="program-list-time">${program.time}</span>
+        <span class="program-list-duration">${program.duration}分鐘</span>
+      </div>
+    </div>
+  `;
+
+  // 點擊事件
+  listItem.addEventListener('click', () => {
+    console.log('🖱️ 點擊節目:', program.title);
+    // 更新主節目區域
+    updateMainProgramArea(program);
+
+    // 更新列表項目的狀態
+    document.querySelectorAll('.program-list-item').forEach(item => {
+      item.classList.remove('current');
+    });
+    listItem.classList.add('current');
+  });
+
+  programList.appendChild(listItem);
+  console.log('✅ 節目列表項目已添加到DOM:', program.title);
+}
+
+function generateDefaultProgramCards() {
+  const taiwanTime = getTaiwanTime();
+  const currentHour = taiwanTime.getHours();
+  const currentMinute = taiwanTime.getMinutes();
+  
+  // 計算當前時段（每30分鐘一個時段）
+  const currentTimeSlot = currentMinute < 30 ? 0 : 1;
+  const startHour = currentHour;
+  const startMinute = currentTimeSlot * 30;
+  
+  console.log('🕐 當前時間:', currentHour + ':' + currentMinute.toString().padStart(2, '0'));
+  console.log('📅 當前時段:', startHour + ':' + startMinute.toString().padStart(2, '0'));
+  
+  const programs = [];
+  
+  // 生成12個小時的節目（24個時段，每小時2個），從當前時段開始
+  for (let i = 0; i < 12; i++) { // 只顯示12個時段，避免列表過長
+    const totalMinutes = startMinute + i * 30;
+    const hour = (startHour + Math.floor(totalMinutes / 60)) % 24;
+    const minute = totalMinutes % 60;
+    const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+    
+    // 第一個節目設為「現正播出」，其他節目設為「即將播出」
+    let status = "upcoming";
+    if (i === 0) {
+      status = "now-playing";
+    }
+    
+    console.log('📺 生成節目:', timeString, '狀態:', status);
+    
+    programs.push({
+      time: timeString,
+      title: "目前暫無節目",
+      duration: "30",
+      category: "空檔",
+      description: "此時段暫無節目安排",
+      thumbnail: "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop",
+      youtubeId: "",
+      status: status,
+      tags: []
+    });
+  }
+  
+  return programs;
+}
 

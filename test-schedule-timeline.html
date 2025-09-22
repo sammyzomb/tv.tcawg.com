@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>節目表版型測試 - 時間軸版型</title>
+  <link rel="stylesheet" href="style.css?v=20250909v2">
+  <link rel="stylesheet" href="simple-enhanced-styles.css?v=20250909v2">
+  <style>
+    /* 時間軸版型樣式 */
+    .schedule-section {
+      padding: 40px 4%;
+      background: var(--section-bg);
+    }
+
+    .schedule-container {
+      background: var(--card-bg);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 8px 32px var(--shadow-color);
+      border: 1px solid var(--card-border);
+      position: relative;
+    }
+
+    .timeline {
+      position: relative;
+      padding: 40px 20px;
+    }
+
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 60px;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: linear-gradient(to bottom, var(--primary-color), #e0e0e0);
+      border-radius: 2px;
+    }
+
+    .timeline-item {
+      position: relative;
+      margin-bottom: 40px;
+      padding-left: 100px;
+    }
+
+    .timeline-item::before {
+      content: '';
+      position: absolute;
+      left: 48px;
+      top: 20px;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--card-bg);
+      border: 3px solid var(--primary-color);
+      z-index: 2;
+    }
+
+    .timeline-item.current::before {
+      background: #e74c3c;
+      border-color: #e74c3c;
+      box-shadow: 0 0 0 4px rgba(231, 76, 60, 0.2);
+    }
+
+    .timeline-item.upcoming::before {
+      background: #3498db;
+      border-color: #3498db;
+    }
+
+    .timeline-content {
+      background: var(--card-bg);
+      border-radius: 12px;
+      border: 1px solid var(--card-border);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      overflow: hidden;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+
+    .timeline-content:hover {
+      transform: translateX(8px);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    }
+
+    .timeline-item.current .timeline-content {
+      border-left: 4px solid #e74c3c;
+      background: rgba(231, 76, 60, 0.05);
+    }
+
+    .timeline-item.upcoming .timeline-content {
+      border-left: 4px solid #3498db;
+    }
+
+    .timeline-time {
+      position: absolute;
+      left: 0;
+      top: 15px;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--primary-color);
+      min-width: 80px;
+    }
+
+    .timeline-item.current .timeline-time {
+      color: #e74c3c;
+    }
+
+    .timeline-item.upcoming .timeline-time {
+      color: #3498db;
+    }
+
+    .program-card {
+      display: flex;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .program-thumbnail {
+      width: 120px;
+      height: 80px;
+      border-radius: 8px;
+      overflow: hidden;
+      margin-right: 20px;
+      flex-shrink: 0;
+    }
+
+    .program-thumbnail img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .program-info {
+      flex: 1;
+    }
+
+    .program-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--text-color);
+      margin-bottom: 6px;
+    }
+
+    .program-description {
+      font-size: 0.9rem;
+      color: var(--text-color-light);
+      line-height: 1.4;
+      margin-bottom: 8px;
+    }
+
+    .program-meta {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .program-category {
+      font-size: 0.8rem;
+      color: var(--text-color-light);
+      background: rgba(0, 0, 0, 0.05);
+      padding: 4px 8px;
+      border-radius: 4px;
+    }
+
+    .program-duration {
+      font-size: 0.8rem;
+      color: var(--text-color-light);
+      font-weight: 500;
+    }
+
+    .program-status {
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 4px 8px;
+      border-radius: 4px;
+    }
+
+    .program-status.current {
+      background: #e74c3c;
+      color: white;
+    }
+
+    .program-status.upcoming {
+      background: #3498db;
+      color: white;
+    }
+
+    .section-title-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+    }
+
+    .title-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .title-icon {
+      width: 24px;
+      height: 24px;
+      stroke: var(--primary-color);
+    }
+
+    .title-left h2 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--text-color);
+      margin: 0;
+    }
+
+    .current-datetime-text {
+      font-size: 1rem;
+      color: var(--text-color-light);
+      font-weight: 500;
+    }
+
+    .back-btn {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      background: var(--primary-color);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      z-index: 1000;
+    }
+
+    .back-btn:hover {
+      background: var(--primary-color-hover);
+    }
+
+    /* 響應式設計 */
+    @media (max-width: 768px) {
+      .timeline::before {
+        left: 30px;
+      }
+
+      .timeline-item {
+        padding-left: 70px;
+      }
+
+      .timeline-item::before {
+        left: 18px;
+      }
+
+      .timeline-time {
+        font-size: 1rem;
+        min-width: 60px;
+      }
+
+      .program-card {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .program-thumbnail {
+        width: 100%;
+        height: 120px;
+        margin-right: 0;
+        margin-bottom: 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <button class="back-btn" onclick="window.history.back()">← 返回</button>
+
+  <div class="container">
+    <section class="schedule-section">
+      <div class="section-title-container">
+        <div class="title-left">
+          <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+            <line x1="16" y1="2" x2="16" y2="6"/>
+            <line x1="8" y1="2" x2="8" y2="6"/>
+            <line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
+          <h2>今日節目表 - 時間軸版型</h2>
+        </div>
+        <div class="current-datetime-text" id="currentDateTime">台灣時間 9月16日 星期一 現在時間 09:43</div>
+      </div>
+
+      <div class="schedule-container">
+        <div class="timeline" id="timeline">
+          <!-- 節目表項目將由 JavaScript 動態載入 -->
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    // 模擬節目數據
+    const mockPrograms = [
+      {
+        time: "09:30",
+        title: "目前暫無節目",
+        duration: "30",
+        category: "空檔",
+        description: "此時段暫無節目安排",
+        thumbnail: "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop",
+        youtubeId: "",
+        status: "current"
+      },
+      {
+        time: "10:00",
+        title: "目前暫無節目",
+        duration: "30",
+        category: "空檔",
+        description: "此時段暫無節目安排",
+        thumbnail: "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop",
+        youtubeId: "",
+        status: "upcoming"
+      },
+      {
+        time: "10:30",
+        title: "目前暫無節目",
+        duration: "30",
+        category: "空檔",
+        description: "此時段暫無節目安排",
+        thumbnail: "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop",
+        youtubeId: "",
+        status: "upcoming"
+      },
+      {
+        time: "11:00",
+        title: "目前暫無節目",
+        duration: "30",
+        category: "空檔",
+        description: "此時段暫無節目安排",
+        thumbnail: "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop",
+        youtubeId: "",
+        status: "upcoming"
+      },
+      {
+        time: "11:30",
+        title: "目前暫無節目",
+        duration: "30",
+        category: "空檔",
+        description: "此時段暫無節目安排",
+        thumbnail: "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop",
+        youtubeId: "",
+        status: "upcoming"
+      }
+    ];
+
+    function renderSchedule() {
+      const timeline = document.getElementById('timeline');
+      timeline.innerHTML = '';
+
+      mockPrograms.forEach(program => {
+        const timelineItem = document.createElement('div');
+        timelineItem.className = `timeline-item ${program.status}`;
+        
+        timelineItem.innerHTML = `
+          <div class="timeline-time">${program.time}</div>
+          <div class="timeline-content">
+            <div class="program-card">
+              <div class="program-thumbnail">
+                <img src="${program.thumbnail}" alt="${program.title}">
+              </div>
+              <div class="program-info">
+                <div class="program-title">${program.title}</div>
+                <div class="program-description">${program.description}</div>
+                <div class="program-meta">
+                  <div class="program-category">${program.category}</div>
+                  <div class="program-duration">${program.duration}分鐘</div>
+                  <div class="program-status ${program.status}">
+                    ${program.status === 'current' ? '現正播出' : '即將播出'}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+
+        timeline.appendChild(timelineItem);
+      });
+    }
+
+    // 頁面載入時渲染節目表
+    document.addEventListener('DOMContentLoaded', renderSchedule);
+  </script>
+</body>
+</html>
+
