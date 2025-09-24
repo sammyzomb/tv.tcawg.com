@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contentful HERO 影片設定工具</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .status.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .status.error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .status.warning { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        .status.info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        
+        .video-item {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 4px;
+            background: #f9f9f9;
+        }
+        .video-item.hero {
+            border-color: #28a745;
+            background: #f8fff8;
+        }
+        
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+        button.danger { background: #dc3545; }
+        button.danger:hover { background: #c82333; }
+        
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .form-group {
+            margin: 15px 0;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎬 Contentful HERO 影片設定工具</h1>
+    
+    <div class="section">
+        <h2>📊 連線狀態檢查</h2>
+        <div id="connection-status"></div>
+        <button onclick="checkConnection()">檢查 Contentful 連線</button>
+    </div>
+    
+    <div class="section">
+        <h2>🎯 現有影片分析</h2>
+        <div id="videos-analysis"></div>
+        <button onclick="analyzeVideos()">分析所有影片</button>
+    </div>
+    
+    <div class="section">
+        <h2>⚙️ 設定 HERO 影片</h2>
+        <div id="hero-setup"></div>
+        <button onclick="setupHeroVideos()">設定 HERO 影片</button>
+    </div>
+    
+    <div class="section">
+        <h2>📝 操作日誌</h2>
+        <div id="operation-log" class="log"></div>
+        <button onclick="clearLog()">清除日誌</button>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/contentful@latest/dist/contentful.browser.min.js"></script>
+    <script src="browser-config.js"></script>
+    <script>
+        // 初始化 Contentful client
+        const contentfulClient = contentful.createClient({
+            space: 'os5wf90ljenp',
+            accessToken: 'lODH-WLwHwVZv7O4rFdBWjSnrzaQWGD4koeOZ1Dypj0'
+        });
+
+        let logMessages = [];
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logMessage = `[${timestamp}] ${message}`;
+            logMessages.push(logMessage);
+            
+            const logElement = document.getElementById('operation-log');
+            logElement.textContent = logMessages.join('\n');
+            logElement.scrollTop = logElement.scrollHeight;
+            
+            console.log(logMessage);
+        }
+
+        function clearLog() {
+            logMessages = [];
+            document.getElementById('operation-log').textContent = '';
+        }
+
+        function addStatus(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            const statusDiv = document.createElement('div');
+            statusDiv.className = `status ${type}`;
+            statusDiv.textContent = message;
+            element.appendChild(statusDiv);
+        }
+
+        function clearStatus(elementId) {
+            document.getElementById(elementId).innerHTML = '';
+        }
+
+        async function checkConnection() {
+            clearStatus('connection-status');
+            log('開始檢查 Contentful 連線...');
+            
+            try {
+                const testEntry = await contentfulClient.getEntries({
+                    content_type: 'video',
+                    limit: 1
+                });
+                
+                addStatus('connection-status', '✅ Contentful 連線正常', 'success');
+                addStatus('connection-status', `找到 ${testEntry.total} 個影片`, 'info');
+                log(`Contentful 連線成功，總共 ${testEntry.total} 個影片`);
+                
+                return true;
+            } catch (error) {
+                addStatus('connection-status', '❌ Contentful 連線失敗', 'error');
+                addStatus('connection-status', `錯誤: ${error.message}`, 'error');
+                log(`Contentful 連線失敗: ${error.message}`, 'error');
+                return false;
+            }
+        }
+
+        async function analyzeVideos() {
+            clearStatus('videos-analysis');
+            log('開始分析影片資料...');
+            
+            try {
+                const allVideos = await contentfulClient.getEntries({
+                    content_type: 'video',
+                    order: '-sys.updatedAt',
+                    limit: 1000
+                });
+
+                log(`獲取到 ${allVideos.items.length} 個影片`);
+
+                let heroCount = 0;
+                let validYouTubeCount = 0;
+                const heroVideos = [];
+                const allVideoList = [];
+
+                allVideos.items.forEach(item => {
+                    const fields = item.fields || {};
+                    const videoData = {
+                        id: item.sys.id,
+                        title: fields.影片標題 || fields.title || '未命名',
+                        youtubeId: fields.YouTubeID || fields.youTubeId || fields.youtubeId || '',
+                        isHero: fields.isHero || fields.首頁HERO || false,
+                        updatedAt: item.sys.updatedAt
+                    };
+                    
+                    allVideoList.push(videoData);
+                    
+                    if (videoData.isHero === true) {
+                        heroCount++;
+                        heroVideos.push(videoData);
+                    }
+                    
+                    if (videoData.youtubeId && videoData.youtubeId.length === 11) {
+                        validYouTubeCount++;
+                    }
+                });
+
+                // 顯示統計
+                addStatus('videos-analysis', `總影片數: ${allVideos.items.length}`, 'info');
+                addStatus('videos-analysis', `HERO 影片數: ${heroCount}`, heroCount > 0 ? 'success' : 'error');
+                addStatus('videos-analysis', `有效 YouTube ID 數: ${validYouTubeCount}`, 'info');
+
+                // 顯示 HERO 影片
+                if (heroVideos.length > 0) {
+                    addStatus('videos-analysis', '現有 HERO 影片:', 'info');
+                    heroVideos.forEach(video => {
+                        const videoDiv = document.createElement('div');
+                        videoDiv.className = 'video-item hero';
+                        videoDiv.innerHTML = `
+                            <h4>${video.title}</h4>
+                            <p><strong>YouTube ID:</strong> ${video.youtubeId || '無'}</p>
+                            <p><strong>更新時間:</strong> ${new Date(video.updatedAt).toLocaleString()}</p>
+                        `;
+                        document.getElementById('videos-analysis').appendChild(videoDiv);
+                    });
+                } else {
+                    addStatus('videos-analysis', '❌ 沒有找到 HERO 影片', 'error');
+                }
+
+                // 顯示前 10 個影片供參考
+                addStatus('videos-analysis', '前 10 個影片（可設定為 HERO）:', 'info');
+                allVideoList.slice(0, 10).forEach(video => {
+                    const videoDiv = document.createElement('div');
+                    videoDiv.className = 'video-item';
+                    videoDiv.innerHTML = `
+                        <h4>${video.title}</h4>
+                        <p><strong>YouTube ID:</strong> ${video.youtubeId || '無'}</p>
+                        <p><strong>是否為 HERO:</strong> ${video.isHero ? '是' : '否'}</p>
+                        <button onclick="setAsHero('${video.id}')" ${video.isHero ? 'disabled' : ''}>
+                            ${video.isHero ? '已是 HERO' : '設為 HERO'}
+                        </button>
+                    `;
+                    document.getElementById('videos-analysis').appendChild(videoDiv);
+                });
+
+                log(`分析完成: ${heroCount} 個 HERO 影片, ${validYouTubeCount} 個有效 YouTube ID`);
+
+            } catch (error) {
+                addStatus('videos-analysis', `❌ 分析失敗: ${error.message}`, 'error');
+                log(`分析影片失敗: ${error.message}`, 'error');
+            }
+        }
+
+        async function setAsHero(videoId) {
+            log(`嘗試將影片 ${videoId} 設為 HERO...`);
+            
+            try {
+                // 注意：這裡需要 Management API 權限才能修改內容
+                // 目前只能顯示操作建議
+                addStatus('videos-analysis', `建議: 在 Contentful 管理介面中將影片 ${videoId} 的 isHero 欄位設為 true`, 'warning');
+                log(`建議: 手動在 Contentful 中設定影片 ${videoId} 的 isHero 欄位為 true`);
+                
+            } catch (error) {
+                log(`設定 HERO 失敗: ${error.message}`, 'error');
+            }
+        }
+
+        async function setupHeroVideos() {
+            clearStatus('hero-setup');
+            log('開始 HERO 影片設定...');
+            
+            addStatus('hero-setup', '📋 HERO 影片設定步驟:', 'info');
+            addStatus('hero-setup', '1. 登入 Contentful 管理介面', 'info');
+            addStatus('hero-setup', '2. 找到「Content model」→「video」', 'info');
+            addStatus('hero-setup', '3. 確認有「isHero」或「首頁HERO」欄位', 'info');
+            addStatus('hero-setup', '4. 編輯影片內容，將 isHero 設為 true', 'info');
+            addStatus('hero-setup', '5. 確保影片有有效的 YouTube ID', 'info');
+            addStatus('hero-setup', '6. 發布內容', 'info');
+            
+            log('提供 HERO 影片設定步驟說明');
+        }
+
+        // 頁面載入時自動檢查
+        document.addEventListener('DOMContentLoaded', () => {
+            log('Contentful HERO 設定工具已載入');
+            checkConnection();
+        });
+    </script>
+</body>
+</html>

@@ -54,6 +54,17 @@
         console.error('❌ Contentful 中沒有 Hero 影片');
         console.log('請在 Contentful 中設定 HERO 影片 (isHero: true)');
         console.log('或者檢查影片的 isHero 欄位是否設為 true');
+        
+        // 顯示錯誤訊息給用戶
+        const heroCaption = document.getElementById('heroCaption');
+        if (heroCaption) {
+          heroCaption.innerHTML = `
+            <div class="cap-title">影片播放器設定錯誤</div>
+            <div class="cap-desc">請在 Contentful 中設定 HERO 影片</div>
+          `;
+          heroCaption.classList.add('visible');
+        }
+        
         return; // 直接返回，不初始化播放器
       } else {
         console.log(`✅ 成功從 Contentful 載入 ${data.length} 個 HERO 影片`);
@@ -82,6 +93,17 @@
       console.error('❌ Contentful 載入失敗:', err);
       console.log('請檢查 Contentful 連線設定或網路連線');
       console.log('HERO 影片系統無法啟動，因為無法從 Contentful 載入資料');
+      
+      // 顯示錯誤訊息給用戶
+      const heroCaption = document.getElementById('heroCaption');
+      if (heroCaption) {
+        heroCaption.innerHTML = `
+          <div class="cap-title">Contentful 連線失敗</div>
+          <div class="cap-desc">請檢查網路連線或 Contentful 設定</div>
+        `;
+        heroCaption.classList.add('visible');
+      }
+      
       // 不提供備用資料，直接結束
     });
   });
@@ -95,11 +117,11 @@
     }
   }
 
-     function onYouTubeIframeAPIReady() {
-     if (!heroVideos.length || !heroOrder.length) {
-       console.log('沒有 Hero 影片可播放');
-       return;
-     }
+  function onYouTubeIframeAPIReady() {
+    if (!heroVideos.length || !heroOrder.length) {
+      console.log('沒有 Hero 影片可播放');
+      return;
+    }
 
     const mask = document.getElementById('heroMask');
     if (mask) mask.classList.add('show'); // 先蓋遮罩
