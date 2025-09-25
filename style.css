@@ -190,6 +190,8 @@ body.menu-open {
   justify-content: space-between; 
   align-items: center; 
   margin-bottom: 24px; 
+  padding: 0 4%;
+  max-width: none;
 }
 
 .title-left {
@@ -363,11 +365,12 @@ body.menu-open {
   font-weight: 500;
   text-shadow: 0 1px 3px rgba(0,0,0,0.5);
 }
-/* 節目表CTA按鈕（優化版） */
+/* 節目表CTA按鈕（優化版） - 滿版寬度 */
 .section-cta-container {
   text-align: center;
   margin-top: 40px;
   position: relative;
+  padding: 0 4%;
 }
 
 .section-cta-container::before {
@@ -468,10 +471,11 @@ body.dark-theme .section-cta-btn:hover {
   border-color: rgba(18, 24, 33, 0.3);
 }
 
-/* 響應式設計 */
+/* 響應式設計 - CTA 按鈕 */
 @media (max-width: 768px) {
   .section-cta-container {
     margin-top: 30px;
+    padding: 0 3%;
   }
   
   .section-cta-btn {
@@ -488,6 +492,7 @@ body.dark-theme .section-cta-btn:hover {
 @media (max-width: 480px) {
   .section-cta-container {
     margin-top: 25px;
+    padding: 0 3%;
   }
   
   .section-cta-btn {
@@ -613,11 +618,12 @@ body.dark-theme .divider{ background: var(--navbar-border); }
 body.dark-theme .continent-item .label .en{ color: var(--text-color-light); }
 
 
-/* --- 節目時間表樣式（橫幅版本）--- */
+/* --- TLC 風格節目時間表樣式 - 滿版寬度 --- */
 .schedule-section {
-  padding: 40px 4%;
+  padding: 40px 0;
   background: var(--section-bg);
   position: relative;
+  width: 100%;
 }
 
 .schedule-section::before {
@@ -629,6 +635,568 @@ body.dark-theme .continent-item .label .en{ color: var(--text-color-light); }
   height: 1px;
   background: linear-gradient(90deg, transparent 0%, var(--primary-color) 50%, transparent 100%);
   opacity: 0.3;
+}
+
+/* TLC 風格容器 - 滿版寬度 */
+.tlc-schedule-container {
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  gap: 0;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  background: var(--card-bg);
+  border-radius: 0;
+  overflow: hidden;
+  box-shadow: none;
+  border: none;
+  min-height: 800px;
+  height: 800px;
+}
+
+/* 左側現正播出區域 */
+.now-playing-area {
+  padding: 0;
+  background: var(--card-bg);
+}
+
+.now-playing-header {
+  padding: 20px 25px 15px;
+  border-bottom: 1px solid var(--card-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+  color: white;
+}
+
+.now-playing-header h3 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.live-indicator {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  animation: pulse 2s infinite;
+}
+
+.now-playing-card {
+  position: relative;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.now-playing-thumbnail {
+  position: relative;
+  width: 100%;
+  height: 400px;
+  overflow: hidden;
+  background: #000;
+}
+
+.now-playing-thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.now-playing-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.3) 0%,
+    rgba(0, 0, 0, 0.1) 50%,
+    rgba(0, 0, 0, 0.7) 100%
+  );
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 20px;
+}
+
+.now-playing-time {
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  font-family: 'Montserrat', sans-serif;
+  align-self: flex-start;
+  backdrop-filter: blur(10px);
+}
+
+.now-playing-status {
+  background: #e74c3c;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 15px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  align-self: flex-start;
+  animation: pulse 2s infinite;
+}
+
+.now-playing-play-button {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80px;
+  height: 80px;
+  background: rgba(231, 76, 60, 0.9);
+  border: none;
+  border-radius: 50%;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 25px rgba(231, 76, 60, 0.4);
+}
+
+.now-playing-play-button:hover {
+  background: #e74c3c;
+  transform: translate(-50%, -50%) scale(1.1);
+  box-shadow: 0 12px 35px rgba(231, 76, 60, 0.6);
+}
+
+.now-playing-play-button svg {
+  width: 32px;
+  height: 32px;
+  margin-left: 4px;
+}
+
+.now-playing-content {
+  padding: 25px;
+  background: var(--card-bg);
+  flex: 1;
+  min-height: 250px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.now-playing-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.now-playing-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--text-color);
+  margin: 0;
+  line-height: 1.3;
+  flex: 1;
+}
+
+.now-playing-status-badge {
+  background: #3498db;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-left: 15px;
+  flex-shrink: 0;
+}
+
+.now-playing-description {
+  font-size: 1rem;
+  color: var(--text-color-light);
+  line-height: 1.6;
+  margin: 0 0 20px 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.now-playing-meta {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-top: 15px;
+  min-height: 40px;
+  flex-wrap: wrap;
+}
+
+.now-playing-duration {
+  background: var(--primary-color);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 15px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.now-playing-category {
+  background: #3498db;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border: none;
+  display: inline-block;
+  box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
+}
+
+.now-playing-topics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+  margin-bottom: 10px;
+  min-height: 30px;
+}
+
+/* 右側即將播出節目列表區域 */
+.upcoming-programs-area {
+  background: var(--card-bg);
+  border-left: 1px solid var(--card-border);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  max-height: none;
+  overflow: hidden;
+}
+
+.upcoming-programs-header {
+  padding: 20px 25px 15px;
+  border-bottom: 1px solid var(--card-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+  color: white;
+}
+
+.upcoming-programs-header h3 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.upcoming-count {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.2);
+  padding: 4px 8px;
+  border-radius: 10px;
+}
+
+.upcoming-programs-list {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(52, 152, 219, 0.3) transparent;
+  max-height: calc(100% - 90px);
+}
+
+/* 自定義捲動條樣式 */
+.upcoming-programs-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.upcoming-programs-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.upcoming-programs-list::-webkit-scrollbar-thumb {
+  background: rgba(52, 152, 219, 0.3);
+  border-radius: 3px;
+}
+
+.upcoming-programs-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(52, 152, 219, 0.5);
+}
+
+.upcoming-program-item {
+  display: flex;
+  align-items: stretch;
+  padding: 25px 30px;
+  border-bottom: 2px solid rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  background: var(--card-bg);
+  min-height: calc((100vh - 350px) / 4);
+  flex: 1;
+}
+
+.upcoming-program-item:hover {
+  background: var(--primary-color-hover);
+  transform: translateX(5px);
+}
+
+.upcoming-program-item:last-child {
+  border-bottom: 2px solid rgba(0, 0, 0, 0.15);
+}
+
+.upcoming-program-item.next {
+  background: linear-gradient(90deg, rgba(52, 152, 219, 0.1) 0%, transparent 100%);
+  border-left: 3px solid #3498db;
+}
+
+.upcoming-program-item.next::before {
+  content: "";
+  display: none;
+}
+
+.upcoming-program-thumbnail {
+  width: 270px;
+  height: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+  margin-right: 30px;
+  flex-shrink: 0;
+  position: relative;
+  align-self: stretch;
+}
+
+.upcoming-program-thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.upcoming-program-time-overlay {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 700;
+  font-family: 'Montserrat', sans-serif;
+}
+
+.upcoming-program-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.upcoming-program-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-color);
+  margin: 0 0 8px 0;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.upcoming-program-description {
+  font-size: 1rem;
+  color: var(--text-color-light);
+  line-height: 1.4;
+  margin: 0 0 12px 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.upcoming-program-meta {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  font-size: 1.2rem;
+}
+
+.upcoming-program-duration {
+  color: var(--text-color-light);
+  background: var(--primary-color-hover);
+  padding: 6px 12px;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.upcoming-program-category {
+  color: #3498db;
+  font-weight: 500;
+}
+
+.upcoming-program-topics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.topic-tag {
+  background: #e8f4fd;
+  color: #2980b9;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  border: 1px solid #bde0ff;
+}
+
+/* 響應式設計 - 滿版寬度 */
+@media (max-width: 1200px) {
+  .tlc-schedule-container {
+    grid-template-columns: 3fr 2fr;
+    gap: 0;
+    height: 800px;
+  }
+  
+  .upcoming-programs-area {
+    max-height: none;
+  }
+  
+  .now-playing-thumbnail {
+    height: 350px;
+  }
+  
+  .now-playing-title {
+    font-size: 1.6rem;
+  }
+  
+  .now-playing-status-badge {
+    font-size: 0.75rem;
+    padding: 5px 10px;
+  }
+}
+
+@media (max-width: 900px) {
+  .tlc-schedule-container {
+    grid-template-columns: 1fr;
+    gap: 0;
+    height: auto;
+    min-height: 800px;
+  }
+  
+  .upcoming-programs-area {
+    border-left: none;
+    border-top: 1px solid var(--card-border);
+    max-height: none;
+  }
+  
+  .now-playing-thumbnail {
+    height: 350px;
+  }
+  
+  .now-playing-title {
+    font-size: 1.4rem;
+  }
+  
+  .now-playing-title-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .now-playing-status-badge {
+    margin-left: 0;
+    font-size: 0.7rem;
+    padding: 4px 8px;
+  }
+  
+  .upcoming-program-item {
+    padding: 12px 15px;
+  }
+  
+  .upcoming-program-thumbnail {
+    width: 225px;
+    height: 100%;
+  }
+}
+
+@media (max-width: 600px) {
+  .schedule-section {
+    padding: 20px 0;
+  }
+  
+  .section-title-container {
+    padding: 0 3%;
+  }
+  
+  .tlc-schedule-container {
+    height: auto;
+    min-height: 600px;
+  }
+  
+  .upcoming-programs-area {
+    max-height: 350px;
+  }
+  
+  .now-playing-thumbnail {
+    height: 300px;
+  }
+  
+  .now-playing-content {
+    padding: 20px;
+  }
+  
+  .now-playing-title {
+    font-size: 1.2rem;
+  }
+  
+  .now-playing-play-button {
+    width: 60px;
+    height: 60px;
+  }
+  
+  .now-playing-play-button svg {
+    width: 24px;
+    height: 24px;
+  }
+  
+  .upcoming-programs-header {
+    padding: 20px 20px 10px;
+  }
+  
+  .upcoming-program-item {
+    padding: 10px 15px;
+  }
+  
+  .upcoming-program-thumbnail {
+    width: 180px;
+    height: 100%;
+  }
+  
+  .upcoming-program-title {
+    font-size: 0.85rem;
+  }
 }
 
 

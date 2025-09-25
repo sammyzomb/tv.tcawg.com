@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <meta http-equiv="Permissions-Policy" content="encrypted-media=*, accelerometer=*, gyroscope=*, picture-in-picture=*, clipboard-write=*, web-share=*">
+  <meta http-equiv="Permissions-Policy" content="autoplay=*, encrypted-media=*, accelerometer=*, gyroscope=*, picture-in-picture=*, clipboard-write=*, web-share=*">
   <title>航向世界旅遊頻道</title>
   
   <link rel="stylesheet" href="style.css?v=20250909v2">
@@ -89,21 +89,55 @@
             <span class="current-datetime-text" id="currentDateTime">1月15日 星期一 14:30</span>
         </div>
     </div>
-    <div class="schedule-container">
-        <div class="schedule-nav-arrow left" id="schedule-nav-left">
-            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="15 18 9 12 15 6"></polyline>
-            </svg>
+    
+    <!-- TLC 風格版型：左右分欄佈局 -->
+    <div class="tlc-schedule-container">
+        <!-- 左側：現正播出節目區域 -->
+        <div class="now-playing-area">
+            <div class="now-playing-header">
+                <h3>🔴 現正播出</h3>
+                <span class="live-indicator">LIVE</span>
+            </div>
+            <div class="now-playing-card" id="now-playing-card">
+                <div class="now-playing-thumbnail">
+                    <img id="now-playing-image" src="" alt="現正播出節目">
+                    <div class="now-playing-overlay">
+                        <div class="now-playing-time" id="now-playing-time">14:30</div>
+                        <div class="now-playing-status" id="now-playing-status">現正播出</div>
+                        <button class="now-playing-play-button" id="now-playing-play-button">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polygon points="5,3 19,12 5,21"></polygon>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                    <div class="now-playing-content">
+                        <div class="now-playing-title-row">
+                            <h3 class="now-playing-title" id="now-playing-title">節目名稱</h3>
+                        </div>
+                        <p class="now-playing-description" id="now-playing-description">節目描述文字...</p>
+                        <div class="now-playing-meta">
+                            <span class="now-playing-category">旅遊節目</span>
+                        </div>
+                        <div class="now-playing-topics" id="now-playing-topics">
+                            <!-- 主題探索標籤將由 JavaScript 動態載入 -->
+                        </div>
+                    </div>
+            </div>
         </div>
-        <div class="schedule-list" id="schedule-list">
-            <!-- 節目表項目將由 script.js 動態載入 -->
-        </div>
-        <div class="schedule-nav-arrow right" id="schedule-nav-right">
-            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="9 18 15 12 9 6"></polyline>
-            </svg>
+        
+        <!-- 右側：即將播出節目卡片區域 -->
+        <div class="upcoming-programs-area">
+            <div class="upcoming-programs-header">
+                <h3>⏰ 即將播出</h3>
+                <span class="upcoming-count" id="upcoming-count">共 24 個節目</span>
+            </div>
+            <div class="upcoming-programs-list" id="upcoming-programs-list">
+                <!-- 即將播出節目列表將由 script.js 動態載入 -->
+            </div>
         </div>
     </div>
+    
     <div class="section-cta-container">
         <a href="schedule.html" class="section-cta-btn">查看完整節目表</a>
     </div>

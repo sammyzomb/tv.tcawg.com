@@ -335,6 +335,19 @@
     <div class="header">
       <h1>📅 統一節目管理系統</h1>
       <p>整合月曆、週曆、日曆三種視圖，統一管理所有節目安排</p>
+      <div class="current-time-display" id="currentTimeDisplay" style="
+        background: #2b71d2;
+        color: white;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        display: inline-block;
+        margin-top: 10px;
+        box-shadow: 0 2px 8px rgba(43, 113, 210, 0.3);
+      ">
+        🕐 台灣時間：<span id="currentTimeText">載入中...</span>
+      </div>
     </div>
 
     <div class="view-controls">
@@ -415,7 +428,11 @@
 
         <div class="form-group">
           <label>播出時間：</label>
-          <input type="time" id="airTime" required>
+          <input type="time" id="airTime" required onchange="checkPastDateTime()">
+        </div>
+
+        <div id="pastDateTimeWarning" style="display: none; background: #fff3cd; border: 1px solid #ffeaa7; color: #856404; padding: 10px; border-radius: 5px; margin: 10px 0; font-size: 0.9rem;">
+          ⚠️ <strong>警告：</strong>您選擇的是過去的日期或時間，這可能會影響節目排程。請確認是否要繼續編輯。
         </div>
 
         <div class="form-group">
@@ -453,16 +470,25 @@
 
         <div class="form-group">
           <label>節目分類：</label>
-          <select id="category" required>
-            <option value="">-- 選擇分類 --</option>
-            <option value="亞洲">亞洲</option>
-            <option value="歐洲">歐洲</option>
-            <option value="北美洲">北美洲</option>
-            <option value="南美洲">南美洲</option>
-            <option value="非洲">非洲</option>
-            <option value="大洋洲">大洋洲</option>
-            <option value="南極洲">南極洲</option>
-          </select>
+          <div style="display: flex; gap: 10px; align-items: center;">
+            <select id="category" required style="flex: 1;">
+              <option value="">-- 選擇分類 --</option>
+              <option value="亞洲">亞洲</option>
+              <option value="歐洲">歐洲</option>
+              <option value="北美洲">北美洲</option>
+              <option value="南美洲">南美洲</option>
+              <option value="非洲">非洲</option>
+              <option value="大洋洲">大洋洲</option>
+              <option value="南極洲">南極洲</option>
+            </select>
+            <button type="button" onclick="autoClassifyFromTitle()" 
+                    style="background: #28a745; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; white-space: nowrap;">
+              🤖 自動分類
+            </button>
+          </div>
+          <small style="color: #666; margin-top: 5px; display: block;">
+            點擊「自動分類」按鈕可根據標題和描述自動判斷所屬洲別
+          </small>
         </div>
 
         <div class="form-group">
@@ -475,7 +501,22 @@
 
         <div class="form-group">
           <label>節目描述：</label>
-          <textarea id="description" placeholder="簡短描述節目內容..."></textarea>
+          <div style="display: flex; gap: 10px; align-items: flex-start;">
+            <textarea id="description" placeholder="簡短描述節目內容..." style="flex: 1; min-height: 80px;"></textarea>
+            <div style="display: flex; flex-direction: column; gap: 5px;">
+               <button type="button" onclick="openYouTubePage()" 
+                       style="background: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; white-space: nowrap;">
+                 🔗 開啟 YouTube 頁面
+               </button>
+               <button type="button" onclick="pasteFromClipboard()" 
+                       style="background: #6f42c1; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; white-space: nowrap;">
+                 📋 貼上剪貼簿內容
+               </button>
+            </div>
+          </div>
+          <small style="color: #666; margin-top: 5px; display: block;">
+            點擊「🔗 開啟 YouTube 頁面」複製描述，然後點擊「📋 貼上剪貼簿內容」
+          </small>
         </div>
 
 
@@ -628,6 +669,34 @@
     let currentView = 'month';
     let events = {};
 
+    // 實時時間更新功能
+    function updateCurrentTime() {
+      const now = new Date();
+      // 直接使用當前時間，假設系統時間已經是台灣時間
+      
+      const year = now.getFullYear();
+      const month = now.getMonth() + 1;
+      const date = now.getDate();
+      const dayNames = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+      const dayName = dayNames[now.getDay()];
+      const hours = now.getHours().toString().padStart(2, '0');
+      const minutes = now.getMinutes().toString().padStart(2, '0');
+      const seconds = now.getSeconds().toString().padStart(2, '0');
+      
+      const timeString = `${year}年${month}月${date}日 ${dayName} ${hours}:${minutes}:${seconds}`;
+      
+      const currentTimeElement = document.getElementById('currentTimeText');
+      if (currentTimeElement) {
+        currentTimeElement.textContent = timeString;
+      }
+    }
+
+    // 啟動實時時間更新
+    function startTimeUpdates() {
+      updateCurrentTime(); // 立即更新一次
+      setInterval(updateCurrentTime, 1000); // 每秒更新
+    }
+
     // 主題探索分類資料
     const TOPICS_DATA = [
       {
@@ -693,6 +762,7 @@
       renderCurrentView();
       updateCurrentDateDisplay();
       loadTopics();
+      startTimeUpdates(); // 啟動實時時間更新
     });
 
     function switchView(view) {
@@ -756,15 +826,11 @@
             </div>
           `;
 
-          if (!isPastDate) {
-            dayElement.style.cursor = 'pointer';
-            dayElement.addEventListener('click', function() {
-              openTimeSlotSelector(dateString);
-            });
-          } else {
-            dayElement.style.cursor = 'not-allowed';
-            dayElement.style.opacity = '0.6';
-          }
+          // 移除過去日期的限制，所有日期都可以點擊編輯
+          dayElement.style.cursor = 'pointer';
+          dayElement.addEventListener('click', function() {
+            openTimeSlotSelector(dateString);
+          });
 
           calendarBody.appendChild(dayElement);
         }
@@ -840,13 +906,7 @@
 
         const hour = parseInt(timeSlot.split(':')[0]);
         const minute = parseInt(timeSlot.split(':')[1]);
-        const isPastTime = today.toDateString() === currentDate.toDateString() &&
-                          (hour < currentHour || (hour === currentHour && minute <= currentMinute));
-
-        if (isPastTime) {
-          timeCell.style.color = '#999';
-          timeCell.style.backgroundColor = '#f5f5f5';
-        }
+        // 移除過去時間的樣式限制，所有時間都可以編輯
 
         if (timeSlot === currentTimeSlot && today.toDateString() === currentDate.toDateString()) {
           timeCell.style.color = '#2b71d2';
@@ -894,22 +954,11 @@
             dayCell.appendChild(dateLabel);
           }
 
-          const todayStart = new Date(today);
-          todayStart.setHours(0, 0, 0, 0);
-          const isPastDate = currentDay < todayStart;
-          const isPastTimeToday = currentDay.toDateString() === today.toDateString() && isPastTime;
-          const isPastTimeOrDate = isPastDate || isPastTimeToday;
-
-          if (isPastTimeOrDate) {
-            dayCell.style.backgroundColor = '#f5f5f5';
-            dayCell.style.opacity = '0.6';
-            dayCell.style.cursor = 'not-allowed';
-          } else {
-            dayCell.style.cursor = 'pointer';
-            dayCell.addEventListener('click', function() {
-              openEventModal(dateString, timeSlot);
-            });
-          }
+          // 移除過去日期和時間的限制，所有日期和時間都可以點擊編輯
+          dayCell.style.cursor = 'pointer';
+          dayCell.addEventListener('click', function() {
+            openEventModal(dateString, timeSlot);
+          });
 
           const events = getDayEvents(dateString);
           const timeSlotEvents = events.filter(event => event.time === timeSlot);
@@ -984,7 +1033,7 @@
             dayCell.appendChild(eventDiv);
           });
 
-          if (timeSlotEvents.length === 0 && !isPastTimeOrDate) {
+          if (timeSlotEvents.length === 0) {
             const emptyDiv = document.createElement('div');
             emptyDiv.style.cssText = `
               color: #ccc;
@@ -1009,6 +1058,7 @@
       const today = new Date();
       const currentHour = today.getHours();
       const currentMinute = today.getMinutes();
+      const currentTimeSlot = `${currentHour.toString().padStart(2, '0')}:${Math.floor(currentMinute / 30) * 30 === 0 ? '00' : '30'}`;
       const dateString = currentDate.getFullYear() + '-' +
                        String(currentDate.getMonth() + 1).padStart(2, '0') + '-' +
                        String(currentDate.getDate()).padStart(2, '0');
@@ -1060,16 +1110,13 @@
 
         const hour = parseInt(timeSlot.split(':')[0]);
         const minute = parseInt(timeSlot.split(':')[1]);
-        const todayStart = new Date(today);
-        todayStart.setHours(0, 0, 0, 0);
-        const isPastDate = currentDate < todayStart;
-        const isPastTime = today.toDateString() === currentDate.toDateString() &&
-                          (hour < currentHour || (hour === currentHour && minute <= currentMinute));
-        const isPastTimeOrDate = isPastDate || isPastTime;
-
-        if (isPastTimeOrDate) {
-          timeCell.style.color = '#999';
-          timeCell.style.backgroundColor = '#f5f5f5';
+        
+        // 標示當前時間
+        if (timeSlot === currentTimeSlot && isToday) {
+          timeCell.style.color = '#2b71d2';
+          timeCell.style.fontWeight = '700';
+          timeCell.style.borderLeft = '3px solid #2b71d2';
+          timeCell.style.backgroundColor = '#e3f2fd';
         }
 
         row.appendChild(timeCell);
@@ -1083,17 +1130,18 @@
           display: flex;
           align-items: center;
         `;
-
-        if (isPastTimeOrDate) {
-          eventCell.style.backgroundColor = '#f5f5f5';
-          eventCell.style.opacity = '0.6';
-          eventCell.style.cursor = 'not-allowed';
-        } else {
-          eventCell.style.cursor = 'pointer';
-          eventCell.addEventListener('click', function() {
-            openEventModal(dateString, timeSlot);
-          });
+        
+        // 標示當前時間的事件單元格
+        if (timeSlot === currentTimeSlot && isToday) {
+          eventCell.style.backgroundColor = '#e3f2fd';
+          eventCell.style.borderLeft = '3px solid #2b71d2';
         }
+
+        // 移除過去時間的樣式限制，所有時間都可以點擊編輯
+        eventCell.style.cursor = 'pointer';
+        eventCell.addEventListener('click', function() {
+          openEventModal(dateString, timeSlot);
+        });
 
         const events = getDayEvents(dateString);
         const timeSlotEvents = events.filter(event => event.time === timeSlot);
@@ -1151,6 +1199,12 @@
     function getDayEvents(dateString) {
       const dayEvents = events[dateString] || [];
       return dayEvents;
+    }
+
+    // 獲取特定日期和時間的節目
+    function getEvent(date, time) {
+      const dayEvents = events[date] || [];
+      return dayEvents.find(event => event.time === time);
     }
 
     function getDayEventsHTML(dateString) {
@@ -1246,25 +1300,16 @@
     }
 
     function openEventModal(date, time = '') {
-      const today = new Date();
-      const currentHour = today.getHours();
-      const currentMinute = today.getMinutes();
-      const todayString = today.getFullYear() + '-' +
-                         String(today.getMonth() + 1).padStart(2, '0') + '-' +
-                         String(today.getDate()).padStart(2, '0');
-      const isPastDate = date < todayString;
-      const isPastTime = date === todayString &&
-                        (parseInt(time.split(':')[0]) < currentHour ||
-                         (parseInt(time.split(':')[0]) === currentHour && parseInt(time.split(':')[1]) <= currentMinute));
-
-      if (isPastDate || isPastTime) {
-        showStatus('無法編輯過去的日期或時間', 'warning');
-        return;
-      }
+      // 移除過去日期和時間的編輯限制，允許編輯所有日期和時間
 
       document.getElementById('editDate').value = date;
       document.getElementById('editTime').value = time;
       document.getElementById('airTime').value = time;
+      
+      // 檢查是否為過去的時間並顯示警語
+      setTimeout(() => {
+        checkPastDateTime();
+      }, 100);
 
       const existingEvent = getEvent(date, time);
       if (existingEvent) {
@@ -1293,6 +1338,27 @@
           // 沒有縮圖資料，使用預設
           thumbnailPreview.src = 'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=200&h=112&fit=crop';
           thumbnailPreview.removeAttribute('data-youtube-url');
+        }
+        
+        // 載入主題探索分類
+        if (existingEvent.topics && Array.isArray(existingEvent.topics)) {
+          // 清除所有主題選擇
+          document.querySelectorAll('input[name="topics"]').forEach(checkbox => {
+            checkbox.checked = false;
+          });
+          
+          // 選中現有的主題
+          existingEvent.topics.forEach(topicId => {
+            const checkbox = document.querySelector(`input[name="topics"][value="${topicId}"]`);
+            if (checkbox) {
+              checkbox.checked = true;
+            }
+          });
+        } else {
+          // 如果沒有主題資料，清除所有選擇
+          document.querySelectorAll('input[name="topics"]').forEach(checkbox => {
+            checkbox.checked = false;
+          });
         }
         
         // 清除檔案選擇（因為是編輯現有節目）
@@ -1327,6 +1393,11 @@
           thumbnailFile.value = '';
         }
         
+        // 清除主題探索分類選擇
+        document.querySelectorAll('input[name="topics"]').forEach(checkbox => {
+          checkbox.checked = false;
+        });
+        
         // 隱藏影片類型相關欄位
         toggleVideoFields();
       }
@@ -1354,7 +1425,7 @@
         for (let minute = 0; minute < 60; minute += 30) {
           const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
 
-          const isPastTime = isToday && (hour < currentHour || (hour === currentHour && minute <= currentMinute));
+          // 移除過去時間的限制，所有時間都可以選擇
 
           const timeSlot = document.createElement('div');
           timeSlot.className = 'time-slot-btn';
@@ -1363,29 +1434,27 @@
             border: 2px solid #e9ecef;
             border-radius: 8px;
             text-align: center;
-            cursor: ${isPastTime ? 'not-allowed' : 'pointer'};
-            background: ${isPastTime ? '#f5f5f5' : '#fff'};
-            color: ${isPastTime ? '#999' : '#333'};
+            cursor: pointer;
+            background: #fff;
+            color: #333;
             font-weight: 600;
             transition: all 0.3s ease;
           `;
 
-          if (!isPastTime) {
-            timeSlot.addEventListener('mouseenter', function() {
-              this.style.borderColor = '#2b71d2';
-              this.style.backgroundColor = '#e3f2fd';
-            });
+          timeSlot.addEventListener('mouseenter', function() {
+            this.style.borderColor = '#2b71d2';
+            this.style.backgroundColor = '#e3f2fd';
+          });
 
-            timeSlot.addEventListener('mouseleave', function() {
-              this.style.borderColor = '#e9ecef';
-              this.style.backgroundColor = '#fff';
-            });
+          timeSlot.addEventListener('mouseleave', function() {
+            this.style.borderColor = '#e9ecef';
+            this.style.backgroundColor = '#fff';
+          });
 
-            timeSlot.addEventListener('click', function() {
-              openEventModal(date, timeString);
-              closeTimeSlotModal();
-            });
-          }
+          timeSlot.addEventListener('click', function() {
+            openEventModal(date, timeString);
+            closeTimeSlotModal();
+          });
 
           timeSlot.textContent = timeString;
           timeSlotGrid.appendChild(timeSlot);
@@ -1408,25 +1477,828 @@
       mp4FileGroup.style.display = videoType === 'MP4' ? 'block' : 'none';
     }
 
+    // 國家/地區到洲的對應表
+    const countryToContinent = {
+      // 亞洲
+      '台灣': '亞洲', '中國': '亞洲', '日本': '亞洲', '韓國': '亞洲', '香港': '亞洲', '澳門': '亞洲',
+      '新加坡': '亞洲', '馬來西亞': '亞洲', '泰國': '亞洲', '越南': '亞洲', '菲律賓': '亞洲',
+      '印尼': '亞洲', '印度': '亞洲', '巴基斯坦': '亞洲', '孟加拉': '亞洲', '斯里蘭卡': '亞洲',
+      '尼泊爾': '亞洲', '不丹': '亞洲', '緬甸': '亞洲', '柬埔寨': '亞洲', '寮國': '亞洲',
+      '蒙古': '亞洲', '哈薩克': '亞洲', '烏茲別克': '亞洲', '吉爾吉斯': '亞洲', '塔吉克': '亞洲',
+      '土庫曼': '亞洲', '阿富汗': '亞洲', '伊朗': '亞洲', '伊拉克': '亞洲', '以色列': '亞洲',
+      '約旦': '亞洲', '黎巴嫩': '亞洲', '敘利亞': '亞洲', '土耳其': '亞洲', '沙烏地阿拉伯': '亞洲',
+      '阿聯酋': '亞洲', '卡達': '亞洲', '科威特': '亞洲', '巴林': '亞洲', '阿曼': '亞洲',
+      '葉門': '亞洲', '亞美尼亞': '亞洲', '亞塞拜然': '亞洲', '喬治亞': '亞洲',
+      
+      // 亞洲英文名稱
+      'China': '亞洲', 'Japan': '亞洲', 'Korea': '亞洲', 'South Korea': '亞洲', 'North Korea': '亞洲',
+      'Taiwan': '亞洲', 'Hong Kong': '亞洲', 'Macau': '亞洲', 'Mongolia': '亞洲', 'India': '亞洲',
+      'Pakistan': '亞洲', 'Bangladesh': '亞洲', 'Sri Lanka': '亞洲', 'Nepal': '亞洲', 'Bhutan': '亞洲',
+      'Maldives': '亞洲', 'Myanmar': '亞洲', 'Thailand': '亞洲', 'Laos': '亞洲', 'Cambodia': '亞洲',
+      'Vietnam': '亞洲', 'Malaysia': '亞洲', 'Singapore': '亞洲', 'Indonesia': '亞洲', 'Philippines': '亞洲',
+      'Brunei': '亞洲', 'East Timor': '亞洲', 'Kazakhstan': '亞洲', 'Uzbekistan': '亞洲', 'Turkmenistan': '亞洲',
+      'Afghanistan': '亞洲', 'Iran': '亞洲', 'Iraq': '亞洲', 'Israel': '亞洲', 'Jordan': '亞洲',
+      'Lebanon': '亞洲', 'Syria': '亞洲', 'Turkey': '亞洲', 'Saudi Arabia': '亞洲', 'UAE': '亞洲',
+      'Qatar': '亞洲', 'Kuwait': '亞洲', 'Bahrain': '亞洲', 'Oman': '亞洲', 'Yemen': '亞洲',
+      'Armenia': '亞洲', 'Azerbaijan': '亞洲', 'Georgia': '亞洲',
+      
+      // 歐洲
+      '英國': '歐洲', 'France': '歐洲', '德國': '歐洲', '義大利': '歐洲', 'Italy': '歐洲', '西班牙': '歐洲',
+      '荷蘭': '歐洲', '比利時': '歐洲', '瑞士': '歐洲', '奧地利': '歐洲', '瑞典': '歐洲',
+      '挪威': '歐洲', '丹麥': '歐洲', '芬蘭': '歐洲', '冰島': '歐洲', '愛爾蘭': '歐洲',
+      '葡萄牙': '歐洲', '希臘': '歐洲', '波蘭': '歐洲', '捷克': '歐洲', '匈牙利': '歐洲',
+      '羅馬尼亞': '歐洲', '保加利亞': '歐洲', '克羅埃西亞': '歐洲', '塞爾維亞': '歐洲',
+      '斯洛維尼亞': '歐洲', '斯洛伐克': '歐洲', '立陶宛': '歐洲', '拉脫維亞': '歐洲',
+      '愛沙尼亞': '歐洲', '烏克蘭': '歐洲', '白俄羅斯': '歐洲', '俄羅斯': '歐洲',
+      
+      // 歐洲英文名稱
+      'United Kingdom': '歐洲', 'UK': '歐洲', 'England': '歐洲', 'Scotland': '歐洲', 'Wales': '歐洲',
+      'Germany': '歐洲', 'Spain': '歐洲', 'Netherlands': '歐洲', 'Belgium': '歐洲', 'Switzerland': '歐洲',
+      'Austria': '歐洲', 'Sweden': '歐洲', 'Norway': '歐洲', 'Denmark': '歐洲', 'Finland': '歐洲',
+      'Iceland': '歐洲', 'Ireland': '歐洲', 'Portugal': '歐洲', 'Greece': '歐洲', 'Poland': '歐洲',
+      'Czech Republic': '歐洲', 'Czech': '歐洲', 'Hungary': '歐洲', 'Romania': '歐洲', 'Bulgaria': '歐洲',
+      'Croatia': '歐洲', 'Serbia': '歐洲', 'Slovenia': '歐洲', 'Slovakia': '歐洲', 'Lithuania': '歐洲',
+      'Latvia': '歐洲', 'Estonia': '歐洲', 'Ukraine': '歐洲', 'Belarus': '歐洲', 'Russia': '歐洲',
+      
+      // 北美洲
+      '美國': '北美洲', 'Canada': '北美洲', '墨西哥': '北美洲', '古巴': '北美洲',
+      '牙買加': '北美洲', '巴哈馬': '北美洲', '多明尼加': '北美洲', '海地': '北美洲',
+      '瓜地馬拉': '北美洲', '貝里斯': '北美洲', '薩爾瓦多': '北美洲', '宏都拉斯': '北美洲',
+      '尼加拉瓜': '北美洲', '哥斯大黎加': '北美洲', '巴拿馬': '北美洲',
+      
+      // 北美洲英文名稱
+      'United States': '北美洲', 'USA': '北美洲', 'US': '北美洲', 'America': '北美洲',
+      'Mexico': '北美洲', 'Cuba': '北美洲', 'Jamaica': '北美洲', 'Bahamas': '北美洲',
+      'Dominican Republic': '北美洲', 'Haiti': '北美洲', 'Guatemala': '北美洲', 'Belize': '北美洲',
+      'El Salvador': '北美洲', 'Honduras': '北美洲', 'Nicaragua': '北美洲', 'Costa Rica': '北美洲',
+      'Panama': '北美洲',
+      
+      // 南美洲
+      '巴西': '南美洲', '阿根廷': '南美洲', '智利': '南美洲', '秘魯': '南美洲',
+      '哥倫比亞': '南美洲', '委內瑞拉': '南美洲', '厄瓜多': '南美洲', '玻利維亞': '南美洲',
+      '巴拉圭': '南美洲', '烏拉圭': '南美洲', '蓋亞那': '南美洲', '蘇利南': '南美洲',
+      
+      // 南美洲英文名稱
+      'Brazil': '南美洲', 'Argentina': '南美洲', 'Chile': '南美洲', 'Peru': '南美洲',
+      'Colombia': '南美洲', 'Venezuela': '南美洲', 'Ecuador': '南美洲', 'Bolivia': '南美洲',
+      'Paraguay': '南美洲', 'Uruguay': '南美洲', 'Guyana': '南美洲', 'Suriname': '南美洲',
+      
+      // 非洲
+      '埃及': '非洲', '南非': '非洲', '摩洛哥': '非洲', '阿爾及利亞': '非洲',
+      '突尼西亞': '非洲', '利比亞': '非洲', '蘇丹': '非洲', '衣索比亞': '非洲',
+      '肯亞': '非洲', '坦尚尼亞': '非洲', '烏干達': '非洲', '盧安達': '非洲',
+      '迦納': '非洲', '奈及利亞': '非洲', '塞內加爾': '非洲', '馬利': '非洲',
+      '布吉納法索': '非洲', '尼日': '非洲', '查德': '非洲', '中非': '非洲',
+      '喀麥隆': '非洲', '剛果': '非洲', '剛果民主共和國': '非洲', '加彭': '非洲',
+      '赤道幾內亞': '非洲', '聖多美普林西比': '非洲', '安哥拉': '非洲', '尚比亞': '非洲',
+      '辛巴威': '非洲', '波札那': '非洲', '納米比亞': '非洲', '馬達加斯加': '非洲',
+      '模里西斯': '非洲', '塞席爾': '非洲', '葛摩': '非洲', '吉布地': '非洲',
+      '索馬利亞': '非洲', '厄利垂亞': '非洲', '馬拉威': '非洲', '莫三比克': '非洲',
+      '賴索托': '非洲', '史瓦帝尼': '非洲',
+      
+      // 大洋洲
+      '澳洲': '大洋洲', '紐西蘭': '大洋洲', '斐濟': '大洋洲', '巴布亞紐幾內亞': '大洋洲',
+      '索羅門群島': '大洋洲', '萬那杜': '大洋洲', '新喀里多尼亞': '大洋洲',
+      '薩摩亞': '大洋洲', '東加': '大洋洲', '吉里巴斯': '大洋洲', '吐瓦魯': '大洋洲',
+      '諾魯': '大洋洲', '帛琉': '大洋洲', '密克羅尼西亞': '大洋洲', '馬紹爾群島': '大洋洲',
+      
+      // 大洋洲英文名稱
+      'Australia': '大洋洲', 'New Zealand': '大洋洲', 'Fiji': '大洋洲', 'Papua New Guinea': '大洋洲',
+      'Solomon Islands': '大洋洲', 'Vanuatu': '大洋洲', 'New Caledonia': '大洋洲',
+      'Samoa': '大洋洲', 'Tonga': '大洋洲', 'Kiribati': '大洋洲', 'Tuvalu': '大洋洲',
+      'Nauru': '大洋洲', 'Palau': '大洋洲', 'Micronesia': '大洋洲', 'Marshall Islands': '大洋洲'
+    };
+
+    // 從文字中提取國家/地區名稱
+    function extractCountryFromText(text) {
+      if (!text) return null;
+      
+      const lowerText = text.toLowerCase();
+      const countries = Object.keys(countryToContinent);
+      
+      for (const country of countries) {
+        if (lowerText.includes(country.toLowerCase())) {
+          return country;
+        }
+      }
+      return null;
+    }
+
+    // 自動分類到洲
+    function autoClassifyContinent(title, description) {
+      const text = (title + ' ' + description).toLowerCase();
+      const country = extractCountryFromText(text);
+      
+      if (country) {
+        return countryToContinent[country];
+      }
+      
+      // 如果沒有找到具體國家，使用關鍵字判斷
+      if (text.includes('亞洲') || text.includes('東亞') || text.includes('東南亞') || 
+          text.includes('東北亞') || text.includes('中亞') || text.includes('西亞')) {
+        return '亞洲';
+      }
+      if (text.includes('歐洲') || text.includes('歐盟') || text.includes('歐陸')) {
+        return '歐洲';
+      }
+      if (text.includes('美洲') || text.includes('北美') || text.includes('美國') || 
+          text.includes('加拿大') || text.includes('墨西哥')) {
+        return '北美洲';
+      }
+      if (text.includes('南美') || text.includes('拉丁美洲') || text.includes('巴西') || 
+          text.includes('阿根廷') || text.includes('智利')) {
+        return '南美洲';
+      }
+      if (text.includes('非洲') || text.includes('黑非洲')) {
+        return '非洲';
+      }
+      if (text.includes('大洋洲') || text.includes('澳洲') || text.includes('紐西蘭') || 
+          text.includes('太平洋')) {
+        return '大洋洲';
+      }
+      
+      return '亞洲'; // 預設為亞洲
+    }
+
+    // 清理 YouTube 描述
+    function cleanYouTubeDescription(description) {
+      if (!description) return '';
+      
+      let cleaned = description;
+      
+      // 移除常見的 YouTube 自動生成的內容
+      const patternsToRemove = [
+        // 移除觀看次數和日期
+        /觀看次數:\d+次\s*\d{4}年\d{1,2}月\d{1,2}日/g,
+        // 移除時間戳記
+        /\d{1,2}:\d{2}(?::\d{2})?\s*[-\u2013\u2014]\s*/g,
+        // 移除常見的 YouTube 標籤
+        /#\w+/g,
+        // 移除過多的換行符號
+        /\n{3,}/g,
+        // 移除常見的社交媒體連結
+        /(?:Facebook|Twitter|Instagram|TikTok|微博|微信):\s*https?:\/\/[^\s]+/gi,
+        // 移除常見的訂閱提醒
+        /(?:訂閱|Subscribe|按讚|Like|分享|Share|通知|Notification)[\s\S]*?(?=\n\n|\n$|$)/gi,
+        // 移除常見的版權聲明
+        /(?:版權|Copyright|All rights reserved)[\s\S]*?(?=\n\n|\n$|$)/gi,
+        // 移除常見的免責聲明
+        /(?:免責聲明|Disclaimer)[\s\S]*?(?=\n\n|\n$|$)/gi,
+        // 移除 URL 連結
+        /https?:\/\/[^\s]+/g,
+        // 移除航向世界旅遊台等品牌資訊
+        /航向世界旅遊台[\s\S]*?(?=\n\n|\n$|$)/gi
+      ];
+      
+      patternsToRemove.forEach(pattern => {
+        cleaned = cleaned.replace(pattern, '');
+      });
+      
+      // 清理多餘的空白和換行
+      cleaned = cleaned
+        .replace(/\n\s*\n/g, '\n\n')  // 將多個換行合併為最多兩個
+        .replace(/^\s+|\s+$/g, '')    // 移除首尾空白
+        .replace(/[ \t]+/g, ' ')      // 將多個空格合併為一個
+        .trim();
+      
+      // 如果清理後太短，返回原始描述
+      if (cleaned.length < 20) {
+        return description;
+      }
+      
+      return cleaned;
+    }
+
+
+    // 從 HTML 中提取 YouTube 描述
+    function extractDescriptionFromHTML(html) {
+      try {
+        console.log('開始解析 HTML 內容...');
+        console.log('HTML 內容長度:', html.length);
+        console.log('HTML 內容預覽:', html.substring(0, 500));
+        
+        // 創建一個臨時的 DOM 元素來解析 HTML
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        
+        // 方法1：嘗試從 meta 標籤提取
+        const metaSelectors = [
+          'meta[name="description"]',
+          'meta[property="og:description"]',
+          'meta[name="twitter:description"]'
+        ];
+        
+        for (const selector of metaSelectors) {
+          const element = doc.querySelector(selector);
+          if (element) {
+            const content = element.getAttribute('content');
+            if (content && content.length > 50) {
+              console.log('從 meta 標籤找到描述:', content.substring(0, 100) + '...');
+              return content.trim();
+            }
+          }
+        }
+        
+        // 方法2：嘗試從 JSON-LD 結構化數據中提取
+        const jsonLdScripts = doc.querySelectorAll('script[type="application/ld+json"]');
+        for (const script of jsonLdScripts) {
+          try {
+            const jsonData = JSON.parse(script.textContent);
+            if (jsonData.description && jsonData.description.length > 50) {
+              console.log('從 JSON-LD 找到描述:', jsonData.description.substring(0, 100) + '...');
+              return jsonData.description.trim();
+            }
+          } catch (e) {
+            // 忽略 JSON 解析錯誤
+          }
+        }
+        
+        // 方法3：嘗試從 YouTube 特定的元素中提取
+        const youtubeSelectors = [
+          '#description',
+          '.content-description',
+          '[data-description]',
+          '.ytd-video-secondary-info-renderer',
+          '#description-text',
+          '.ytd-expander'
+        ];
+        
+        for (const selector of youtubeSelectors) {
+          const element = doc.querySelector(selector);
+          if (element) {
+            const content = element.textContent || element.innerText;
+            if (content && content.length > 50) {
+              console.log('從 YouTube 元素找到描述:', content.substring(0, 100) + '...');
+              return content.trim();
+            }
+          }
+        }
+        
+        // 方法4：從頁面文本中智能提取
+        const bodyText = doc.body ? doc.body.textContent : '';
+        if (bodyText) {
+          console.log('開始從頁面文本中提取...');
+          
+          // 尋找包含「觀看次數」的段落，然後提取後續的描述
+          const lines = bodyText.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+          
+          for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+            
+            // 尋找「觀看次數」標題（支援中英文）
+            if (line.includes('觀看次數') || line.includes('Views') || line.includes('次') || 
+                line.includes('views') || line.includes('view')) {
+              console.log('找到觀看次數行:', line);
+              
+              // 提取後續的內容
+              let description = '';
+              let foundContent = false;
+              let paragraphCount = 0;
+              
+              for (let j = i + 1; j < Math.min(i + 50, lines.length); j++) {
+                const contentLine = lines[j];
+                
+                // 如果遇到下一個標題或按鈕，停止提取
+                if (contentLine.includes('訂閱') || contentLine.includes('分享') || 
+                    contentLine.includes('儲存') || contentLine.includes('Subscribe') ||
+                    contentLine.includes('Share') || contentLine.includes('Save') ||
+                    contentLine.includes('縮圖') || contentLine.includes('播放清單') || 
+                    contentLine.includes('資訊卡') || contentLine.includes('Thumbnail') ||
+                    contentLine.includes('Playlist') || contentLine.includes('Info Cards') ||
+                    contentLine.includes('Watch more') || contentLine.includes('Question for you') ||
+                    contentLine.includes('Welcome to') || contentLine.includes('✨')) {
+                  break;
+                }
+                
+                // 如果這行有實質內容，加入描述
+                if (contentLine.length > 20 && !contentLine.match(/^[#@\s]*$/)) {
+                  // 檢查是否為有效的描述段落
+                  if (isValidDescriptionParagraph(contentLine)) {
+                    description += contentLine + '\n';
+                    foundContent = true;
+                    paragraphCount++;
+                    console.log('找到有效段落:', contentLine.substring(0, 50) + '...');
+                  }
+                }
+              }
+              
+              if (foundContent && description.length > 50) {
+                console.log('成功提取描述:', description.substring(0, 100) + '...');
+                return description.trim();
+              }
+            }
+          }
+          
+          // 如果沒有找到「觀看次數」，嘗試尋找其他標識
+          for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+            
+            // 尋找包含「在加拿大的壯麗北國」的段落
+            if (line.includes('在加拿大的壯麗北國') || line.includes('在') && line.includes('的') && line.includes('，')) {
+              console.log('找到描述開始行:', line);
+              
+              // 提取後續的內容
+              let description = '';
+              let foundContent = false;
+              let paragraphCount = 0;
+              
+              for (let j = i; j < Math.min(i + 20, lines.length); j++) {
+                const contentLine = lines[j];
+                
+                // 如果遇到下一個標題或按鈕，停止提取
+                if (contentLine.includes('訂閱') || contentLine.includes('分享') || 
+                    contentLine.includes('儲存') || contentLine.includes('Subscribe') ||
+                    contentLine.includes('Share') || contentLine.includes('Save')) {
+                  break;
+                }
+                
+                // 如果這行有實質內容，加入描述
+                if (contentLine.length > 20 && !contentLine.match(/^[#@\s]*$/)) {
+                  if (isValidDescriptionParagraph(contentLine)) {
+                    description += contentLine + '\n';
+                    foundContent = true;
+                    paragraphCount++;
+                  }
+                }
+              }
+              
+              if (foundContent && description.length > 100 && paragraphCount >= 2) {
+                console.log('成功提取描述:', description.substring(0, 100) + '...');
+                return description.trim();
+              }
+            }
+          }
+        }
+        
+        // 方法5：嘗試從 YouTube 的內嵌數據中提取
+        const scripts = doc.querySelectorAll('script');
+        for (const script of scripts) {
+          const scriptContent = script.textContent;
+          if (scriptContent && scriptContent.includes('description')) {
+            // 尋找 JSON 格式的描述數據
+            const descriptionMatch = scriptContent.match(/"description":\s*"([^"]+)"/);
+            if (descriptionMatch && descriptionMatch[1].length > 50) {
+              console.log('從腳本中找到描述:', descriptionMatch[1].substring(0, 100) + '...');
+              return descriptionMatch[1].trim();
+            }
+          }
+        }
+        
+        // 方法6：嘗試從 YouTube 的 ytInitialData 中提取
+        for (const script of scripts) {
+          const scriptContent = script.textContent;
+          if (scriptContent && scriptContent.includes('ytInitialData')) {
+            try {
+              // 尋找 ytInitialData 變數
+              const ytDataMatch = scriptContent.match(/var ytInitialData = ({.+?});/);
+              if (ytDataMatch) {
+                const ytData = JSON.parse(ytDataMatch[1]);
+                console.log('找到 ytInitialData，開始解析...');
+                
+                // 遞歸搜索描述
+                const description = findDescriptionInYtData(ytData);
+                if (description && description.length > 50) {
+                  console.log('從 ytInitialData 中找到描述:', description.substring(0, 100) + '...');
+                  return description.trim();
+                }
+              }
+            } catch (e) {
+              console.log('解析 ytInitialData 失敗:', e);
+            }
+          }
+        }
+        
+        // 方法7：直接從 HTML 文本中尋找描述模式
+        console.log('嘗試直接從 HTML 文本中提取...');
+        
+        // 尋找包含 "Join us" 或類似開頭的段落
+        const descriptionPatterns = [
+          /Join us on a scenic road trip[^<]*/gi,
+          /Join us[^<]*/gi,
+          /Welcome to[^<]*/gi,
+          /In this video[^<]*/gi,
+          /This journey[^<]*/gi,
+          /Experience[^<]*/gi,
+          /Discover[^<]*/gi,
+          /Explore[^<]*/gi
+        ];
+        
+        for (const pattern of descriptionPatterns) {
+          const match = html.match(pattern);
+          if (match && match[0].length > 50) {
+            let description = match[0];
+            // 清理 HTML 標籤
+            description = description.replace(/<[^>]*>/g, '');
+            // 清理多餘的空白
+            description = description.replace(/\s+/g, ' ').trim();
+            
+            if (description.length > 50) {
+              console.log('從 HTML 文本模式找到描述:', description.substring(0, 100) + '...');
+              return description;
+            }
+          }
+        }
+        
+        // 方法8：尋找包含旅遊關鍵詞的長段落
+        const travelPatterns = [
+          /Switzerland[^<]{50,500}/gi,
+          /Italy[^<]{50,500}/gi,
+          /travel[^<]{50,500}/gi,
+          /journey[^<]{50,500}/gi,
+          /adventure[^<]{50,500}/gi,
+          /scenic[^<]{50,500}/gi,
+          /beautiful[^<]{50,500}/gi,
+          /breathtaking[^<]{50,500}/gi
+        ];
+        
+        for (const pattern of travelPatterns) {
+          const match = html.match(pattern);
+          if (match && match[0].length > 100) {
+            let description = match[0];
+            // 清理 HTML 標籤
+            description = description.replace(/<[^>]*>/g, '');
+            // 清理多餘的空白
+            description = description.replace(/\s+/g, ' ').trim();
+            
+            if (description.length > 100) {
+              console.log('從旅遊關鍵詞模式找到描述:', description.substring(0, 100) + '...');
+              return description;
+            }
+          }
+        }
+        
+        console.log('未能找到有效的描述內容');
+        return null;
+        
+      } catch (error) {
+        console.error('HTML 解析錯誤:', error);
+        return null;
+      }
+    }
+
+    // 遞歸搜索 YouTube 數據中的描述
+    function findDescriptionInYtData(obj, depth = 0) {
+      if (depth > 10) return null; // 防止無限遞歸
+      
+      if (typeof obj === 'string' && obj.length > 100) {
+        // 檢查是否包含中文描述內容 - 更精確的匹配
+        if (isChineseDescription(obj)) {
+          return obj;
+        }
+      }
+      
+      if (typeof obj === 'object' && obj !== null) {
+        // 檢查是否有 description 屬性
+        if (obj.description && typeof obj.description === 'string' && obj.description.length > 100) {
+          if (isChineseDescription(obj.description)) {
+            return obj.description;
+          }
+        }
+        
+        // 遞歸搜索所有屬性
+        for (const key in obj) {
+          if (obj.hasOwnProperty(key)) {
+            const result = findDescriptionInYtData(obj[key], depth + 1);
+            if (result) return result;
+          }
+        }
+      }
+      
+      return null;
+    }
+
+    // 檢查是否為有效的描述段落
+    function isValidDescriptionParagraph(text) {
+      if (!text || text.length < 20) return false;
+      
+      // 檢查是否包含旅遊相關的關鍵詞（中文）
+      const chineseTravelKeywords = [
+        '壯麗', '北國', '夢幻', '之旅', '河面', '銀白', '極光', '雪地', '探險',
+        '清澈', '奔騰', '倒映', '天空', '原始', '森林', '大自然', '純粹', '力量', '靜謐',
+        '山脈', '小鎮', '風情', '童話', '雪景', '環抱', '購物', '美食', '天堂',
+        '工藝品', '楓糖漿', '服飾', '驚喜', '鏡頭', '感受', '靜謐', '磅礴', '熱鬧', '繽紛', '迷人', '面貌',
+        '加拿大', '黃刀鎮', '弓河', '洛磯山脈', '班夫', '冬季', '夏季', '探險', '欣賞'
+      ];
+      
+      // 檢查是否包含旅遊相關的關鍵詞（英文）
+      const englishTravelKeywords = [
+        'travel', 'journey', 'trip', 'adventure', 'explore', 'visit', 'destination',
+        'scenic', 'beautiful', 'amazing', 'stunning', 'breathtaking', 'landscape',
+        'countryside', 'mountain', 'lake', 'river', 'city', 'town', 'village',
+        'culture', 'history', 'nature', 'wildlife', 'experience', 'discover',
+        'road trip', 'hiking', 'sightseeing', 'photography', 'video', 'vlog',
+        'Switzerland', 'Zurich', 'Thun', 'Alps', 'Swiss', 'Europe', 'Italy',
+        'France', 'Germany', 'Spain', 'Japan', 'Korea', 'Thailand', 'Vietnam'
+      ];
+      
+      // 檢查是否包含中文標點符號
+      const hasChinesePunctuation = /[，。；：！？]/.test(text);
+      
+      // 檢查是否包含英文標點符號
+      const hasEnglishPunctuation = /[.,;:!?]/.test(text);
+      
+      // 計算匹配的中文關鍵詞數量
+      let chineseKeywordCount = 0;
+      for (const keyword of chineseTravelKeywords) {
+        if (text.includes(keyword)) {
+          chineseKeywordCount++;
+        }
+      }
+      
+      // 計算匹配的英文關鍵詞數量
+      let englishKeywordCount = 0;
+      for (const keyword of englishTravelKeywords) {
+        if (text.toLowerCase().includes(keyword.toLowerCase())) {
+          englishKeywordCount++;
+        }
+      }
+      
+      // 檢查是否為英文內容
+      const isEnglishContent = /[a-zA-Z]/.test(text) && englishKeywordCount >= 2;
+      
+      // 檢查是否為中文內容
+      const isChineseContent = /[\u4e00-\u9fff]/.test(text) && chineseKeywordCount >= 2 && hasChinesePunctuation;
+      
+      // 如果包含足夠的關鍵詞和標點符號，認為是有效的描述段落
+      return isEnglishContent || isChineseContent;
+    }
+
+    // 檢查是否為中文描述內容
+    function isChineseDescription(text) {
+      if (!text || text.length < 50) return false;
+      
+      // 檢查是否包含中文標點符號和常見詞彙
+      const chinesePatterns = [
+        /在.*的.*，/,  // "在...的...，"
+        /這裡.*是/,    // "這裡...是"
+        /而.*您將/,    // "而...您將"
+        /從.*到/,      // "從...到"
+        /跟隨.*一起/,  // "跟隨...一起"
+        /發現.*的/,    // "發現...的"
+        /，.*，.*。/   // 中文標點符號模式
+      ];
+      
+      // 檢查是否包含旅遊相關詞彙
+      const travelKeywords = [
+        '壯麗', '北國', '夢幻', '之旅', '河面', '銀白', '極光', '雪地', '探險',
+        '清澈', '奔騰', '倒映', '天空', '原始', '森林', '大自然', '純粹', '力量', '靜謐',
+        '山脈', '小鎮', '風情', '童話', '雪景', '環抱', '購物', '美食', '天堂',
+        '工藝品', '楓糖漿', '服飾', '驚喜', '鏡頭', '感受', '靜謐', '磅礴', '熱鬧', '繽紛', '迷人', '面貌'
+      ];
+      
+      // 計算匹配的關鍵詞數量
+      let keywordCount = 0;
+      for (const keyword of travelKeywords) {
+        if (text.includes(keyword)) {
+          keywordCount++;
+        }
+      }
+      
+      // 檢查中文標點符號模式
+      let patternCount = 0;
+      for (const pattern of chinesePatterns) {
+        if (pattern.test(text)) {
+          patternCount++;
+        }
+      }
+      
+      // 如果包含足夠的關鍵詞和模式，認為是有效的中文描述
+      return keywordCount >= 3 && patternCount >= 1;
+    }
+
+    // 開啟 YouTube 頁面
+    function openYouTubePage() {
+      const youtubeId = document.getElementById('youtubeId').value.trim();
+      if (!youtubeId) {
+        showStatus('請先輸入 YouTube ID', 'warning');
+        return;
+      }
+      
+      const youtubeUrl = `https://www.youtube.com/watch?v=${youtubeId}`;
+      window.open(youtubeUrl, '_blank');
+      
+      showStatus('已開啟 YouTube 頁面，請複製「說明」區塊的內容，然後點擊「📋 貼上剪貼簿內容」', 'info');
+    }
+
+    // 從剪貼簿貼上內容
+    async function pasteFromClipboard() {
+      try {
+        const text = await navigator.clipboard.readText();
+        if (text && text.trim()) {
+          // 清理剪貼簿內容
+          let cleanedText = text.trim();
+          
+          // 移除常見的無關內容
+          cleanedText = cleanedText.replace(/觀看次數:\d+次\s*\d{4}年\d{1,2}月\d{1,2}日/g, '');
+          cleanedText = cleanedText.replace(/Views:\d+\s*\d{4}-\d{1,2}-\d{1,2}/g, '');
+          cleanedText = cleanedText.replace(/Subscribe|分享|儲存|縮圖|播放清單|資訊卡/g, '');
+          cleanedText = cleanedText.replace(/Watch more|Question for you|Welcome to/g, '');
+          
+          // 如果內容太短，可能是無效內容
+          if (cleanedText.length < 20) {
+            showStatus('剪貼簿內容太短，請確認已複製完整的 YouTube 描述', 'warning');
+            return;
+          }
+          
+          document.getElementById('description').value = cleanedText;
+          
+          // 自動分類
+          const title = document.getElementById('title').value;
+          const continent = autoClassifyContinent(title, cleanedText);
+          document.getElementById('category').value = continent;
+          
+          showStatus(`已貼上剪貼簿內容並分類到：${continent}`, 'success');
+        } else {
+          showStatus('剪貼簿為空，請先複製 YouTube 描述內容', 'warning');
+        }
+      } catch (error) {
+        console.error('讀取剪貼簿失敗:', error);
+        showStatus('無法讀取剪貼簿，請手動輸入描述', 'error');
+      }
+    }
+
+    // 單獨獲取 YouTube 描述（使用無需 API Key 的方法）
+    async function fetchYouTubeDescription() {
+      const youtubeId = document.getElementById('youtubeId').value.trim();
+      if (!youtubeId) {
+        showStatus('請先輸入 YouTube ID', 'warning');
+        return;
+      }
+      
+      console.log('🔍 開始獲取 YouTube 描述，ID:', youtubeId);
+
+      try {
+        showStatus('正在從 YouTube 獲取描述...', 'info');
+        
+        // 使用 YouTube oEmbed API 驗證影片存在
+        const oembedResponse = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${youtubeId}&format=json`);
+        if (oembedResponse.ok) {
+          const oembedData = await oembedResponse.json();
+          
+          // 嘗試使用多個代理服務獲取 YouTube 描述
+          const proxyServices = [
+            `https://api.allorigins.win/get?url=${encodeURIComponent(`https://www.youtube.com/watch?v=${youtubeId}`)}`,
+            `https://cors-anywhere.herokuapp.com/https://www.youtube.com/watch?v=${youtubeId}`,
+            `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(`https://www.youtube.com/watch?v=${youtubeId}`)}`,
+            `https://thingproxy.freeboard.io/fetch/https://www.youtube.com/watch?v=${youtubeId}`,
+            `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(`https://youtu.be/${youtubeId}`)}`
+          ];
+          
+          for (let i = 0; i < proxyServices.length; i++) {
+            try {
+              showStatus(`正在嘗試獲取影片描述... (方法 ${i + 1}/${proxyServices.length})`, 'info');
+              
+              const proxyResponse = await fetch(proxyServices[i]);
+              if (proxyResponse.ok) {
+                let htmlContent = '';
+                
+                if (proxyServices[i].includes('allorigins.win')) {
+                  const proxyData = await proxyResponse.json();
+                  htmlContent = proxyData.contents;
+                } else {
+                  htmlContent = await proxyResponse.text();
+                }
+                
+                console.log(`代理服務 ${i + 1} 獲取到 HTML 內容長度:`, htmlContent.length);
+                
+                // 從 HTML 中提取描述
+                const description = extractDescriptionFromHTML(htmlContent);
+                
+                if (description && description.length > 50) {
+                  // 清理描述
+                  const cleanedDescription = cleanYouTubeDescription(description);
+                  document.getElementById('description').value = cleanedDescription;
+                  
+                  // 自動分類
+                  const continent = autoClassifyContinent(oembedData.title, cleanedDescription);
+                  document.getElementById('category').value = continent;
+                  
+                  showStatus(`✅ 已成功獲取 YouTube 描述並分類到：${continent}`, 'success');
+                  return;
+                } else {
+                  console.log(`代理服務 ${i + 1} 未能提取到有效描述`);
+                }
+              } else {
+                console.log(`代理服務 ${i + 1} 請求失敗:`, proxyResponse.status);
+              }
+            } catch (proxyError) {
+              console.log(`代理服務 ${i + 1} 失敗:`, proxyError);
+            }
+          }
+          
+          // 如果所有代理服務都失敗，嘗試使用 YouTube 的公開 API
+          try {
+            showStatus('正在嘗試使用 YouTube 公開 API...', 'info');
+            
+            // 使用 YouTube 的公開 oEmbed API 獲取更多資訊
+            const oembedResponse = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${youtubeId}&format=json&maxwidth=800&maxheight=600`);
+            if (oembedResponse.ok) {
+              const oembedData = await oembedResponse.json();
+              
+              // oEmbed API 不提供描述，但我們可以嘗試其他方法
+              console.log('oEmbed API 成功，但無法獲取描述');
+            }
+          } catch (oembedError) {
+            console.log('oEmbed API 失敗:', oembedError);
+          }
+          
+          // 如果無法獲取描述，提供手動輸入的指導
+          showStatus('代理服務被 YouTube 阻擋，請手動輸入描述', 'warning');
+          
+          // 同時自動分類
+          const continent = autoClassifyContinent(oembedData.title, '');
+          document.getElementById('category').value = continent;
+          
+          // 提供手動輸入的選項
+          const manualDescription = prompt(`影片標題：${oembedData.title}\n\n請手動輸入 YouTube 影片描述（或按取消跳過）：`);
+          if (manualDescription && manualDescription.trim()) {
+            document.getElementById('description').value = manualDescription.trim();
+            showStatus(`已手動輸入描述並分類到：${continent}`, 'success');
+          } else {
+            // 在描述欄位中提供建議
+            const suggestions = [
+              `📺 影片標題：${oembedData.title}`,
+              '',
+              '💡 手動獲取描述的方法：',
+              '1. 前往 YouTube 影片頁面：https://www.youtube.com/watch?v=' + youtubeId,
+              '2. 找到「說明」或「Description」區塊',
+              '3. 複製完整的描述文字',
+              '4. 貼到此欄位中',
+              '',
+              '💡 建議描述格式：',
+              '• 影片主題和內容概述',
+              '• 主要景點或特色',
+              '• 適合的觀眾群體',
+              '• 影片亮點或推薦原因',
+              '',
+              '📝 請手動輸入描述...'
+            ].join('\n');
+            
+            document.getElementById('description').value = suggestions;
+            showStatus(`已根據標題自動分類到：${continent}，請手動輸入描述`, 'info');
+          }
+          
+        } else {
+          showStatus('無法獲取 YouTube 資訊，請檢查 ID 是否正確', 'warning');
+        }
+        
+      } catch (error) {
+        showStatus('獲取 YouTube 描述時發生錯誤', 'error');
+        console.error('YouTube 描述獲取錯誤:', error);
+      }
+    }
+
+    // 手動觸發自動分類
+    function autoClassifyFromTitle() {
+      const title = document.getElementById('title').value;
+      const description = document.getElementById('description').value;
+      
+      if (!title && !description) {
+        showStatus('請先填入節目標題或描述', 'warning');
+        return;
+      }
+      
+      const continent = autoClassifyContinent(title, description);
+      document.getElementById('category').value = continent;
+      
+      // 顯示分類結果
+      const country = extractCountryFromText(title + ' ' + description);
+      if (country) {
+        showStatus(`已自動分類到：${continent}（檢測到：${country}）`, 'success');
+      } else {
+        showStatus(`已自動分類到：${continent}（基於關鍵字判斷）`, 'success');
+      }
+    }
+
     async function fetchYouTubeInfo() {
       const youtubeId = document.getElementById('youtubeId').value.trim();
       if (!youtubeId) return;
 
       try {
+        showStatus('正在獲取 YouTube 資訊...', 'info');
+        
+        // 使用 YouTube oEmbed API 獲取基本資訊
         const response = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${youtubeId}&format=json`);
         if (response.ok) {
           const data = await response.json();
+          
+          // 填入標題
           document.getElementById('title').value = data.title;
           
           // 自動更新縮圖預覽
           updateThumbnailPreview(youtubeId);
           
-          showStatus('YouTube 資訊已自動填入', 'success');
+          // 自動分類到洲（基於標題）
+          const continent = autoClassifyContinent(data.title, '');
+          document.getElementById('category').value = continent;
+          
+          showStatus(`YouTube 資訊已自動填入，已分類到：${continent}。如需描述，請手動輸入或使用「📝 從 YouTube 獲取」按鈕`, 'success');
         } else {
           showStatus('無法獲取 YouTube 資訊，請檢查 ID 是否正確', 'warning');
         }
       } catch (error) {
         showStatus('獲取 YouTube 資訊時發生錯誤', 'error');
+        console.error('YouTube 資訊獲取錯誤:', error);
       }
     }
 
@@ -1486,6 +2358,39 @@
       return dayEvents.find(event => event.time === time);
     }
 
+    // 檢查是否為過去的日期時間並顯示警語
+    function checkPastDateTime() {
+      const date = document.getElementById('editDate').value;
+      const time = document.getElementById('airTime').value;
+      const warningDiv = document.getElementById('pastDateTimeWarning');
+      
+      if (!date || !time) {
+        warningDiv.style.display = 'none';
+        return;
+      }
+
+      const now = new Date();
+      const currentHour = now.getHours();
+      const currentMinute = now.getMinutes();
+      const todayString = now.getFullYear() + '-' +
+                         String(now.getMonth() + 1).padStart(2, '0') + '-' +
+                         String(now.getDate()).padStart(2, '0');
+      
+      const isPastDate = date < todayString;
+      const isPastTime = date === todayString &&
+                        (parseInt(time.split(':')[0]) < currentHour ||
+                         (parseInt(time.split(':')[0]) === currentHour && parseInt(time.split(':')[1]) <= currentMinute));
+
+      if (isPastDate || isPastTime) {
+        warningDiv.style.display = 'block';
+        warningDiv.innerHTML = isPastDate 
+          ? `⚠️ <strong>警告：</strong>您選擇的是過去的日期 (${date})，這可能會影響節目排程。請確認是否要繼續編輯。`
+          : `⚠️ <strong>警告：</strong>您選擇的是過去的時間 (${date} ${time})，這可能會影響節目排程。請確認是否要繼續編輯。`;
+      } else {
+        warningDiv.style.display = 'none';
+      }
+    }
+
     document.getElementById('eventForm').addEventListener('submit', function(e) {
       e.preventDefault();
 
@@ -1503,9 +2408,17 @@
                         (parseInt(time.split(':')[0]) < currentHour ||
                          (parseInt(time.split(':')[0]) === currentHour && parseInt(time.split(':')[1]) <= currentMinute));
 
+      // 如果是過去的時間，顯示警語但允許繼續
       if (isPastDate || isPastTime) {
-        showStatus('無法在過去的日期或時間安排節目', 'warning');
-        return;
+        const confirmMessage = isPastDate 
+          ? `⚠️ 警告：您正在編輯過去的日期 (${date})，這可能會影響節目排程。是否繼續？`
+          : `⚠️ 警告：您正在編輯過去的時間 (${date} ${time})，這可能會影響節目排程。是否繼續？`;
+        
+        if (!confirm(confirmMessage)) {
+          showStatus('已取消編輯', 'info');
+          return;
+        }
+        showStatus('⚠️ 正在編輯過去的時間，請注意節目排程影響', 'warning');
       }
 
       const videoType = document.getElementById('videoType').value;
@@ -1518,6 +2431,12 @@
       const currentThumbnail = thumbnailPreview.src;
       const isDefaultThumbnail = currentThumbnail.includes('placeholder') || currentThumbnail.includes('via.placeholder');
       
+      // 獲取選中的主題探索分類
+      const selectedTopics = [];
+      document.querySelectorAll('input[name="topics"]:checked').forEach(checkbox => {
+        selectedTopics.push(checkbox.value);
+      });
+
       const event = {
         date: date,
         time: time,
@@ -1529,7 +2448,8 @@
         videoType: videoType,
         youtubeId: videoType === 'YouTube' ? document.getElementById('youtubeId').value : null,
         mp4File: videoType === 'MP4' ? (document.getElementById('mp4File').files[0] ? document.getElementById('mp4File').files[0].name : null) : null,
-        thumbnail: isDefaultThumbnail ? null : currentThumbnail
+        thumbnail: isDefaultThumbnail ? null : currentThumbnail,
+        topics: selectedTopics
       };
 
       if (!events[date]) {
@@ -1628,28 +2548,83 @@
             events[airDate] = [];
           }
 
-          // 清理描述，移除時間標記
-          const cleanDescription = notes.replace(/\[時間:\d{2}:\d{2}\]/, '').trim();
+          // 從備註中提取 YouTube ID
+          const youtubeMatch = notes.match(/\[YouTube:([^\]]+)\]/);
+          const youtubeId = youtubeMatch ? youtubeMatch[1] : '';
           
-          events[airDate].push({
-            id: item.sys.id,
-            title: fields.title || '未命名節目',
-            time: time,
-            duration: 30,
-            category: '旅遊節目',
-            description: cleanDescription,
-            videoType: 'youtube',
-            videoId: '',
-            status: 'published',
-            published: true,
-            publishedAt: item.sys.createdAt,
-            contentfulId: item.sys.id
-          });
+          // 調試資訊
+          if (youtubeId) {
+            console.log('✅ 從 Contentful 提取到 YouTube ID:', youtubeId, 'for', fields.title);
+          } else if (notes.includes('[YouTube:')) {
+            console.log('⚠️ 備註中有 YouTube 標記但提取失敗:', notes);
+          }
+          
+          // 清理描述，移除時間標記和 YouTube 標記
+          const cleanDescription = notes
+            .replace(/\[時間:\d{2}:\d{2}\]/, '')
+            .replace(/\[YouTube:[^\]]+\]/, '')
+            .trim();
+          
+          // 檢查是否已存在相同時間的節目，避免重複
+          const existingEventIndex = events[airDate].findIndex(event => event.time === time);
+          if (existingEventIndex !== -1) {
+            console.log('⚠️ 發現重複時間段節目，更新現有節目:', time, fields.title);
+            // 更新現有節目
+            events[airDate][existingEventIndex] = {
+              id: item.sys.id,
+              title: fields.title || '未命名節目',
+              time: time,
+              duration: fields.duration || 30,
+              category: fields.category || '旅遊節目',
+              description: cleanDescription,
+              videoType: youtubeId ? 'YouTube' : (fields.videoType || 'YouTube'),
+              youtubeId: youtubeId,
+              thumbnail: fields.thumbnail || (youtubeId ? `https://img.youtube.com/vi/${youtubeId}/maxresdefault.jpg` : ''),
+              status: fields.status || '重播',
+              topics: fields.topics || [],
+              published: true,
+              publishedAt: item.sys.createdAt,
+              contentfulId: item.sys.id
+            };
+          } else {
+            // 添加新節目
+            events[airDate].push({
+              id: item.sys.id,
+              title: fields.title || '未命名節目',
+              time: time,
+              duration: fields.duration || 30,
+              category: fields.category || '旅遊節目',
+              description: cleanDescription,
+              videoType: youtubeId ? 'YouTube' : (fields.videoType || 'YouTube'),
+              youtubeId: youtubeId,
+              thumbnail: fields.thumbnail || (youtubeId ? `https://img.youtube.com/vi/${youtubeId}/maxresdefault.jpg` : ''),
+              status: fields.status || '重播',
+              topics: fields.topics || [],
+              published: true,
+              publishedAt: item.sys.createdAt,
+              contentfulId: item.sys.id
+            });
+          }
         });
 
-        // 按時間排序
+        // 按時間排序並清理重複節目
         Object.keys(events).forEach(date => {
           events[date].sort((a, b) => a.time.localeCompare(b.time));
+          
+          // 清理重複節目（基於時間）
+          const uniqueEvents = [];
+          const seenTimes = new Set();
+          
+          events[date].forEach(event => {
+            if (!seenTimes.has(event.time)) {
+              seenTimes.add(event.time);
+              uniqueEvents.push(event);
+            } else {
+              console.log('🗑️ 移除重複節目:', event.time, event.title);
+            }
+          });
+          
+          events[date] = uniqueEvents;
         });
 
         // 儲存到 localStorage 作為備份
@@ -1693,6 +2668,15 @@
       eventDates.forEach(date => {
         const dayEvents = events[date];
         console.log(`日期 ${date} (${new Date(date).toLocaleDateString('zh-TW')}):`, dayEvents);
+        
+        // 檢查每個節目的 YouTube ID
+        dayEvents.forEach(event => {
+          if (event.youtubeId) {
+            console.log(`✅ 節目 "${event.title}" 有 YouTube ID: ${event.youtubeId}`);
+          } else {
+            console.log(`❌ 節目 "${event.title}" 沒有 YouTube ID`);
+          }
+        });
       });
 
       const today = new Date();
@@ -1960,9 +2944,17 @@
                         (parseInt(time.split(':')[0]) < currentHour ||
                          (parseInt(time.split(':')[0]) === currentHour && parseInt(time.split(':')[1]) <= currentMinute));
 
+      // 如果是過去的時間，顯示警語但允許繼續
       if (isPastDate || isPastTime) {
-        showStatus('無法上架過去的日期或時間的節目', 'warning');
-        return;
+        const confirmMessage = isPastDate 
+          ? `⚠️ 警告：您正在上架過去的日期 (${date})，這可能會影響節目排程。是否繼續？`
+          : `⚠️ 警告：您正在上架過去的時間 (${date} ${time})，這可能會影響節目排程。是否繼續？`;
+        
+        if (!confirm(confirmMessage)) {
+          showStatus('已取消上架', 'info');
+          return;
+        }
+        showStatus('⚠️ 正在上架過去的時間，請注意節目排程影響', 'warning');
       }
 
       showStatus('正在上架節目到 Contentful...', 'info');
@@ -1973,6 +2965,12 @@
         const currentThumbnail = thumbnailPreview.src;
         const isDefaultThumbnail = currentThumbnail.includes('placeholder') || currentThumbnail.includes('via.placeholder');
         
+        // 獲取選中的主題探索分類
+        const selectedTopics = [];
+        document.querySelectorAll('input[name="topics"]:checked').forEach(checkbox => {
+          selectedTopics.push(checkbox.value);
+        });
+
         const programData = {
           title: title,
           airDate: date,
@@ -1984,7 +2982,8 @@
           videoType: document.getElementById('videoType').value,
           youtubeId: document.getElementById('videoType').value === 'YouTube' ? document.getElementById('youtubeId').value : null,
           mp4File: document.getElementById('videoType').value === 'MP4' ? (document.getElementById('mp4File').files[0] ? document.getElementById('mp4File').files[0].name : null) : null,
-          thumbnail: isDefaultThumbnail ? null : currentThumbnail
+          thumbnail: isDefaultThumbnail ? null : currentThumbnail,
+          topics: selectedTopics
         };
 
         // 使用簡化的上架功能
