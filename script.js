@@ -614,7 +614,7 @@ document.addEventListener('DOMContentLoaded', () => {
               description: description,
               thumbnail: thumbnail,
               youtubeId: youtubeId,
-              status: item.fields.isPremiere ? '首播' : '重播',
+              status: (item.fields.isPremiere === true || item.fields.status === '首播') ? '首播' : '重播',
               tags: topics
             };
           }).sort((a, b) => {
