@@ -372,19 +372,19 @@ document.addEventListener('DOMContentLoaded', () => {
       @media(min-width:1400px){.schedule-spotlight-grid{grid-template-columns:repeat(4,1fr)}}
       @media(max-width:900px){.schedule-spotlight-grid{grid-template-columns:repeat(2,1fr)}}
       @media(max-width:640px){.schedule-spotlight-grid{grid-template-columns:1fr}}
-      .spot-card{position:relative;display:block;border-radius:20px;overflow:hidden;border:1px solid rgba(0,0,0,.06);
+      .spot-card{position:relative;display:block;border-radius:20px;border:1px solid rgba(0,0,0,.06);
                  box-shadow:0 10px 24px rgba(0,0,0,.06);transform:translateY(6px);opacity:0;animation:upfade .32s ease forwards}
       @media(prefers-color-scheme:dark){.spot-card{border-color:rgba(255,255,255,.12);box-shadow:0 14px 32px rgba(0,0,0,.25)}}
       .spot-card:hover{transform:translateY(0) scale(1.01)}
-      .spot-img{width:100%;aspect-ratio:16/9;height:auto;object-fit:cover;display:block;filter:brightness(.94)}
-      .spot-grad{position:absolute;inset:0;background:linear-gradient(180deg, rgba(0,0,0,0) 38%, rgba(0,0,0,.55) 100%)}
-      .spot-meta{position:absolute;left:16px;right:16px;bottom:14px;color:#fff;overflow:hidden;text-shadow:0 1px 4px rgba(0,0,0,.35)}
-      .spot-title{font-weight:800;font-size:18px;line-height:1.28;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-      .spot-desc{opacity:.95;font-size:13px;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .spot-img{width:100%;aspect-ratio:16/9;height:auto;object-fit:cover;display:block;filter:brightness(.94);border-radius:20px 20px 0 0}
+      .spot-grad{position:absolute;inset:0;background:linear-gradient(180deg, rgba(0,0,0,0) 15%, rgba(0,0,0,.75) 100%)}
+      .spot-meta{position:absolute;left:16px;right:16px;bottom:20px;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.35);max-height:100px;overflow:visible}
+      .spot-title{font-weight:800;font-size:14px;line-height:1.2;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:2px}
+      .spot-desc{opacity:.95;font-size:11px;margin-top:2px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.3}
       @media(max-width:640px){.spot-desc{display:none}}
       .spot-chip{position:absolute;padding:6px 10px;border-radius:999px;font-weight:900;font-size:12px;color:#fff;
                  backdrop-filter:saturate(140%) blur(4px);border:1px solid rgba(255,255,255,.22)}
-      .spot-time{left:12px;bottom:12px;background:rgba(8,8,8,.45)}
+      .spot-time{left:12px;bottom:85px;background:rgba(8,8,8,.45)}
       .spot-block{right:12px;top:12px}
       .spot-badge{position:absolute;left:12px;top:12px;background:rgba(224,180,106,.95);color:#111;padding:6px 10px;border-radius:999px;font-size:12px;font-weight:900;border:1px solid rgba(0,0,0,.2)}
       .blk-00 .spot-block{background:linear-gradient(135deg,#4b79a1,#283e51)}
@@ -593,16 +593,29 @@ document.addEventListener('DOMContentLoaded', () => {
             // 如果沒有 topics，根據節目標題生成一些預設標籤
             if (topics.length === 0) {
               const title = item.fields.title || '';
-              if (title.includes('極光')) {
-                topics = ['自然風光', '極光探索'];
-              } else if (title.includes('JAPAN') || title.includes('日本')) {
-                topics = ['文化探索', '亞洲旅遊'];
-              } else if (title.includes('加拿大')) {
-                topics = ['自然風光', '北美旅遊'];
-              } else if (title.includes('Italy') || title.includes('義大利')) {
-                topics = ['文化探索', '歐洲旅遊'];
+              const description = item.fields.notes || '';
+              const fullText = (title + ' ' + description).toLowerCase();
+              
+              if (fullText.includes('極光') || fullText.includes('aurora') || fullText.includes('北極光')) {
+                topics = ['自然秘境'];
+              } else if (fullText.includes('japan') || fullText.includes('日本') || fullText.includes('tokyo') || fullText.includes('京都')) {
+                topics = ['城市秘境', '時光漫遊'];
+              } else if (fullText.includes('加拿大') || fullText.includes('canada') || fullText.includes('楓葉')) {
+                topics = ['自然秘境', '繞著地球跑'];
+              } else if (fullText.includes('italy') || fullText.includes('義大利') || fullText.includes('羅馬') || fullText.includes('威尼斯')) {
+                topics = ['城市秘境', '時光漫遊'];
+              } else if (fullText.includes('美食') || fullText.includes('料理') || fullText.includes('餐廳') || fullText.includes('小吃')) {
+                topics = ['味覺日誌', '食話實說'];
+              } else if (fullText.includes('親子') || fullText.includes('家庭') || fullText.includes('遊樂園') || fullText.includes('動物園')) {
+                topics = ['玩樂FUN'];
+              } else if (fullText.includes('古蹟') || fullText.includes('博物館') || fullText.includes('歷史') || fullText.includes('文化')) {
+                topics = ['時光漫遊', '城市秘境'];
+              } else if (fullText.includes('小鎮') || fullText.includes('鄉村') || fullText.includes('市場') || fullText.includes('工藝')) {
+                topics = ['繞著地球跑'];
+              } else if (fullText.includes('自然') || fullText.includes('風景') || fullText.includes('山') || fullText.includes('海') || fullText.includes('森林')) {
+                topics = ['自然秘境'];
               } else {
-                topics = ['文化探索', '自然風光'];
+                topics = ['城市秘境', '旅途談'];
               }
             }
             
@@ -610,7 +623,7 @@ document.addEventListener('DOMContentLoaded', () => {
               time: timeString,
               title: item.fields.title || '未命名節目',
               duration: '30', // 預設30分鐘
-              category: video.category || '旅遊',
+              category: video.category || '',
               description: description,
               thumbnail: thumbnail,
               youtubeId: youtubeId,
@@ -927,34 +940,18 @@ document.addEventListener('DOMContentLoaded', () => {
       
       const fullSchedule = [];
       
-      // 從當前時段開始，顯示未來12小時的節目（24個時段）
-      for (let i = 0; i < 24; i++) {
-        const hour = (startHour + Math.floor((startMinute + i * 30) / 60)) % 24;
-        const minute = (startMinute + i * 30) % 60;
-        const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+      // 只顯示有節目的時段
+      visiblePrograms.forEach(program => {
+        const [programHour, programMinute] = program.time.split(':').map(Number);
+        const programStartTime = programHour * 60 + programMinute;
+        const currentTime = currentHour * 60 + currentMinute;
         
-        // 檢查是否已有該時段的節目
-        const existingProgram = visiblePrograms.find(p => p.time === timeString);
-        
-        if (existingProgram) {
-          console.log(`時段 ${timeString}: 使用現有節目 - ${existingProgram.title}`);
-          fullSchedule.push(existingProgram);
-        } else {
-          // 添加「暫無節目」卡片
-          console.log(`時段 ${timeString}: 使用空節目卡片`);
-          fullSchedule.push({
-            time: timeString,
-            title: "",
-            duration: "30",
-            category: "空檔",
-            description: "",
-            thumbnail: "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop",
-            youtubeId: "",
-            status: "空檔",
-            tags: []
-          });
+        // 只顯示當前時段和未來的節目
+        if (programStartTime >= currentTime) {
+          console.log(`時段 ${program.time}: 顯示節目 - ${program.title}`);
+          fullSchedule.push(program);
         }
-      }
+      });
       
       let limitedPrograms = fullSchedule;
       
@@ -2049,7 +2046,7 @@ function renderTLCStyleSchedule(programs) {
       time: currentTimeString,
       title: "目前暫無節目",
       duration: "30",
-      category: "旅遊節目",
+      category: "",
       description: "此時段暫無節目安排",
       thumbnail: "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=800&h=450&fit=crop",
       youtubeId: "",
@@ -2105,8 +2102,14 @@ function updateNowPlayingArea(program) {
     nowPlayingDuration.textContent = (program.duration || '30') + '分鐘';
   }
   if (nowPlayingCategory) {
-    nowPlayingCategory.textContent = program.category || '旅遊節目';
-    console.log('🏷️ 更新節目類別標籤:', nowPlayingCategory.textContent);
+    nowPlayingCategory.textContent = program.category || '';
+    if (program.category && program.category.trim() !== '') {
+      nowPlayingCategory.style.display = 'inline-block';
+      console.log('🏷️ 更新節目類別標籤:', nowPlayingCategory.textContent);
+    } else {
+      nowPlayingCategory.style.display = 'none';
+      console.log('🏷️ 隱藏節目類別標籤（無分類）');
+    }
   } else {
     console.error('❌ 找不到 nowPlayingCategory 元素');
   }
@@ -2203,6 +2206,7 @@ function renderUpcomingProgramItem(program, upcomingProgramsList) {
   listItem.innerHTML = `
     <div class="upcoming-program-thumbnail">
       <img src="${program.thumbnail || 'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop'}" 
+           style="width: 100%; height: 100%; object-fit: cover; object-position: center; display: block;"
            alt="${escapeHtml(program.title || '未命名節目')}"
            onerror="this.src='https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop';">
       <div class="upcoming-program-time-overlay">${program.time || '00:00'}</div>
@@ -2212,7 +2216,7 @@ function renderUpcomingProgramItem(program, upcomingProgramsList) {
       <div class="upcoming-program-description">${escapeHtml(program.description || '節目描述暫無')}</div>
       <div class="upcoming-program-meta">
         <span class="upcoming-program-duration">${program.duration || '30'}分鐘</span>
-        <span class="upcoming-program-category">${program.category || '旅遊節目'}</span>
+        ${program.category && program.category.trim() !== '' ? `<span class="upcoming-program-category">${escapeHtml(program.category)}</span>` : ''}
       </div>
       ${program.tags && program.tags.length > 0 ? `
         <div class="upcoming-program-topics">
@@ -2260,7 +2264,7 @@ function generateDefaultUpcomingPrograms() {
       time: timeString,
       title: "",
       duration: "30",
-      category: "空檔",
+      category: "",
       description: "",
       thumbnail: "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop",
       youtubeId: "",
@@ -2306,7 +2310,7 @@ function generateDefaultProgramCards() {
       time: timeString,
       title: "",
       duration: "30",
-      category: "空檔",
+      category: "",
       description: "",
       thumbnail: "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop",
       youtubeId: "",
