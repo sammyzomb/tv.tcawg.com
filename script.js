@@ -47,6 +47,90 @@ const contentfulClient = contentful.createClient({
   accessToken: window.CONTENTFUL_CONFIG?.DELIVERY_TOKEN || 'lODH-WLwHwVZv7O4rFdBWjSnrzaQWGD4koeOZ1Dypj0'
 });
 
+// 從備註中提取分類
+function extractCategoryFromNotes(notes) {
+  if (!notes) return '';
+  const match = notes.match(/\[分類:(.*?)\]/);
+  return match ? match[1] : '';
+}
+
+// 主題探索分類數據
+const TOPICS_DATA = [
+  {
+    id: 'city-secrets',
+    title: '城市秘境',
+    description: '深入城市角落、市集、文化景點，用實地體驗呈現城市故事'
+  },
+  {
+    id: 'taste-journal',
+    title: '味覺日誌',
+    description: '品嘗當地料理與街頭小吃，訪問餐廳老闆或廚師，分享食物背後的故事'
+  },
+  {
+    id: 'travel-talk',
+    title: '旅途談',
+    description: '邀請旅遊達人、部落客、在地人，分享旅行心得、技巧與趣聞'
+  },
+  {
+    id: 'around-world',
+    title: '繞著地球跑',
+    description: '走訪小鎮或鄉村，介紹當地文化、手作工藝、市場與特色美食'
+  },
+  {
+    id: 'food-talk',
+    title: '食話實說',
+    description: '討論特定食材、料理或美食文化，結合討論與實地示範'
+  },
+  {
+    id: 'play-fun',
+    title: '玩樂FUN',
+    description: '專為家庭設計，探索適合親子活動的景點、遊樂園、動物園'
+  },
+  {
+    id: 'culture-heritage',
+    title: '文化遺產',
+    description: '走訪古蹟、博物館、傳統村落，透過歷史故事呈現深度文化旅程'
+  },
+  {
+    id: 'nature-secrets',
+    title: '自然秘境',
+    description: '探索自然景觀、野生動植物、生態保育，感受地球之美'
+  }
+];
+
+// 從備註中提取主題
+function extractTopicsFromNotes(notes) {
+  if (!notes) return [];
+  const matches = notes.match(/\[主題:(.*?)\]/g);
+  if (!matches) return [];
+  
+  // 提取所有主題標記的內容
+  const topics = matches.map(m => m.replace(/\[主題:(.*?)\]/, '$1'));
+  
+  // 如果主題包含逗號分隔的多個主題，則分割它們
+  const allTopics = [];
+  topics.forEach(topic => {
+    if (topic.includes(',')) {
+      // 分割逗號分隔的主題
+      const splitTopics = topic.split(',').map(t => t.trim()).filter(t => t);
+      allTopics.push(...splitTopics);
+    } else {
+      allTopics.push(topic.trim());
+    }
+  });
+  
+  // 將英文 ID 轉換為中文標題
+  const translatedTopics = allTopics.map(topicId => {
+    const topicData = TOPICS_DATA.find(t => t.id === topicId);
+    return topicData ? topicData.title : topicId;
+  });
+  
+  // 去重：移除重複的主題
+  const uniqueTopics = [...new Set(translatedTopics)];
+  
+  return uniqueTopics;
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   // === 漢堡選單 ===
   const hamburgerBtn = document.getElementById('hamburger-btn');
@@ -575,19 +659,34 @@ document.addEventListener('DOMContentLoaded', () => {
               finalDescription: description
             });
             
-            // 提取主題探索分類
-            let topics = [];
+            // 從備註中提取分類和主題
+            const category = extractCategoryFromNotes(notes);
+            let topics = extractTopicsFromNotes(notes);
+            
             console.log('🔍 檢查 topics 數據:', {
               itemFieldsTopics: item.fields.topics,
               videoTopics: video.topics,
+              extractedTopics: topics,
+              extractedCategory: category,
               itemFieldsKeys: Object.keys(item.fields),
               videoKeys: Object.keys(video)
             });
             
-            if (item.fields.topics && Array.isArray(item.fields.topics)) {
-              topics = item.fields.topics;
-            } else if (video.topics && Array.isArray(video.topics)) {
-              topics = video.topics;
+            // 如果沒有從備註中提取到主題，則使用原有的邏輯
+            if (!topics || topics.length === 0) {
+              if (item.fields.topics && Array.isArray(item.fields.topics)) {
+                // 將英文 ID 轉換為中文標題
+                topics = item.fields.topics.map(topicId => {
+                  const topicData = TOPICS_DATA.find(t => t.id === topicId);
+                  return topicData ? topicData.title : topicId;
+                });
+              } else if (video.topics && Array.isArray(video.topics)) {
+                // 將英文 ID 轉換為中文標題
+                topics = video.topics.map(topicId => {
+                  const topicData = TOPICS_DATA.find(t => t.id === topicId);
+                  return topicData ? topicData.title : topicId;
+                });
+              }
             }
             
             // 如果沒有 topics，根據節目標題生成一些預設標籤
@@ -623,7 +722,7 @@ document.addEventListener('DOMContentLoaded', () => {
               time: timeString,
               title: item.fields.title || '未命名節目',
               duration: '30', // 預設30分鐘
-              category: video.category || '',
+              category: category || video.category || '',
               description: description,
               thumbnail: thumbnail,
               youtubeId: youtubeId,
@@ -894,7 +993,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const timeString = getCurrentTimeString();
 
     if (currentDateTimeEl) {
-      currentDateTimeEl.textContent = `台灣時間 ${currentMonth}月${currentDay}日 ${currentDayOfWeek} 現在時間 ${timeString}`;
+      currentDateTimeEl.textContent = `${currentMonth}月${currentDay}日 ${currentDayOfWeek} 現在時間 ${timeString}`;
     }
 
     // 更新即將播出節目數量
@@ -1283,7 +1382,7 @@ document.addEventListener('DOMContentLoaded', () => {
       clearInterval(currentTimeUpdateInterval);
     }
     
-    // 每秒更新一次時間
+    // 每分鐘更新一次時間（減少更新頻率，避免影響佈局）
     currentTimeUpdateInterval = setInterval(() => {
       const currentDateTimeEl = document.getElementById('currentDateTime');
       
@@ -1294,7 +1393,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const dayOfWeek = getDayOfWeek(taiwanTime);
         const timeString = getCurrentTimeString();
         
-        currentDateTimeEl.innerHTML = `台灣時間 <span class="flip-clock date">${month}月${day}日</span> <span class="flip-clock day">${dayOfWeek}</span> 現在時間 <span class="flip-clock time">${timeString}</span>`;
+        // 顯示完整的時間信息，但使用簡潔格式
+        currentDateTimeEl.innerHTML = `${month}月${day}日 ${dayOfWeek} 現在時間 ${timeString}`;
       }
       
       // 檢查日期是否改變（跨日檢查）
@@ -1497,6 +1597,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // 強制重新載入節目表，確保使用最新資料
   console.log('🚀 頁面載入，強制重新載入節目表');
   loadScheduleData();
+  
+  // 頁面載入完成
+  console.log('✅ 頁面初始化完成');
   
   // 添加調試函數到全域
   window.debugScheduleData = function() {
@@ -2063,13 +2166,14 @@ function renderTLCStyleSchedule(programs) {
 }
 
 function updateNowPlayingArea(program) {
+  console.log('🚀 updateNowPlayingArea 函數被調用，節目:', program);
+  
   const nowPlayingImage = document.getElementById('now-playing-image');
   const nowPlayingTitle = document.getElementById('now-playing-title');
   const nowPlayingDescription = document.getElementById('now-playing-description');
   const nowPlayingTime = document.getElementById('now-playing-time');
   const nowPlayingStatus = document.getElementById('now-playing-status');
   const nowPlayingDuration = document.getElementById('now-playing-duration');
-  const nowPlayingCategory = document.querySelector('.now-playing-category');
   const nowPlayingPlayButton = document.getElementById('now-playing-play-button');
 
   if (nowPlayingImage) {
@@ -2080,7 +2184,16 @@ function updateNowPlayingArea(program) {
     nowPlayingTitle.textContent = program.title || '未命名節目';
   }
   if (nowPlayingDescription) {
-    nowPlayingDescription.textContent = program.description || '節目描述暫無';
+    // 從說明文字中移除標籤信息
+    let cleanDescription = program.description || '節目描述暫無';
+    cleanDescription = cleanDescription.replace(/\[分類:[^\]]*\]/g, '');
+    cleanDescription = cleanDescription.replace(/\[主題:[^\]]*\]/g, '');
+    cleanDescription = cleanDescription.replace(/\[時長:[^\]]*\]/g, '');
+    cleanDescription = cleanDescription.replace(/\[狀態:[^\]]*\]/g, '');
+    cleanDescription = cleanDescription.replace(/\[縮圖:[^\]]*\]/g, '');
+    cleanDescription = cleanDescription.replace(/\[YouTube:[^\]]*\]/g, '');
+    cleanDescription = cleanDescription.trim();
+    nowPlayingDescription.textContent = cleanDescription;
   }
   if (nowPlayingTime) {
     // 如果是預設節目，使用當前時間
@@ -2101,32 +2214,37 @@ function updateNowPlayingArea(program) {
   if (nowPlayingDuration) {
     nowPlayingDuration.textContent = (program.duration || '30') + '分鐘';
   }
-  if (nowPlayingCategory) {
-    nowPlayingCategory.textContent = program.category || '';
+  
+  // 更新標題旁的標籤
+  const nowPlayingTitleTags = document.getElementById('now-playing-title-tags');
+  if (nowPlayingTitleTags) {
+    let titleTags = [];
+    
+    // 添加節目分類標籤
     if (program.category && program.category.trim() !== '') {
-      nowPlayingCategory.style.display = 'inline-block';
-      console.log('🏷️ 更新節目類別標籤:', nowPlayingCategory.textContent);
-    } else {
-      nowPlayingCategory.style.display = 'none';
-      console.log('🏷️ 隱藏節目類別標籤（無分類）');
+      titleTags.push(`<span class="topic-tag">${escapeHtml(program.category)}</span>`);
     }
-  } else {
-    console.error('❌ 找不到 nowPlayingCategory 元素');
+    
+    // 添加主題探索標籤
+    if (program.tags && program.tags.length > 0) {
+      const topicTags = program.tags.map(topic => 
+        `<span class="topic-tag">${escapeHtml(topic)}</span>`
+      );
+      titleTags = titleTags.concat(topicTags);
+    }
+    
+    // 時長標籤已移除
+    
+    nowPlayingTitleTags.innerHTML = titleTags.join('');
+    console.log('✅ 標題旁標籤已更新:', titleTags);
   }
   
-  // 更新主題探索標籤
+  // 清空底部的標籤顯示區域（標籤已移到標題旁邊）
   const nowPlayingTopics = document.getElementById('now-playing-topics');
   if (nowPlayingTopics) {
-    if (program.tags && program.tags.length > 0) {
-      nowPlayingTopics.innerHTML = program.tags.map(topic => 
-        `<span class="topic-tag">${escapeHtml(topic)}</span>`
-      ).join('');
-      nowPlayingTopics.style.display = 'flex';
-    } else {
-      nowPlayingTopics.innerHTML = '';
-      nowPlayingTopics.style.display = 'none';
-    }
-    console.log('🏷️ 更新主題探索標籤:', program.tags);
+    nowPlayingTopics.innerHTML = '';
+    nowPlayingTopics.style.display = 'none';
+    console.log('✅ 底部標籤區域已清空');
   }
 
   // 播放按鈕事件
@@ -2139,6 +2257,9 @@ function updateNowPlayingArea(program) {
       }
     };
   }
+  
+  // 標籤顯示完成
+  console.log('✅ 現正播出區域更新完成');
 }
 
 function renderUpcomingProgramsList(programs) {

@@ -888,6 +888,11 @@
       setTimeout(() => {
         checkCleanupReminder();
       }, 3000);
+      
+      // 檢查重複時間槽（延遲5秒執行）
+      setTimeout(() => {
+        checkDuplicateTimeSlots();
+      }, 5000);
     });
 
     function switchView(view) {
@@ -1452,6 +1457,15 @@
           topicsArray: Array.isArray(existingEvent.topics)
         });
         document.getElementById('modalTitle').textContent = '編輯節目';
+        
+        // 更新按鈕文字為「修改節目」
+        const publishButton = document.querySelector('button[onclick="publishToContentful()"]');
+        if (publishButton) {
+          publishButton.textContent = '✏️ 修改節目';
+          publishButton.style.background = '#ffc107';
+          publishButton.style.color = '#000';
+        }
+        
         document.getElementById('title').value = existingEvent.title;
         document.getElementById('duration').value = existingEvent.duration;
         document.getElementById('category').value = existingEvent.category;
@@ -1480,6 +1494,26 @@
         
         // 載入主題探索分類
         console.log('🔍 檢查主題資料:', existingEvent.topics);
+        console.log('🔍 檢查節目備註內容:', existingEvent.description);
+        
+        // 檢查備註中是否有主題標記
+        const notes = existingEvent.description || '';
+        const hasTopicMarkers = notes.includes('[主題:');
+        const hasCategoryMarkers = notes.includes('[分類:');
+        console.log('🔍 備註標記檢查:', {
+          hasTopicMarkers: hasTopicMarkers,
+          hasCategoryMarkers: hasCategoryMarkers,
+          notesLength: notes.length,
+          notesPreview: notes.substring(0, 200)
+        });
+        
+        // 手動從備註中提取主題，檢查是否與 existingEvent.topics 一致
+        const extractedTopics = extractTopicsFromNotes(notes);
+        console.log('🔍 手動提取的主題:', extractedTopics);
+        console.log('🔍 existingEvent.topics:', existingEvent.topics);
+        console.log('🔍 主題資料是否一致:', JSON.stringify(extractedTopics) === JSON.stringify(existingEvent.topics));
+        console.log('🔍 完整的 existingEvent 物件:', existingEvent);
+        console.log('🔍 備註完整內容:', notes);
         
         // 確保主題複選框已經載入
         const topicsContainer = document.getElementById('topicsCheckboxes');
@@ -1490,15 +1524,24 @@
         
         // 等待一下讓 DOM 更新
         setTimeout(() => {
-          if (existingEvent.topics && Array.isArray(existingEvent.topics) && existingEvent.topics.length > 0) {
-            console.log('✅ 找到主題資料，開始載入:', existingEvent.topics);
+          // 決定使用哪個主題資料
+          let topicsToLoad = existingEvent.topics;
+          
+          // 如果 existingEvent.topics 為空，但備註中有主題標記，使用手動提取的主題
+          if ((!topicsToLoad || topicsToLoad.length === 0) && extractedTopics.length > 0) {
+            console.log('🔄 使用手動提取的主題資料:', extractedTopics);
+            topicsToLoad = extractedTopics;
+          }
+          
+          if (topicsToLoad && Array.isArray(topicsToLoad) && topicsToLoad.length > 0) {
+            console.log('✅ 找到主題資料，開始載入:', topicsToLoad);
             // 清除所有主題選擇
             document.querySelectorAll('input[name="topics"]').forEach(checkbox => {
               checkbox.checked = false;
             });
             
             // 選中現有的主題
-            existingEvent.topics.forEach(topicTitle => {
+            topicsToLoad.forEach(topicTitle => {
               console.log('🔍 處理主題:', topicTitle);
               // 根據主題標題找到對應的 topicId
               const topicData = TOPICS_DATA.find(topic => topic.title === topicTitle);
@@ -1534,6 +1577,15 @@
         toggleVideoFields();
       } else {
         document.getElementById('modalTitle').textContent = '新增節目';
+        
+        // 恢復按鈕文字為「上架節目」
+        const publishButton = document.querySelector('button[onclick="publishToContentful()"]');
+        if (publishButton) {
+          publishButton.textContent = '🚀 上架節目';
+          publishButton.style.background = '#28a745';
+          publishButton.style.color = '#fff';
+        }
+        
         document.getElementById('eventForm').reset();
         document.getElementById('airTime').value = time;
         
@@ -3287,19 +3339,65 @@
           accessToken: 'lODH-WLwHwVZv7O4rFdBWjSnrzaQWGD4koeOZ1Dypj0'
         });
 
-        // 獲取所有節目（移除 limit 限制）
+        // 獲取所有節目（使用分頁載入以確保載入到 10/31）
+        let allItems = [];
+        let skip = 0;
+        const limit = 1000; // Contentful API 最大限制為 1000
+        let hasMore = true;
+        
+        while (hasMore) {
         const response = await client.getEntries({
           content_type: 'scheduleItem',
-          order: 'fields.airDate',
-          limit: 1000  // 增加限制到 1000
-        });
+            order: 'fields.airDate',
+            limit: limit,
+            skip: skip
+          });
+          
+          allItems = allItems.concat(response.items);
+          console.log(`📥 載入第 ${Math.floor(skip/limit) + 1} 頁: ${response.items.length} 個節目 (總計: ${allItems.length})`);
+          
+          // 檢查是否還有更多資料
+          hasMore = response.items.length === limit;
+          skip += limit;
+          
+          // 如果已經載入到 10/31 之後的節目，可以停止載入
+          const hasOct31OrLater = response.items.some(item => {
+            const airDate = item.fields.airDate;
+            return airDate && airDate >= '2025-10-31';
+          });
+          
+          if (hasOct31OrLater) {
+            console.log('✅ 已載入到 10/31 及之後的節目，停止分頁載入');
+            break;
+          }
+        }
 
-        console.log(`從 Contentful 載入 ${response.items.length} 個節目`);
+        console.log(`📊 總共從 Contentful 載入 ${allItems.length} 個節目`);
+        
+        // 檢查主題標記統計
+        let programsWithTopics = 0;
+        let programsWithCategory = 0;
+        let programsWithNoTags = 0;
+        
+        allItems.forEach(item => {
+          const notes = String(item.fields.notes || '');
+          const hasTopics = notes.includes('[主題:');
+          const hasCategory = notes.includes('[分類:');
+          
+          if (hasTopics) programsWithTopics++;
+          if (hasCategory) programsWithCategory++;
+          if (!hasTopics && !hasCategory) programsWithNoTags++;
+        });
+        
+        console.log('📊 節目標記統計:');
+        console.log(`  - 有主題標記的節目: ${programsWithTopics} 個`);
+        console.log(`  - 有分類標記的節目: ${programsWithCategory} 個`);
+        console.log(`  - 沒有任何標記的節目: ${programsWithNoTags} 個`);
         
         // 調試：檢查所有節目的日期
         console.log('🔍 所有節目的日期分佈:');
         const dateCounts = {};
-        response.items.forEach(item => {
+        allItems.forEach(item => {
           const airDate = item.fields.airDate;
           if (airDate) {
             dateCounts[airDate] = (dateCounts[airDate] || 0) + 1;
@@ -3311,8 +3409,19 @@
           console.log(`📅 ${date}: ${dateCounts[date]} 個節目`);
         });
         
-        // 特別檢查 10/2 - 檢查所有可能的日期格式
-        const oct2Items = response.items.filter(item => {
+        // 檢查是否有超過 10/11 的節目
+        const laterDates = Object.keys(dateCounts).filter(date => date > '2025-10-11');
+        console.log('🔍 超過 10/11 的日期:', laterDates);
+        if (laterDates.length > 0) {
+          laterDates.forEach(date => {
+            console.log(`📅 ${date}: ${dateCounts[date]} 個節目`);
+          });
+        } else {
+          console.log('❌ 沒有找到超過 10/11 的節目');
+        }
+        
+        // 特別檢查 10/2 和 10/31 - 檢查所有可能的日期格式
+        const oct2Items = allItems.filter(item => {
           const airDate = item.fields.airDate;
           if (!airDate) return false;
           
@@ -3324,10 +3433,38 @@
                  dateStr.includes('10/02');
         });
         
+        const oct31Items = allItems.filter(item => {
+          const airDate = item.fields.airDate;
+          if (!airDate) return false;
+          
+          // 檢查多種日期格式
+          const dateStr = String(airDate);
+          return dateStr.includes('2025-10-31') || 
+                 dateStr.includes('2025-10-31') ||
+                 dateStr.includes('10-31') ||
+                 dateStr.includes('10/31');
+        });
+        
         console.log('🔍 Contentful 中 10/2 的節目數量:', oct2Items.length);
         if (oct2Items.length > 0) {
           oct2Items.forEach((item, index) => {
             console.log(`10/2 節目 ${index + 1}:`, {
+          id: item.sys.id,
+          title: item.fields.title,
+          airDate: item.fields.airDate,
+              notes: item.fields.notes,
+              block: item.fields.block,
+              slotIndex: item.fields.slotIndex
+            });
+          });
+        } else {
+          console.log('❌ 沒有找到 10/2 的節目');
+        }
+        
+        console.log('🔍 Contentful 中 10/31 的節目數量:', oct31Items.length);
+        if (oct31Items.length > 0) {
+          oct31Items.forEach((item, index) => {
+            console.log(`10/31 節目 ${index + 1}:`, {
               id: item.sys.id,
               title: item.fields.title,
               airDate: item.fields.airDate,
@@ -3337,7 +3474,7 @@
             });
           });
         } else {
-          console.log('❌ 沒有找到 10/2 的節目');
+          console.log('❌ 沒有找到 10/31 的節目');
           
           // 檢查所有節目的日期格式
           console.log('🔍 檢查所有節目的日期格式:');
@@ -3350,7 +3487,7 @@
           });
         }
         
-        console.log('載入的節目詳情:', response.items.map(item => ({
+        console.log('載入的節目詳情:', allItems.map(item => ({
           id: item.sys.id,
           title: item.fields.title,
           airDate: item.fields.airDate,
@@ -3363,7 +3500,7 @@
         events = {};
 
         // 轉換 Contentful 資料為本地格式
-        response.items.forEach(item => {
+        allItems.forEach(item => {
           const fields = item.fields;
           const airDate = fields.airDate || new Date().toISOString().split('T')[0];
           
@@ -3383,6 +3520,18 @@
           const youtubeMatch = notes.match(/\[YouTube:([^\]]+)\]/);
           const youtubeId = youtubeMatch ? youtubeMatch[1] : '';
           
+          // 從備註中提取時長
+          const durationMatch = notes.match(/\[時長:(\d+)分鐘\]/);
+          const duration = durationMatch ? parseInt(durationMatch[1]) : 30;
+          
+          // 從備註中提取狀態
+          const statusMatch = notes.match(/\[狀態:(.*?)\]/);
+          const status = statusMatch ? statusMatch[1] : '重播';
+          
+          // 從備註中提取縮圖
+          const thumbnailMatch = notes.match(/\[縮圖:([^\]]+)\]/);
+          const thumbnail = thumbnailMatch ? thumbnailMatch[1] : (youtubeId ? `https://img.youtube.com/vi/${youtubeId}/maxresdefault.jpg` : '');
+          
           // 調試資訊
           if (youtubeId) {
             console.log('✅ 從 Contentful 提取到 YouTube ID:', youtubeId, 'for', fields.title);
@@ -3399,6 +3548,8 @@
             console.log('✅ 提取到主題:', fields.title, '主題:', topics);
           } else if (notes.includes('[主題:')) {
             console.log('⚠️ 備註中有主題標記但提取失敗:', fields.title, '備註:', notes);
+          } else {
+            console.log('❌ 沒有主題標記:', fields.title, '備註長度:', notes.length, '備註預覽:', notes.substring(0, 100));
           }
           
           // 清理描述，移除時間標記、YouTube 標記、分類標記和主題標記
@@ -3419,13 +3570,13 @@
               id: item.sys.id,
               title: fields.title || '未命名節目',
               time: time,
-              duration: fields.duration || 30,
+              duration: duration,
               category: category,
               description: cleanDescription,
               videoType: youtubeId ? 'YouTube' : (fields.videoType || 'YouTube'),
               youtubeId: youtubeId,
-              thumbnail: fields.thumbnail || (youtubeId ? `https://img.youtube.com/vi/${youtubeId}/maxresdefault.jpg` : ''),
-              status: fields.status || '重播',
+              thumbnail: thumbnail,
+              status: status,
               topics: topics,
               published: true,
               publishedAt: item.sys.createdAt,
@@ -3453,14 +3604,14 @@
             id: item.sys.id,
             title: fields.title || '未命名節目',
             time: time,
-                duration: fields.duration || 30,
-                category: category,
+            duration: duration,
+            category: category,
             description: cleanDescription,
-                videoType: youtubeId ? 'YouTube' : (fields.videoType || 'YouTube'),
-                youtubeId: youtubeId,
-                thumbnail: fields.thumbnail || (youtubeId ? `https://img.youtube.com/vi/${youtubeId}/maxresdefault.jpg` : ''),
-                status: (fields.isPremiere === true || fields.status === '首播') ? '首播' : '重播',
-                topics: topics,
+            videoType: youtubeId ? 'YouTube' : (fields.videoType || 'YouTube'),
+            youtubeId: youtubeId,
+            thumbnail: thumbnail,
+            status: status,
+            topics: topics,
             published: true,
             publishedAt: item.sys.createdAt,
             contentfulId: item.sys.id
@@ -3523,6 +3674,21 @@
             console.log(`✅ 節目 "${event.title}" 有 YouTube ID: ${event.youtubeId}`);
           } else {
             console.log(`❌ 節目 "${event.title}" 沒有 YouTube ID`);
+          }
+        });
+        
+        // 檢查重複時間槽
+        const timeGroups = {};
+        dayEvents.forEach(event => {
+          if (!timeGroups[event.time]) {
+            timeGroups[event.time] = [];
+          }
+          timeGroups[event.time].push(event);
+        });
+        
+        Object.keys(timeGroups).forEach(time => {
+          if (timeGroups[time].length > 1) {
+            console.log(`⚠️ 發現重複時間槽 ${time}:`, timeGroups[time].map(e => e.title));
           }
         });
       });
@@ -3912,6 +4078,149 @@
       
       if (daysSinceLastCleanup >= reminderInterval) {
         showCleanupReminder(daysSinceLastCleanup);
+      }
+    }
+    
+    // 檢查重複時間槽
+    function checkDuplicateTimeSlots() {
+      const duplicateSlots = [];
+      
+      Object.keys(events).forEach(date => {
+        const dayEvents = events[date];
+        const timeGroups = {};
+        
+        dayEvents.forEach(event => {
+          if (!timeGroups[event.time]) {
+            timeGroups[event.time] = [];
+          }
+          timeGroups[event.time].push(event);
+        });
+        
+        Object.keys(timeGroups).forEach(time => {
+          if (timeGroups[time].length > 1) {
+            duplicateSlots.push({
+              date: date,
+              time: time,
+              programs: timeGroups[time]
+            });
+          }
+        });
+      });
+      
+      if (duplicateSlots.length > 0) {
+        console.log('⚠️ 發現重複時間槽:', duplicateSlots);
+        showDuplicateTimeSlotsDialog(duplicateSlots);
+      }
+    }
+    
+    // 顯示重複時間槽對話框
+    function showDuplicateTimeSlotsDialog(duplicateSlots) {
+      const dialog = document.createElement('div');
+      dialog.style.cssText = `
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.5); z-index: 10000;
+        display: flex; align-items: center; justify-content: center;
+      `;
+      
+      const duplicateList = duplicateSlots.map(slot => `
+        <div style="margin: 10px 0; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+          <strong>${slot.date} ${slot.time}</strong>
+          ${slot.programs.map(program => `
+            <div style="margin: 5px 0; padding: 5px; background: #f5f5f5; border-radius: 3px;">
+              <strong>${program.title}</strong>
+              ${program.youtubeId ? `<br>YouTube ID: ${program.youtubeId}` : ''}
+              ${program.contentfulId ? `<br>Contentful ID: ${program.contentfulId}` : ''}
+            </div>
+          `).join('')}
+        </div>
+      `).join('');
+      
+      dialog.innerHTML = `
+        <div style="background: white; padding: 30px; border-radius: 10px; max-width: 800px; width: 90%; max-height: 80vh; overflow-y: auto;">
+          <h3>⚠️ 發現重複時間槽</h3>
+          <p>以下時間槽有多個節目，這可能會造成顯示問題：</p>
+          ${duplicateList}
+          <div style="margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px;">
+            <button onclick="this.closest('div').parentElement.remove()" style="background: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">
+              稍後處理
+            </button>
+            <button onclick="cleanupDuplicateTimeSlots(); this.closest('div').parentElement.remove()" style="background: #dc3545; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">
+              清理重複
+            </button>
+          </div>
+        </div>
+      `;
+      
+      document.body.appendChild(dialog);
+      
+      // 點擊背景關閉
+      dialog.addEventListener('click', function(e) {
+        if (e.target === dialog) {
+          dialog.remove();
+        }
+      });
+    }
+    
+    // 清理重複時間槽
+    function cleanupDuplicateTimeSlots() {
+      const duplicateSlots = [];
+      
+      Object.keys(events).forEach(date => {
+        const dayEvents = events[date];
+        const timeGroups = {};
+        
+        dayEvents.forEach(event => {
+          if (!timeGroups[event.time]) {
+            timeGroups[event.time] = [];
+          }
+          timeGroups[event.time].push(event);
+        });
+        
+        Object.keys(timeGroups).forEach(time => {
+          if (timeGroups[time].length > 1) {
+            duplicateSlots.push({
+              date: date,
+              time: time,
+              programs: timeGroups[time]
+            });
+          }
+        });
+      });
+      
+      if (duplicateSlots.length === 0) {
+        showStatus('沒有發現重複時間槽', 'info');
+        return;
+      }
+      
+      // 清理重複：保留第一個節目，刪除其他
+      let cleanedCount = 0;
+      duplicateSlots.forEach(slot => {
+        const programs = slot.programs;
+        if (programs.length > 1) {
+          // 保留第一個節目，刪除其他
+          for (let i = 1; i < programs.length; i++) {
+            const programToRemove = programs[i];
+            const eventIndex = events[slot.date].findIndex(e => 
+              e.time === programToRemove.time && 
+              e.title === programToRemove.title && 
+              e.youtubeId === programToRemove.youtubeId
+            );
+            
+            if (eventIndex !== -1) {
+              events[slot.date].splice(eventIndex, 1);
+              cleanedCount++;
+              console.log(`🗑️ 刪除重複節目: ${programToRemove.title} (${slot.date} ${slot.time})`);
+            }
+          }
+        }
+      });
+      
+      if (cleanedCount > 0) {
+        saveEvents();
+        renderCurrentView();
+        showStatus(`✅ 已清理 ${cleanedCount} 個重複節目`, 'success');
+      } else {
+        showStatus('沒有需要清理的重複節目', 'info');
       }
     }
     
@@ -5673,7 +5982,15 @@
         showStatus('⚠️ 正在上架過去的時間，請注意節目排程影響', 'warning');
       }
 
+      // 檢查是否為編輯現有節目
+      const existingEvent = getEvent(date, time);
+      const isEditing = existingEvent && existingEvent.contentfulId;
+      
+      if (isEditing) {
+        showStatus('正在修改節目到 Contentful...', 'info');
+      } else {
       showStatus('正在上架節目到 Contentful...', 'info');
+      }
 
       try {
         // 獲取縮圖資料
@@ -5685,6 +6002,13 @@
         const selectedTopics = [];
         document.querySelectorAll('input[name="topics"]:checked').forEach(checkbox => {
           selectedTopics.push(checkbox.value);
+        });
+        
+        console.log('🔍 獲取選中的主題探索分類:', {
+          selectedTopics: selectedTopics,
+          topicsLength: selectedTopics.length,
+          allCheckboxes: document.querySelectorAll('input[name="topics"]').length,
+          checkedCheckboxes: document.querySelectorAll('input[name="topics"]:checked').length
         });
         
         const programData = {
@@ -5702,11 +6026,24 @@
           topics: selectedTopics
         };
 
-        // 單一節目上架
-        const result = await uploadProgramSimple(programData);
+        // 根據是否為編輯決定執行上架或更新
+        let result;
+        if (isEditing) {
+          // 更新現有節目
+          result = await updateProgramInContentful(existingEvent.contentfulId, programData);
+        } else {
+          // 上架新節目
+          result = await uploadProgramSimple(programData);
+        }
 
         if (result.success) {
-          // 處理上架結果
+          console.log('✅ 操作成功，準備關閉視窗...', { isEditing, title });
+          if (isEditing) {
+            // 修改節目：updateProgramInContentful 已經處理了本地事件更新
+            console.log('🔄 修改節目成功，顯示成功訊息');
+            showStatus(`✅ 成功修改節目「${title}」到 Contentful！`, 'success');
+          } else {
+            // 新增節目：處理上架結果
           const publishedPrograms = JSON.parse(localStorage.getItem('published_programs') || '[]');
           publishedPrograms.push({
             ...programData,
@@ -5714,25 +6051,28 @@
             contentfulId: result.entryId,
             simulated: result.simulated || false
           });
-          
+            
           localStorage.setItem('published_programs', JSON.stringify(publishedPrograms));
 
           // 同步到今日節目表顯示系統
           updateCurrentScheduleForToday(programData);
 
-          // 更新日曆事件
-          const event = getEvent(programData.airDate, programData.airTime);
+            // 更新日曆事件
+            const event = getEvent(programData.airDate, programData.airTime);
           if (event) {
             event.published = true;
             event.publishedAt = new Date().toISOString();
             event.contentfulId = result.entryId;
-          }
-          
+            }
+            
             saveEvents();
             renderCurrentView();
 
-          showStatus(`✅ 成功上架節目「${title}」到 Contentful！`, 'success');
+            showStatus(`✅ 成功上架節目「${title}」到 Contentful！`, 'success');
+          }
+          console.log('🚪 準備關閉視窗...');
           closeModal();
+          console.log('✅ 視窗已關閉');
         } else {
           showStatus('❌ 上架失敗：' + (result.error || '未知錯誤'), 'error');
         }
@@ -6555,6 +6895,143 @@
       }
     }
 
+    // 更新現有節目到 Contentful
+    async function updateProgramInContentful(contentfulId, programData) {
+      try {
+        console.log('🔄 開始更新節目到 Contentful:', contentfulId, programData);
+        
+        // 檢查 API Token
+        const managementToken = window.CONTENTFUL_CONFIG?.MANAGEMENT_TOKEN || window.CONTENTFUL_MANAGEMENT_TOKEN;
+        if (!managementToken) {
+          throw new Error('Management Token 未設定');
+        }
+
+        // 創建 Contentful Management API 客戶端
+        const managementClient = contentfulManagement.createClient({
+          accessToken: managementToken
+        });
+
+        // 獲取 Space 和 Environment
+        const spaceId = window.CONTENTFUL_CONFIG?.SPACE_ID || 'os5wf90ljenp';
+        const space = await managementClient.getSpace(spaceId);
+        const environment = await space.getEnvironment('master');
+
+        // 獲取現有條目
+        const entry = await environment.getEntry(contentfulId);
+        
+        // 準備更新資料
+        console.log('🔍 處理主題探索分類:', {
+          programDataTopics: programData.topics,
+          topicsLength: programData.topics ? programData.topics.length : 0,
+          topicsType: typeof programData.topics
+        });
+        
+        const topicsText = programData.topics && programData.topics.length > 0 
+          ? programData.topics.map(topicId => {
+              const topicData = TOPICS_DATA.find(t => t.id === topicId);
+              console.log('🔍 主題映射:', { topicId, topicData: topicData ? topicData.title : '未找到' });
+              return topicData ? topicData.title : topicId;
+            }).join(',')
+          : '';
+        
+        console.log('🔍 最終主題文字:', topicsText);
+        
+        // 構建備註內容，包含分類和主題標記
+        let notes = programData.description || '';
+        
+        // 添加分類標記
+        if (programData.category) {
+          const categoryPattern = /\[分類:.*?\]/g;
+          notes = notes.replace(categoryPattern, '');
+          notes = `[分類:${programData.category}] ${notes}`;
+        }
+        
+        // 添加主題標記
+        if (topicsText) {
+          const topicPattern = /\[主題:.*?\]/g;
+          notes = notes.replace(topicPattern, '');
+          notes = `${notes} [主題:${topicsText}]`;
+          console.log('🔍 添加主題標記後的備註:', notes.substring(0, 200) + '...');
+        } else {
+          console.log('⚠️ 沒有主題文字，跳過主題標記');
+        }
+        
+        // 添加時長標記
+        if (programData.duration) {
+          const durationPattern = /\[時長:.*?\]/g;
+          notes = notes.replace(durationPattern, '');
+          notes = `${notes} [時長:${programData.duration}分鐘]`;
+        }
+        
+        // 添加狀態標記
+        if (programData.status) {
+          const statusPattern = /\[狀態:.*?\]/g;
+          notes = notes.replace(statusPattern, '');
+          notes = `${notes} [狀態:${programData.status}]`;
+        }
+        
+        // 添加縮圖標記
+        if (programData.thumbnail) {
+          const thumbnailPattern = /\[縮圖:.*?\]/g;
+          notes = notes.replace(thumbnailPattern, '');
+          notes = `${notes} [縮圖:${programData.thumbnail}]`;
+        }
+
+        // 計算 block 和 slotIndex
+        const block = getTimeBlock(programData.airTime);
+        const slotIndex = 0; // 預設值，可以根據需要調整
+        
+        // 更新條目（只更新 Contentful 中實際存在的欄位）
+        entry.fields.title = { 'en-US': programData.title };
+        entry.fields.airDate = { 'en-US': programData.airDate };
+        entry.fields.block = { 'en-US': block };
+        entry.fields.slotIndex = { 'en-US': slotIndex };
+        entry.fields.notes = { 'en-US': notes };
+        
+        // 注意：duration、status、youtubeId、thumbnail 等資訊都存儲在 notes 欄位中
+        // 不需要單獨更新這些欄位，因為它們在 Contentful 中不存在
+
+        // 保存更新
+        const updatedEntry = await entry.update();
+        
+        // 發布更新
+        await updatedEntry.publish();
+        
+        console.log('✅ 成功更新節目到 Contentful:', updatedEntry.sys.id);
+        
+        // 更新本地事件資料
+        const event = getEvent(programData.airDate, programData.airTime);
+        if (event) {
+          event.title = programData.title;
+          event.duration = programData.duration;
+          event.category = programData.category;
+          event.description = notes;
+          event.status = programData.status;
+          event.youtubeId = programData.youtubeId;
+          event.thumbnail = programData.thumbnail;
+          event.topics = programData.topics;
+          event.publishedAt = new Date().toISOString();
+          event.contentfulId = updatedEntry.sys.id;
+        }
+        
+        saveEvents();
+        renderCurrentView();
+        
+        return {
+          success: true,
+          entryId: updatedEntry.sys.id,
+          message: '節目更新成功'
+        };
+        
+      } catch (error) {
+        console.error('❌ 更新節目失敗:', error);
+        return {
+          success: false,
+          error: error.message || '更新失敗'
+        };
+      }
+    }
+
     async function uploadProgramSimple(programData) {
       try {
         console.log('🚀 開始上架節目:', programData);
@@ -6727,12 +7204,13 @@
             // 更新現有節目
             const updatedEntry = await sameProgram.update();
             
-            // 更新所有欄位
-            updatedEntry.fields.title = { 'zh-TW': programData.title };
-            updatedEntry.fields.airDate = { 'zh-TW': airDate };
-            updatedEntry.fields.airTime = { 'zh-TW': airTime };
-            updatedEntry.fields.status = { 'zh-TW': programData.status };
-            updatedEntry.fields.notes = { 'zh-TW': notes };
+            // 更新所有欄位（只更新 Contentful 中實際存在的欄位）
+            updatedEntry.fields.title = { 'en-US': programData.title };
+            updatedEntry.fields.airDate = { 'en-US': airDate };
+            updatedEntry.fields.notes = { 'en-US': notes };
+            
+            // 注意：airTime、status、duration、youtubeId、thumbnail 等資訊都存儲在 notes 欄位中
+            // 不需要單獨更新這些欄位，因為它們在 Contentful 中不存在
             
             // 保存更新
             await updatedEntry.update();
@@ -6837,6 +7315,14 @@
         
         if (programData.duration) {
           notes += ` [時長:${programData.duration}分鐘]`;
+        }
+        
+        if (programData.status) {
+          notes += ` [狀態:${programData.status}]`;
+        }
+        
+        if (programData.thumbnail) {
+          notes += ` [縮圖:${programData.thumbnail}]`;
         }
         
         // 先創建 video entry
@@ -7018,17 +7504,43 @@
       console.log(`✅ 載入了 ${response.items.length} 個節目`);
       
       // 轉換為程式可用的格式
-      return response.items.map(item => ({
-        id: item.sys.id,
-        title: item.fields.title || '未命名節目',
-        airDate: item.fields.airDate || '',
-        airTime: item.fields.airTime || '',
-        duration: item.fields.duration || 30,
-        category: extractCategoryFromNotes(item.fields.notes),
-        topics: extractTopicsFromNotes(item.fields.notes),
-        description: item.fields.notes || '',
-        status: item.fields.status || '重播'
-      }));
+      return response.items.map(item => {
+        const notes = String(item.fields.notes || '');
+        
+        // 從 notes 中提取時間
+        const timeMatch = notes.match(/\[時間:(\d{2}:\d{2})\]/);
+        const airTime = timeMatch ? timeMatch[1] : '';
+        
+        // 從 notes 中提取時長
+        const durationMatch = notes.match(/\[時長:(\d+)分鐘\]/);
+        const duration = durationMatch ? parseInt(durationMatch[1]) : 30;
+        
+        // 從 notes 中提取狀態
+        const statusMatch = notes.match(/\[狀態:(.*?)\]/);
+        const status = statusMatch ? statusMatch[1] : '重播';
+        
+        // 從 notes 中提取 YouTube ID
+        const youtubeMatch = notes.match(/\[YouTube:([^\]]+)\]/);
+        const youtubeId = youtubeMatch ? youtubeMatch[1] : '';
+        
+        // 從 notes 中提取縮圖
+        const thumbnailMatch = notes.match(/\[縮圖:([^\]]+)\]/);
+        const thumbnail = thumbnailMatch ? thumbnailMatch[1] : (youtubeId ? `https://img.youtube.com/vi/${youtubeId}/maxresdefault.jpg` : '');
+        
+        return {
+          id: item.sys.id,
+          title: item.fields.title || '未命名節目',
+          airDate: item.fields.airDate || '',
+          airTime: airTime,
+          duration: duration,
+          category: extractCategoryFromNotes(notes),
+          topics: extractTopicsFromNotes(notes),
+          description: notes,
+          status: status,
+          youtubeId: youtubeId,
+          thumbnail: thumbnail
+        };
+      });
     }
 
     function extractCategoryFromNotes(notes) {

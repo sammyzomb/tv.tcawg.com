@@ -118,12 +118,37 @@ document.addEventListener('DOMContentLoaded', () => {
         status: 'published'
       };
       
-      scheduleData[dayName].schedule.push(program);
+      // 檢查是否已存在相同時間和標題的節目，避免重複
+      const existingProgram = scheduleData[dayName].schedule.find(p => 
+        p.time === actualTime && p.title === title && p.youtubeId === youtubeId
+      );
+      
+      if (!existingProgram) {
+        scheduleData[dayName].schedule.push(program);
+      } else {
+        console.log(`⚠️ 跳過重複節目: ${title} (${actualTime})`);
+      }
     });
     
-    // 按時間排序每個日期的節目
+    // 按時間排序每個日期的節目，並進行最終去重
     Object.keys(scheduleData).forEach(day => {
       scheduleData[day].schedule.sort((a, b) => a.time.localeCompare(b.time));
+      
+      // 最終去重：移除相同時間、標題和 YouTube ID 的重複節目
+      const uniquePrograms = [];
+      const seen = new Set();
+      
+      scheduleData[day].schedule.forEach(program => {
+        const key = `${program.time}-${program.title}-${program.youtubeId}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          uniquePrograms.push(program);
+        } else {
+          console.log(`🗑️ 移除重複節目: ${program.title} (${program.time})`);
+        }
+      });
+      
+      scheduleData[day].schedule = uniquePrograms;
     });
     
     return scheduleData;
