@@ -184,6 +184,24 @@ document.addEventListener('DOMContentLoaded', () => {
     const container = document.getElementById('featured-videos');
     if (!container) return;
 
+    // 標籤翻譯映射
+    const TAG_TRANSLATIONS = {
+      'city-secrets': '城市秘境',
+      'around-world': '繞著地球跑',
+      'nature-secrets': '自然秘境',
+      'taste-journal': '味覺日誌',
+      'food-talk': '食話實說',
+      'time-travel': '時光漫遊',
+      'play-fun': '玩樂FUN',
+      'travel-talk': '旅途談'
+    };
+
+    // 翻譯標籤函數
+    const translateTags = (tags) => {
+      if (!Array.isArray(tags)) return [];
+      return tags.map(tag => TAG_TRANSLATIONS[tag] || tag);
+    };
+
     // 取第一個有值的欄位
     const pick = (f, keys) => {
       for (const k of keys) {
@@ -210,7 +228,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const desc  = pick(f, ['精選推薦影片說明文字','description']);
         const ytid  = pick(f, ['YouTube ID','youTubeId']);
         const mp4   = pick(f, ['MP4 影片網址','mp4Url']);
-        const tags  = Array.isArray(f.tags) ? f.tags : [];
+        const tags  = translateTags(Array.isArray(f.tags) ? f.tags : []);
 
         // 縮圖：優先 Contentful 圖，否則用 YouTube 預設圖
         let thumb = '';
@@ -609,7 +627,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             // 3. 使用 YouTube 縮圖（只有當 YouTube ID 有效時）
             else if (isValidYouTubeId) {
-              thumbnail = `https://i.ytimg.com/vi/${youtubeId}/hqdefault.jpg`;
+              thumbnail = `https://i.ytimg.com/vi/${youtubeId}/maxresdefault.jpg`;
             }
             // 4. 預設縮圖
             else {

@@ -216,7 +216,7 @@ class ContentfulAPI {
   async getYouTubeInfo(videoId) {
     try {
       // 這裡可以調用 YouTube API 獲取影片資訊
-      const thumbnail = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+      const thumbnail = `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`;
       
       return {
         thumbnail,

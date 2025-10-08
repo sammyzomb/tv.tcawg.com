@@ -625,7 +625,7 @@
               const videoEntry = fields.video['en-US'];
               if (videoEntry.fields && videoEntry.fields.youTubeId && videoEntry.fields.youTubeId['en-US']) {
                 const youtubeId = videoEntry.fields.youTubeId['en-US'];
-                thumbnail = `https://img.youtube.com/vi/${youtubeId}/maxresdefault.jpg`;
+                thumbnail = `https://i.ytimg.com/vi/${youtubeId}/maxresdefault.jpg`;
                 console.log('使用 Video Entry 中的 YouTube 縮圖:', thumbnail);
               }
             }
@@ -634,7 +634,7 @@
               const youtubeIdMatch = notes.match(/\[YouTube:([a-zA-Z0-9_-]+)\]/);
               if (youtubeIdMatch) {
                 const youtubeId = youtubeIdMatch[1];
-                thumbnail = `https://img.youtube.com/vi/${youtubeId}/maxresdefault.jpg`;
+                thumbnail = `https://i.ytimg.com/vi/${youtubeId}/maxresdefault.jpg`;
                 console.log('從備註中提取 YouTube 縮圖:', thumbnail);
               }
             }

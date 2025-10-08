@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>觀看次數提取測試</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-input {
+            width: 100%;
+            height: 100px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 觀看次數提取功能測試</h1>
+        
+        <div class="test-section">
+            <h3>測試 1: 手動測試</h3>
+            <p>在下方輸入框中貼上包含觀看次數的文本，然後點擊測試按鈕：</p>
+            <textarea id="testInput" class="test-input" placeholder="請貼上包含觀看次數的文本，例如：
+觀看次數:13次 2025年9月24日 #航向世界旅遊
+
+加拿大尼加拉瀑布 (Niagara Falls, Canada)"></textarea>
+            <br>
+            <button class="test-button" onclick="testManual()">🔍 測試提取</button>
+            <button class="test-button" onclick="testClipboard()">📋 測試剪貼簿</button>
+            <div id="manualResult" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>測試 2: 預設測試案例</h3>
+            <button class="test-button" onclick="testPreset()">🧪 執行預設測試</button>
+            <div id="presetResult" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>測試 3: 多種格式測試</h3>
+            <button class="test-button" onclick="testMultipleFormats()">🔄 測試多種格式</button>
+            <div id="formatResult" class="result" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        // 從 admin-calendar-unified.html 複製的函數
+        function extractViewCountInfo(text) {
+            try {
+                console.log('🔍 開始提取觀看次數，輸入文本:', text.substring(0, 200) + '...');
+                
+                // 匹配中文格式：觀看次數:22次 2025年9月22日（可能包含標籤）
+                const chinesePattern = /觀看次數:(\d+)次\s*(\d{4})年(\d{1,2})月(\d{1,2})日(?:\s*#\S+)?/;
+                const chineseMatch = text.match(chinesePattern);
+                console.log('🔍 中文格式匹配結果:', chineseMatch);
+                
+                if (chineseMatch) {
+                    const [, viewCount, year, month, day] = chineseMatch;
+                    
+                    // 提取標籤（如果存在）
+                    const tagMatch = chineseMatch[0].match(/#(\S+)/);
+                    const tag = tagMatch ? tagMatch[1] : null;
+                    
+                    return {
+                        viewCount: `${viewCount}次`,
+                        date: `${year}年${month}月${day}日`,
+                        tag: tag,
+                        fullText: chineseMatch[0],
+                        type: 'chinese'
+                    };
+                }
+                
+                // 匹配英文格式：Views: 22 September 22, 2025
+                const englishPattern = /Views:\s*(\d+)\s*(\w+)\s*(\d{1,2}),\s*(\d{4})/i;
+                const englishMatch = text.match(englishPattern);
+                console.log('🔍 英文格式匹配結果:', englishMatch);
+                
+                if (englishMatch) {
+                    const [, viewCount, month, day, year] = englishMatch;
+                    return {
+                        viewCount: `${viewCount} views`,
+                        date: `${month} ${day}, ${year}`,
+                        tag: null,
+                        fullText: englishMatch[0],
+                        type: 'english'
+                    };
+                }
+                
+                // 匹配簡化格式：觀看次數:22次
+                const simplePattern = /觀看次數:(\d+)次/;
+                const simpleMatch = text.match(simplePattern);
+                console.log('🔍 簡化格式匹配結果:', simpleMatch);
+                
+                if (simpleMatch) {
+                    return {
+                        viewCount: `${simpleMatch[1]}次`,
+                        date: '日期未找到',
+                        tag: null,
+                        fullText: simpleMatch[0],
+                        type: 'simple'
+                    };
+                }
+                
+                console.log('❌ 沒有找到任何觀看次數格式');
+                return null;
+            } catch (error) {
+                console.error('提取觀看次數失敗:', error);
+                return null;
+            }
+        }
+
+        async function pasteFromClipboard() {
+            try {
+                console.log('📋 開始從剪貼簿讀取內容...');
+                const text = await navigator.clipboard.readText();
+                console.log('📋 剪貼簿內容長度:', text ? text.length : 0);
+                console.log('📋 剪貼簿內容預覽:', text ? text.substring(0, 200) + '...' : '空');
+                
+                if (text && text.trim()) {
+                    // 清理剪貼簿內容
+                    let cleanedText = text.trim();
+                    
+                    // 自動提取觀看次數
+                    console.log('🔍 開始提取觀看次數...');
+                    const viewCountInfo = extractViewCountInfo(cleanedText);
+                    if (viewCountInfo) {
+                        console.log('📊 提取到觀看次數信息:', viewCountInfo);
+                        return {
+                            success: true,
+                            message: `✅ 自動提取觀看次數: ${viewCountInfo.viewCount} (${viewCountInfo.date})`,
+                            data: viewCountInfo
+                        };
+                    } else {
+                        console.log('❌ 沒有提取到觀看次數信息');
+                        return {
+                            success: false,
+                            message: '❌ 沒有提取到觀看次數信息',
+                            data: null
+                        };
+                    }
+                } else {
+                    return {
+                        success: false,
+                        message: '剪貼簿為空，請先複製 YouTube 描述內容',
+                        data: null
+                    };
+                }
+            } catch (error) {
+                console.error('讀取剪貼簿失敗:', error);
+                return {
+                    success: false,
+                    message: '無法讀取剪貼簿，請手動輸入描述',
+                    data: null
+                };
+            }
+        }
+
+        function testManual() {
+            const input = document.getElementById('testInput').value;
+            const resultDiv = document.getElementById('manualResult');
+            
+            if (!input.trim()) {
+                showResult(resultDiv, '請先輸入測試文本', 'error');
+                return;
+            }
+            
+            const result = extractViewCountInfo(input);
+            if (result) {
+                showResult(resultDiv, `✅ 提取成功！
+觀看次數: ${result.viewCount}
+日期: ${result.date}
+完整文本: ${result.fullText}
+類型: ${result.type}`, 'success');
+            } else {
+                showResult(resultDiv, '❌ 沒有提取到觀看次數信息', 'error');
+            }
+        }
+
+        async function testClipboard() {
+            const resultDiv = document.getElementById('manualResult');
+            showResult(resultDiv, '📋 正在讀取剪貼簿...', 'info');
+            
+            const result = await pasteFromClipboard();
+            showResult(resultDiv, result.message, result.success ? 'success' : 'error');
+            
+            if (result.data) {
+                const details = `
+詳細信息:
+觀看次數: ${result.data.viewCount}
+日期: ${result.data.date}
+完整文本: ${result.data.fullText}
+類型: ${result.data.type}`;
+                showResult(resultDiv, resultDiv.innerHTML + details, result.success ? 'success' : 'error');
+            }
+        }
+
+        function testPreset() {
+            const resultDiv = document.getElementById('presetResult');
+            const testText = `觀看次數:13次 2025年9月24日 #航向世界旅遊
+
+加拿大尼加拉瀑布
+尼加拉瀑布位於加拿大安大略省與美國紐約州的交界，是世界最著名的自然奇觀之一。壯觀的馬蹄瀑布以驚人的水量傾瀉而下，每秒高達 280 萬公升，景象震撼人心。白天可以欣賞磅礴水勢，夜晚則有燈光秀與煙火表演，冬季更因水霧結冰而呈現晶瑩夢幻的景致。遊客常搭乘「霧中少女號」近距離感受水勢，或登上斯凱倫塔（Skylon Tower）俯瞰壯麗全景。
+
+加拿大滑雪場
+加拿大擁有世界級的滑雪勝地，其中卑詩省的 惠斯勒黑梳山（Whistler Blackcomb） 是北美最大的滑雪場，雪道總長超過 200 公里，曾舉辦 2010 年冬季奧運，吸引無數滑雪愛好者。洛磯山脈的 班夫（Banff）與露易絲湖（Lake Louise） 滑雪場則以壯麗山景與高品質粉雪著稱，是冬季旅遊的首選。除了滑雪，度假村還提供雪鞋健行、狗拉雪橇、冰上運動等活動，讓遊客盡情體驗加拿大的冰雪魅力。
+✈️航向世界旅遊台
+https://www.tcawg.com/`;
+            
+            showResult(resultDiv, `🧪 執行預設測試（使用完整的截圖內容）...
+測試文本長度: ${testText.length} 字元`, 'info');
+            
+            const result = extractViewCountInfo(testText);
+            if (result) {
+                const details = `
+✅ 提取成功！
+觀看次數: ${result.viewCount}
+日期: ${result.date}
+標籤: ${result.tag || '無'}
+完整文本: ${result.fullText}
+類型: ${result.type}`;
+                showResult(resultDiv, resultDiv.innerHTML + details, 'success');
+            } else {
+                showResult(resultDiv, resultDiv.innerHTML + '\n❌ 沒有提取到觀看次數信息', 'error');
+            }
+        }
+
+        function testMultipleFormats() {
+            const resultDiv = document.getElementById('formatResult');
+            const testCases = [
+                {
+                    name: '截圖格式（含標籤）',
+                    text: '觀看次數:13次 2025年9月24日 #航向世界旅遊\n\n加拿大尼加拉瀑布 (Niagara Falls, Canada)'
+                },
+                {
+                    name: '中文格式（不含標籤）',
+                    text: '觀看次數:22次 2025年9月22日\n\n這是一個測試描述...'
+                },
+                {
+                    name: '英文格式',
+                    text: 'Views: 22 September 22, 2025\n\nThis is a test description...'
+                },
+                {
+                    name: '簡化格式',
+                    text: '觀看次數:22次\n\n這是一個測試描述...'
+                },
+                {
+                    name: '無觀看次數',
+                    text: '這是一個沒有觀看次數的描述...'
+                }
+            ];
+            
+            let results = '🔄 測試多種格式:\n\n';
+            
+            testCases.forEach((testCase, index) => {
+                results += `${index + 1}. ${testCase.name}:\n`;
+                results += `   文本: ${testCase.text.substring(0, 50)}...\n`;
+                
+                const result = extractViewCountInfo(testCase.text);
+                if (result) {
+                    results += `   ✅ 提取成功: ${result.viewCount} (${result.date})\n`;
+                } else {
+                    results += `   ❌ 沒有提取到\n`;
+                }
+                results += '\n';
+            });
+            
+            showResult(resultDiv, results, 'info');
+        }
+
+        function showResult(element, message, type) {
+            element.style.display = 'block';
+            element.className = `result ${type}`;
+            element.textContent = message;
+        }
+
+        // 頁面載入時自動執行預設測試
+        window.onload = function() {
+            console.log('🧪 觀看次數提取測試頁面已載入');
+            console.log('🧪 可以在控制台查看詳細的調試信息');
+        };
+    </script>
+</body>
+</html>

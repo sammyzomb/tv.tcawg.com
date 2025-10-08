@@ -10,10 +10,8 @@
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
 
   <!-- 必要套件：Contentful + Twemoji -->
-  <!-- 移除 Contentful 與 browser-config（此頁不需要） -->
-  <!-- <script src="https://cdn.jsdelivr.net/npm/contentful@latest/dist/contentful.browser.min.js"></script> -->
+  <script src="https://cdn.jsdelivr.net/npm/contentful@latest/dist/contentful.browser.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/twemoji@14.0.2/dist/twemoji.min.js" crossorigin="anonymous"></script>
-  <!-- <script src="browser-config.js"></script> -->
 
   <!-- 本頁樣式 -->
   <style>
@@ -137,6 +135,145 @@
       background: var(--accent);
       color: white;
       border-color: var(--accent);
+    }
+    
+    /* 主題標籤特殊樣式 */
+    .search-tag[data-tag*="city-secrets"],
+    .search-tag[data-tag*="taste-journal"],
+    .search-tag[data-tag*="travel-talk"],
+    .search-tag[data-tag*="around-world"],
+    .search-tag[data-tag*="food-talk"],
+    .search-tag[data-tag*="play-fun"],
+    .search-tag[data-tag*="time-walk"],
+    .search-tag[data-tag*="nature-secrets"] {
+      border-color: var(--accent);
+      background: rgba(224, 180, 106, 0.1);
+      font-weight: 600;
+    }
+
+    /* 搜尋結果網格樣式 */
+    .search-results-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+      padding: 0;
+    }
+
+    @media (max-width: 768px) {
+      .search-results-grid {
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 16px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .search-results-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+    }
+
+    /* 搜尋結果卡片樣式 */
+    .search-result-card {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      overflow: hidden;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .search-result-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    .search-result-thumbnail {
+      position: relative;
+      width: 100%;
+      height: 200px;
+      overflow: hidden;
+    }
+
+    .search-result-thumbnail img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .search-result-play-button {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0, 0, 0, 0.7);
+      color: white;
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      transition: all 0.3s ease;
+    }
+
+    .search-result-card:hover .search-result-play-button {
+      background: rgba(0, 0, 0, 0.9);
+      transform: translate(-50%, -50%) scale(1.1);
+    }
+
+    .search-result-content {
+      padding: 16px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .search-result-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin: 0 0 8px 0;
+      color: var(--text);
+      line-height: 1.4;
+    }
+
+    .search-result-description {
+      font-size: 14px;
+      color: #6b7280;
+      margin: 0 0 12px 0;
+      line-height: 1.4;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      flex: 1;
+    }
+
+    .search-result-meta {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .search-result-category {
+      background: #e3f2fd;
+      color: #1976d2;
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .search-result-topic {
+      background: #f3e5f5;
+      color: #7b1fa2;
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 500;
     }
 
     .search-tag.active {
@@ -496,7 +633,7 @@
     <!-- 精選節目 -->
     <div class="videos-section" id="featured-videos-section" style="display: none;">
       <h2 class="section-title">精選節目</h2>
-      <div class="video-grid" id="featured-videos">
+      <div class="search-results-grid" id="featured-videos">
         <!-- 節目卡片將由 JavaScript 動態載入 -->
       </div>
     </div>
@@ -548,78 +685,78 @@
       }
     }
 
-    // 主題分類資料
+    // 主題分類資料（與 admin-calendar-unified.html 保持一致）
     const TOPICS_DATA = [
       {
         id: 'city-secrets',
         title: '城市秘境',
-        description: '《繞著地球跑/城市秘境 City Secrets》- 深入城市角落、市集、文化景點，用實地體驗呈現城市故事',
+        description: '深入城市角落、市集、文化景點，用實地體驗呈現城市故事',
         icon: '🏙️',
         tags: ['小眾景點', '在地生活', '夜市', '特色咖啡館'],
-        videoCount: 28,
+        videoCount: 0, // 將從 Contentful 動態載入
         backgroundImage: 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
       },
       {
         id: 'taste-journal',
         title: '味覺日誌',
-        description: '《味覺日誌 Taste Journal》- 品嘗當地料理與街頭小吃，訪問餐廳老闆或廚師，分享食物背後的故事',
+        description: '品嘗當地料理與街頭小吃，訪問餐廳老闆或廚師，分享食物背後的故事',
         icon: '🍽️',
         tags: ['美食故事', '街頭小吃', '在地料理', '文化背景'],
-        videoCount: 35,
+        videoCount: 0,
         backgroundImage: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
       },
       {
         id: 'travel-talk',
         title: '旅途談',
-        description: '《旅途談 Travel Talk》- 邀請旅遊達人、部落客、在地人，分享旅行心得、技巧與趣聞',
+        description: '邀請旅遊達人、部落客、在地人，分享旅行心得、技巧與趣聞',
         icon: '💬',
         tags: ['旅遊技巧', '節省預算', '互動討論', '實用資訊'],
-        videoCount: 22,
+        videoCount: 0,
         backgroundImage: 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
       },
       {
         id: 'around-world',
         title: '繞著地球跑',
-        description: '《繞著地球跑 Around the World》- 走訪小鎮或鄉村，介紹當地文化、手作工藝、市場與特色美食',
+        description: '走訪小鎮或鄉村，介紹當地文化、手作工藝、市場與特色美食',
         icon: '🌍',
         tags: ['慢節奏', '輕旅行', '手作工藝', '在地生活'],
-        videoCount: 18,
+        videoCount: 0,
         backgroundImage: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
       },
       {
         id: 'food-talk',
         title: '食話實說',
-        description: '《食話實說 Food Talk》- 討論特定食材、料理或美食文化，結合討論與實地示範',
+        description: '討論特定食材、料理或美食文化，結合討論與實地示範',
         icon: '🍳',
         tags: ['食材討論', '料理文化', '教育性', '實地示範'],
-        videoCount: 25,
+        videoCount: 0,
         backgroundImage: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
       },
       {
         id: 'play-fun',
         title: '玩樂FUN',
-        description: '《玩樂FUN Play Fun》- 專為家庭設計，探索適合親子活動的景點、遊樂園、動物園',
+        description: '專為家庭設計，探索適合親子活動的景點、遊樂園、動物園',
         icon: '🎮',
         tags: ['親子活動', '遊樂園', '動物園', '手作體驗'],
-        videoCount: 20,
+        videoCount: 0,
         backgroundImage: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
       },
       {
         id: 'time-walk',
         title: '時光漫遊',
-        description: '《時光漫遊 Time Walk》- 走訪古蹟、博物館、傳統村落，透過歷史故事呈現深度文化旅程',
+        description: '走訪古蹟、博物館、傳統村落，透過歷史故事呈現深度文化旅程',
         icon: '🏛️',
         tags: ['古蹟', '博物館', '歷史故事', '文化旅程'],
-        videoCount: 30,
+        videoCount: 0,
         backgroundImage: 'https://images.unsplash.com/photo-1520637836862-4d197d17c93a?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
       },
       {
         id: 'nature-secrets',
         title: '自然秘境',
-        description: '《自然秘境 Nature Secrets》- 探索自然景觀、野生動植物、生態保育，感受地球之美',
+        description: '探索自然景觀、野生動植物、生態保育，感受地球之美',
         icon: '🌿',
         tags: ['自然景觀', '野生動物', '生態保育', '環境保護'],
-        videoCount: 26,
+        videoCount: 0,
         backgroundImage: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
       }
     ];
@@ -628,7 +765,8 @@
     const POPULAR_TAGS = [
       '城市秘境', '味覺日誌', '旅途談', '繞著地球跑', '食話實說', '玩樂FUN', '時光漫遊', '自然秘境',
       '小眾景點', '在地生活', '美食故事', '旅遊技巧', '慢節奏', '親子活動', '古蹟', '自然景觀',
-      '街頭小吃', '手作工藝', '歷史故事', '生態保育', '夜市', '咖啡館', '博物館', '野生動物'
+      '街頭小吃', '手作工藝', '歷史故事', '生態保育', '夜市', '咖啡館', '博物館', '野生動物',
+      'city-secrets', 'taste-journal', 'travel-talk', 'around-world', 'food-talk', 'play-fun', 'time-walk', 'nature-secrets'
     ];
 
     // HTML 轉義函數
@@ -643,7 +781,7 @@
       const container = document.getElementById('search-tags');
       if (!container) return;
 
-      const displayTags = POPULAR_TAGS.slice(0, 16);
+      const displayTags = POPULAR_TAGS.slice(0, 24);
       
       container.innerHTML = displayTags.map(tag => `
         <span class="search-tag" data-tag="${tag}">${escapeHtml(tag)}</span>
@@ -716,6 +854,113 @@
       }
     }
 
+    // 全域變數
+    let allPrograms = [];
+    let currentSearchQuery = '';
+
+    // 從備註中提取主題標籤
+    function extractTopicsFromNotes(notes) {
+      if (!notes) return [];
+      const matches = notes.match(/\[主題:(.*?)\]/g);
+      if (!matches) return [];
+      
+      const topics = matches.map(m => m.replace(/\[主題:(.*?)\]/, '$1'));
+      const allTopics = [];
+      topics.forEach(topic => {
+        if (topic.includes(',')) {
+          allTopics.push(...topic.split(',').map(t => t.trim()));
+        } else {
+          allTopics.push(topic.trim());
+        }
+      });
+      
+      return allTopics.filter(topic => topic.length > 0);
+    }
+
+    // 從備註中提取分類
+    function extractCategoryFromNotes(notes) {
+      if (!notes) return '旅遊節目';
+      const match = notes.match(/\[分類:(.*?)\]/);
+      return match ? match[1] : '旅遊節目';
+    }
+
+    // 載入 Contentful 數據
+    async function loadContentfulData() {
+      try {
+        if (typeof contentful === 'undefined') {
+          console.log('Contentful 未載入，使用模擬數據');
+          return;
+        }
+
+        const client = contentful.createClient({
+          space: 'os5wf90ljenp',
+          accessToken: 'lODH-WLwHwVZv7O4rFdBWjSnrzaQWGD4koeOZ1Dypj0'
+        });
+
+        const response = await client.getEntries({
+          content_type: 'scheduleItem',
+          include: 2,
+          limit: 1000
+        });
+
+        if (response.items && response.items.length > 0) {
+          console.log(`✅ 從 Contentful 載入 ${response.items.length} 個節目`);
+          
+          allPrograms = response.items.map(item => {
+            const fields = item.fields;
+            const notes = fields.notes || '';
+            
+            // 從備註中提取 YouTube ID
+            const youtubeMatch = notes.match(/\[YouTube:([^\]]+)\]/);
+            const youtubeId = youtubeMatch ? youtubeMatch[1] : '';
+            
+            // 清理描述文字
+            let cleanDescription = notes
+              .replace(/\[時間:\d{2}:\d{2}\]/g, '')
+              .replace(/\[YouTube:[^\]]+\]/g, '')
+              .replace(/\[分類:.*?\]/g, '')
+              .replace(/\[主題:.*?\]/g, '')
+              .trim();
+            
+            if (!cleanDescription) {
+              cleanDescription = fields.title;
+            }
+
+            return {
+              id: item.sys.id,
+              title: fields.title,
+              description: cleanDescription,
+              category: extractCategoryFromNotes(notes),
+              topics: extractTopicsFromNotes(notes),
+              youtubeId: youtubeId,
+              thumbnail: youtubeId ? `https://img.youtube.com/vi/${youtubeId}/maxresdefault.jpg` : 'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop',
+              airDate: fields.airDate,
+              publishedAt: item.sys.publishedAt || item.sys.createdAt
+            };
+          });
+
+          // 更新主題統計
+          updateTopicStats();
+          console.log('✅ 節目數據載入完成，共', allPrograms.length, '個節目');
+        }
+      } catch (error) {
+        console.error('載入 Contentful 數據失敗:', error);
+      }
+    }
+
+    // 更新主題統計
+    function updateTopicStats() {
+      TOPICS_DATA.forEach(topic => {
+        const count = allPrograms.filter(program => 
+          program.topics && program.topics.includes(topic.id)
+        ).length;
+        topic.videoCount = count;
+      });
+      
+      // 重新渲染主題網格
+      renderTopicsGrid();
+    }
+
     // 執行搜尋
     function performSearch(query) {
       const container = document.getElementById('featured-videos');
@@ -723,19 +968,136 @@
       
       if (!container || !section) return;
 
+      currentSearchQuery = query;
       container.innerHTML = '<div style="text-align: center; padding: 40px; color: #6b7280;">搜尋中...</div>';
       section.style.display = 'block';
 
-      // 模擬搜尋結果
-      setTimeout(() => {
+      // 搜尋相關節目
+      const results = searchPrograms(query);
+      displaySearchResults(results, query);
+    }
+
+    // 搜尋節目
+    function searchPrograms(query) {
+      if (!query || allPrograms.length === 0) return [];
+
+      const lowerQuery = query.toLowerCase();
+      
+      // 先進行搜尋過濾
+      const searchResults = allPrograms.filter(program => {
+        // 搜尋標題
+        if (program.title.toLowerCase().includes(lowerQuery)) return true;
+        
+        // 搜尋描述
+        if (program.description.toLowerCase().includes(lowerQuery)) return true;
+        
+        // 搜尋分類
+        if (program.category.toLowerCase().includes(lowerQuery)) return true;
+        
+        // 搜尋主題標籤
+        if (program.topics && program.topics.some(topic => 
+          topic.toLowerCase().includes(lowerQuery)
+        )) return true;
+        
+        return false;
+      });
+
+      // 去重：根據 YouTube ID 去重，保留第一個出現的
+      const uniqueResults = [];
+      const seenYouTubeIds = new Set();
+      
+      searchResults.forEach(program => {
+        if (program.youtubeId && program.youtubeId.trim() !== '') {
+          // 如果有 YouTube ID，檢查是否已存在
+          if (!seenYouTubeIds.has(program.youtubeId)) {
+            seenYouTubeIds.add(program.youtubeId);
+            uniqueResults.push(program);
+          }
+        } else {
+          // 如果沒有 YouTube ID，直接加入（避免遺漏沒有 YouTube ID 的節目）
+          uniqueResults.push(program);
+        }
+      });
+
+      console.log(`🔍 搜尋「${query}」：找到 ${searchResults.length} 個結果，去重後 ${uniqueResults.length} 個`);
+      
+      return uniqueResults;
+    }
+
+    // 顯示搜尋結果
+    function displaySearchResults(results, query) {
+      const container = document.getElementById('featured-videos');
+      
+      if (results.length === 0) {
         container.innerHTML = `
           <div style="text-align: center; padding: 40px; color: #6b7280;">
             <div style="font-size: 48px; margin-bottom: 16px;">🔍</div>
-            <div>搜尋「${query}」的結果</div>
-            <div style="font-size: 14px; margin-top: 8px;">這裡會顯示相關的旅遊節目</div>
+            <div>沒有找到「${escapeHtml(query)}」的相關節目</div>
+            <div style="font-size: 14px; margin-top: 8px;">請嘗試其他關鍵字或主題標籤</div>
           </div>
         `;
-      }, 1000);
+        return;
+      }
+
+      const resultsHtml = results.map(program => `
+        <div class="search-result-card" onclick="openVideoModal('${program.youtubeId}')">
+          <div class="search-result-thumbnail">
+            <img src="${program.thumbnail}" alt="${escapeHtml(program.title)}">
+            <div class="search-result-play-button">▶</div>
+          </div>
+          <div class="search-result-content">
+            <h3 class="search-result-title">${escapeHtml(program.title)}</h3>
+            <p class="search-result-description">${escapeHtml(program.description)}</p>
+            <div class="search-result-meta">
+              <span class="search-result-category">${escapeHtml(program.category)}</span>
+              ${program.topics && program.topics.length > 0 ? program.topics.map(topic => `
+                <span class="search-result-topic">${escapeHtml(topic)}</span>
+              `).join('') : ''}
+            </div>
+          </div>
+        </div>
+      `).join('');
+
+      container.innerHTML = `
+        <div style="margin-bottom: 20px; padding: 16px; background: var(--card); border-radius: 12px; border: 1px solid var(--card-border);">
+          <h2 style="margin: 0 0 8px 0; color: var(--text);">搜尋「${escapeHtml(query)}」的結果</h2>
+          <p style="margin: 0; color: #6b7280; font-size: 14px;">找到 ${results.length} 個相關節目（已去除重複的 YouTube 影片）</p>
+        </div>
+        ${resultsHtml}
+      `;
+    }
+
+    // 開啟影片模態框
+    function openVideoModal(youtubeId) {
+      if (!youtubeId) return;
+      
+      const modal = document.createElement('div');
+      modal.style.cssText = `
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+        background: rgba(0,0,0,0.9); z-index: 10000; display: flex; 
+        align-items: center; justify-content: center; padding: 20px;
+      `;
+      
+      modal.innerHTML = `
+        <div style="position: relative; width: 100%; max-width: 800px; background: white; border-radius: 12px; overflow: hidden;">
+          <button onclick="this.closest('.modal').remove()" style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.5); color: white; border: none; border-radius: 50%; width: 40px; height: 40px; cursor: pointer; z-index: 10001;">×</button>
+          <div style="position: relative; width: 100%; height: 0; padding-bottom: 56.25%;">
+            <iframe src="https://www.youtube.com/embed/${youtubeId}?autoplay=1" 
+                    style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;" 
+                    allowfullscreen></iframe>
+          </div>
+        </div>
+      `;
+      
+      modal.className = 'modal';
+      document.body.appendChild(modal);
+      
+      // 點擊背景關閉
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+          modal.remove();
+        }
+      });
     }
 
     // 設置搜尋事件
@@ -778,13 +1140,16 @@
     }
 
     // 頁面載入完成後初始化
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
       dbg('DOM 載入完成');
       initThemeToggle(); dbg('主題切換初始化完成');
       initHamburgerMenu(); dbg('漢堡選單初始化完成');
       renderSearchTags(); dbg('已渲染搜尋標籤');
       renderTopicsGrid(); dbg('已渲染主題卡片：'+TOPICS_DATA.length);
       setupSearchEvents(); dbg('已綁定搜尋事件');
+      
+      // 載入 Contentful 數據
+      await loadContentfulData(); dbg('Contentful 數據載入完成');
     });
   </script>
 </body>

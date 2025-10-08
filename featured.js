@@ -58,6 +58,24 @@
     accessToken: 'lODH-WLwHwVZv7O4rFdBWjSnrzaQWGD4koeOZ1Dypj0'
   });
 
+  // 標籤翻譯映射
+  const TAG_TRANSLATIONS = {
+    'city-secrets': '城市秘境',
+    'around-world': '繞著地球跑',
+    'nature-secrets': '自然秘境',
+    'taste-journal': '味覺日誌',
+    'food-talk': '食話實說',
+    'time-travel': '時光漫遊',
+    'play-fun': '玩樂FUN',
+    'travel-talk': '旅途談'
+  };
+
+  // 翻譯標籤函數
+  function translateTags(tags) {
+    if (!Array.isArray(tags)) return [];
+    return tags.map(tag => TAG_TRANSLATIONS[tag] || tag);
+  }
+
   // HTML 轉義函數
   function escapeHtml(text) {
     const div = document.createElement('div');
@@ -89,7 +107,7 @@
         const desc  = pick(f, ['精選推薦影片說明文字','description']);
         const ytid  = pick(f, ['YouTube ID','youTubeId','youtubeId']);
         const mp4   = pick(f, ['MP4 影片網址','mp4Url']);
-        const tags  = Array.isArray(f.tags) ? f.tags : [];
+        const tags  = translateTags(Array.isArray(f.tags) ? f.tags : []);
         let thumb = '';
         const cfThumb = f.thumbnail?.fields?.file?.url;
         if (cfThumb) thumb = cfThumb.startsWith('http') ? cfThumb : `https:${cfThumb}`;
@@ -121,11 +139,41 @@
       moreWrap.appendChild(moreLink);
       container.after(moreWrap);
 
-      function renderNextPage() {
-        const slice = allItems.slice(rendered, rendered + PAGE_SIZE);
-        if (!slice.length) return;
 
+      container.innerHTML = '';
+      
+      // 確保始終顯示 8 個卡片位置
+      const TARGET_CARDS = 8;
+      
+      if (allItems.length === 0) {
+        // 沒有節目時，顯示 8 個空白卡片
         const frag = document.createDocumentFragment();
+        for (let i = 0; i < TARGET_CARDS; i++) {
+          const card = document.createElement('div');
+          card.className = 'video-card';
+          card.style.opacity = '0.3'; // 讓空白卡片稍微透明
+          card.innerHTML = `
+            <div class="video-thumb" style="aspect-ratio:16/9; width:100%; overflow:hidden; border-radius:14px; background:var(--card-bg); border: 2px dashed #ddd;">
+              <div style="width:100%;height:100%;background:var(--card-bg);display:flex;align-items:center;justify-content:center;color:#999;font-size:0.9rem;">
+                暫無節目
+              </div>
+            </div>
+            <div class="video-content">
+              <div class="video-tags" style="color:#ccc;">精選節目</div>
+              <div class="video-title" style="color:#ccc;">等待上架中...</div>
+              <div class="video-desc" style="color:#ccc;">敬請期待更多精彩內容</div>
+              <button class="video-cta" style="opacity:0.5;cursor:not-allowed;" disabled>即將推出</button>
+            </div>`;
+          frag.appendChild(card);
+        }
+        container.appendChild(frag);
+        moreWrap.style.display = 'none';
+      } else {
+        // 有節目時，確保顯示 8 個卡片（不足時用空白卡片補齊）
+        const frag = document.createDocumentFragment();
+        
+        // 先渲染實際的節目
+        const slice = allItems.slice(0, TARGET_CARDS);
         slice.forEach(v => {
           const card = document.createElement('div');
           card.className = 'video-card';
@@ -148,22 +196,62 @@
             </div>`;
           frag.appendChild(card);
         });
-
+        
+        // 如果節目不足 8 個，用空白卡片補齊
+        const remainingSlots = TARGET_CARDS - slice.length;
+        for (let i = 0; i < remainingSlots; i++) {
+          const card = document.createElement('div');
+          card.className = 'video-card';
+          card.style.opacity = '0.3';
+          card.innerHTML = `
+            <div class="video-thumb" style="aspect-ratio:16/9; width:100%; overflow:hidden; border-radius:14px; background:var(--card-bg); border: 2px dashed #ddd;">
+              <div style="width:100%;height:100%;background:var(--card-bg);display:flex;align-items:center;justify-content:center;color:#999;font-size:0.9rem;">
+                暫無節目
+              </div>
+            </div>
+            <div class="video-content">
+              <div class="video-tags" style="color:#ccc;">精選節目</div>
+              <div class="video-title" style="color:#ccc;">等待上架中...</div>
+              <div class="video-desc" style="color:#ccc;">敬請期待更多精彩內容</div>
+              <button class="video-cta" style="opacity:0.5;cursor:not-allowed;" disabled>即將推出</button>
+            </div>`;
+          frag.appendChild(card);
+        }
+        
         container.appendChild(frag);
-        rendered += slice.length;
-        moreWrap.style.display = allItems.length ? '' : 'none';
-      }
-
-      container.innerHTML = '';
-      if (allItems.length === 0) {
-        container.innerHTML = `<p style="color:#999;">目前無法載入精選節目。</p>`;
-        moreWrap.style.display = 'none';
-      } else {
-        renderNextPage();
+        rendered = slice.length;
+        moreWrap.style.display = allItems.length > TARGET_CARDS ? '' : 'none';
       }
     } catch (err) {
       console.error('Contentful 連線失敗（featured）：', err);
-      if (container) container.innerHTML = `<p style="color:#999;">目前無法載入精選節目。</p>`;
+      
+      // 連線失敗時也顯示 8 個空白卡片
+      const TARGET_CARDS = 8;
+      const frag = document.createDocumentFragment();
+      
+      for (let i = 0; i < TARGET_CARDS; i++) {
+        const card = document.createElement('div');
+        card.className = 'video-card';
+        card.style.opacity = '0.3';
+        card.innerHTML = `
+          <div class="video-thumb" style="aspect-ratio:16/9; width:100%; overflow:hidden; border-radius:14px; background:var(--card-bg); border: 2px dashed #ddd;">
+            <div style="width:100%;height:100%;background:var(--card-bg);display:flex;align-items:center;justify-content:center;color:#999;font-size:0.9rem;">
+              載入失敗
+            </div>
+          </div>
+          <div class="video-content">
+            <div class="video-tags" style="color:#ccc;">精選節目</div>
+            <div class="video-title" style="color:#ccc;">連線異常</div>
+            <div class="video-desc" style="color:#ccc;">請稍後再試或重新整理頁面</div>
+            <button class="video-cta" style="opacity:0.5;cursor:not-allowed;" disabled>無法載入</button>
+          </div>`;
+        frag.appendChild(card);
+      }
+      
+      if (container) {
+        container.innerHTML = '';
+        container.appendChild(frag);
+      }
     }
   });
 })();

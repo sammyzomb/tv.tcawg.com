@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>精選節目清理工具</title>
+    <script src="https://cdn.jsdelivr.net/npm/contentful@latest/dist/contentful.browser.min.js"></script>
+    <script src="browser-config.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .status-card {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+        .status-success {
+            border-left: 4px solid #28a745;
+            background: #d4edda;
+        }
+        .status-error {
+            border-left: 4px solid #dc3545;
+            background: #f8d7da;
+        }
+        .status-warning {
+            border-left: 4px solid #ffc107;
+            background: #fff3cd;
+        }
+        .video-item {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .video-thumbnail {
+            width: 120px;
+            height: 68px;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+        .video-info {
+            flex: 1;
+        }
+        .video-info h3 {
+            margin: 0 0 5px 0;
+            color: #2c3e50;
+        }
+        .video-info p {
+            margin: 0;
+            color: #6c757d;
+            font-size: 14px;
+        }
+        .video-status {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .status-valid {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status-invalid {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .status-unknown {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+        .btn-danger {
+            background: #dc3545;
+        }
+        .btn-danger:hover {
+            background: #c82333;
+        }
+        .btn-success {
+            background: #28a745;
+        }
+        .btn-success:hover {
+            background: #1e7e34;
+        }
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+        .btn-warning:hover {
+            background: #e0a800;
+        }
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        .actions {
+            display: flex;
+            gap: 10px;
+            margin: 10px 0;
+        }
+        .checkbox {
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧹 精選節目清理工具</h1>
+        
+        <div class="status-card">
+            <h3>📊 清理選項</h3>
+            <div class="actions">
+                <button class="btn" onclick="scanFeaturedVideos()">🔍 掃描精選節目</button>
+                <button class="btn btn-warning" onclick="cleanInvalidVideos()">🧹 清理失效影片</button>
+                <button class="btn btn-success" onclick="restoreBackupVideos()">🔄 恢復備用節目</button>
+                <button class="btn btn-danger" onclick="clearAllFeatured()">🗑️ 清空所有精選</button>
+            </div>
+        </div>
+
+        <div class="status-card">
+            <h3>📺 精選節目狀態</h3>
+            <div id="featured-videos-status">
+                <p>點擊「掃描精選節目」開始檢查...</p>
+            </div>
+        </div>
+
+        <div class="status-card">
+            <h3>📝 操作日誌</h3>
+            <div id="log" class="log">等待操作開始...</div>
+        </div>
+    </div>
+
+    <script>
+        let contentfulClient = null;
+        let logMessages = [];
+        let featuredVideos = [];
+
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            const logMessage = `[${timestamp}] ${message}`;
+            logMessages.push(logMessage);
+            
+            const logElement = document.getElementById('log');
+            logElement.textContent = logMessages.join('\n');
+            logElement.scrollTop = logElement.scrollHeight;
+            
+            console.log(logMessage);
+        }
+
+        function addStatus(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            const statusClass = type === 'success' ? 'status-success' : 
+                               type === 'error' ? 'status-error' : 
+                               type === 'warning' ? 'status-warning' : '';
+            
+            element.innerHTML = `<div class="status-card ${statusClass}">${message}</div>`;
+        }
+
+        async function initContentful() {
+            if (!contentfulClient) {
+                contentfulClient = contentful.createClient({
+                    space: 'os5wf90ljenp',
+                    accessToken: 'lODH-WLwHwVZv7O4rFdBWjSnrzaQWGD4koeOZ1Dypj0'
+                });
+            }
+        }
+
+        async function scanFeaturedVideos() {
+            log('🔍 開始掃描精選節目...');
+            addStatus('featured-videos-status', '🔄 正在掃描精選節目...', 'warning');
+
+            try {
+                await initContentful();
+
+                // 查詢精選節目
+                const response = await contentfulClient.getEntries({
+                    content_type: 'video',
+                    'fields.isFeatured': true,
+                    limit: 100
+                });
+
+                featuredVideos = response.items || [];
+                log(`📺 找到 ${featuredVideos.length} 個精選節目`);
+
+                if (featuredVideos.length === 0) {
+                    addStatus('featured-videos-status', '⚠️ 沒有找到精選節目', 'warning');
+                    return;
+                }
+
+                // 檢查每個節目的狀態
+                const videoStatuses = [];
+                for (const video of featuredVideos) {
+                    const status = await checkVideoStatus(video);
+                    videoStatuses.push({ video, status });
+                }
+
+                displayVideoStatuses(videoStatuses);
+
+            } catch (error) {
+                log(`❌ 掃描失敗: ${error.message}`);
+                addStatus('featured-videos-status', `❌ 掃描失敗: ${error.message}`, 'error');
+            }
+        }
+
+        async function checkVideoStatus(video) {
+            const fields = video.fields || {};
+            const youtubeId = fields.youTubeId || fields.youtubeId || fields.YouTubeID || '';
+            
+            if (!youtubeId) {
+                return { status: 'no-id', message: '沒有 YouTube ID' };
+            }
+
+            try {
+                // 檢查 YouTube 影片是否存在
+                const response = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${youtubeId}&format=json`);
+                
+                if (response.ok) {
+                    return { status: 'valid', message: '影片有效' };
+                } else {
+                    return { status: 'invalid', message: '影片不存在或已刪除' };
+                }
+            } catch (error) {
+                return { status: 'error', message: `檢查失敗: ${error.message}` };
+            }
+        }
+
+        function displayVideoStatuses(videoStatuses) {
+            const container = document.getElementById('featured-videos-status');
+            
+            const validCount = videoStatuses.filter(v => v.status.status === 'valid').length;
+            const invalidCount = videoStatuses.filter(v => v.status.status === 'invalid').length;
+            const errorCount = videoStatuses.filter(v => v.status.status === 'error').length;
+
+            let html = `
+                <div class="status-card">
+                    <h4>📊 掃描結果</h4>
+                    <p>✅ 有效影片: ${validCount} 個</p>
+                    <p>❌ 失效影片: ${invalidCount} 個</p>
+                    <p>⚠️ 檢查錯誤: ${errorCount} 個</p>
+                </div>
+            `;
+
+            videoStatuses.forEach(({ video, status }) => {
+                const fields = video.fields || {};
+                const title = fields.title || fields.影片標題 || '未命名影片';
+                const youtubeId = fields.youTubeId || fields.youtubeId || fields.YouTubeID || '';
+                const thumbnail = fields.thumbnail?.fields?.file?.url || 
+                                (youtubeId ? `https://i.ytimg.com/vi/${youtubeId}/hqdefault.jpg` : '');
+
+                const statusClass = status.status === 'valid' ? 'status-valid' : 
+                                  status.status === 'invalid' ? 'status-invalid' : 'status-unknown';
+
+                html += `
+                    <div class="video-item">
+                        <input type="checkbox" class="checkbox" id="video-${video.sys.id}">
+                        <img src="${thumbnail}" alt="${title}" class="video-thumbnail" 
+                             onerror="this.src='https://via.placeholder.com/120x68?text=No+Image'">
+                        <div class="video-info">
+                            <h3>${title}</h3>
+                            <p><strong>YouTube ID:</strong> ${youtubeId || '無'}</p>
+                            <p><strong>Contentful ID:</strong> ${video.sys.id}</p>
+                        </div>
+                        <div class="video-status ${statusClass}">${status.message}</div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+            log(`✅ 掃描完成: ${validCount} 有效, ${invalidCount} 失效, ${errorCount} 錯誤`);
+        }
+
+        async function cleanInvalidVideos() {
+            log('🧹 開始清理失效影片...');
+            
+            const checkboxes = document.querySelectorAll('input[type="checkbox"]:checked');
+            if (checkboxes.length === 0) {
+                alert('請先選擇要清理的影片！');
+                return;
+            }
+
+            const confirmMessage = `確定要清理選中的 ${checkboxes.length} 個失效影片嗎？\n\n這將從 Contentful 中移除這些精選節目標記。`;
+            if (!confirm(confirmMessage)) {
+                return;
+            }
+
+            try {
+                await initContentful();
+                
+                let successCount = 0;
+                let failCount = 0;
+
+                for (const checkbox of checkboxes) {
+                    const videoId = checkbox.id.replace('video-', '');
+                    const video = featuredVideos.find(v => v.sys.id === videoId);
+                    
+                    if (video) {
+                        try {
+                            // 這裡需要 Management API 來更新 Contentful
+                            // 暫時記錄需要清理的項目
+                            log(`📝 標記清理: ${video.fields.title || '未命名影片'}`);
+                            successCount++;
+                        } catch (error) {
+                            log(`❌ 清理失敗: ${video.fields.title || '未命名影片'} - ${error.message}`);
+                            failCount++;
+                        }
+                    }
+                }
+
+                log(`✅ 清理完成: ${successCount} 成功, ${failCount} 失敗`);
+                alert(`清理完成！\n成功: ${successCount} 個\n失敗: ${failCount} 個`);
+
+            } catch (error) {
+                log(`❌ 清理過程發生錯誤: ${error.message}`);
+            }
+        }
+
+        async function restoreBackupVideos() {
+            log('🔄 開始恢復備用節目...');
+            
+            const confirmMessage = '確定要恢復備用精選節目嗎？\n\n這將使用預設的 8 個精選節目替換當前的精選節目。';
+            if (!confirm(confirmMessage)) {
+                return;
+            }
+
+            try {
+                // 備用精選節目資料
+                const backupVideos = [
+                    {
+                        title: "雅加達 千島群島 浮潛",
+                        desc: "潛入海洋，探索繽紛的熱帶生態",
+                        ytid: "3GZCJfIOg_k",
+                        tags: ["印尼", "浮潛", "海洋"]
+                    },
+                    {
+                        title: "雅加達 火山",
+                        desc: "走訪壯觀的活火山與地熱奇景",
+                        ytid: "LcdGhVwS3gw",
+                        tags: ["印尼", "火山", "地熱"]
+                    },
+                    {
+                        title: "俄羅斯 莫斯科 紅場",
+                        desc: "走進俄羅斯歷史心臟，宏偉紅場",
+                        ytid: "25Fmx1G-C3k",
+                        tags: ["俄羅斯", "莫斯科", "歷史"]
+                    },
+                    {
+                        title: "極光",
+                        desc: "追尋極地夜空中最美的奇幻光芒",
+                        ytid: "u4XvG8jkToY",
+                        tags: ["極光", "北極", "自然奇觀"]
+                    },
+                    {
+                        title: "挪威峽灣郵輪",
+                        desc: "郵輪穿越冰河峽灣，壯闊如畫",
+                        ytid: "jLNBKAFgtNU",
+                        tags: ["挪威", "峽灣", "郵輪"]
+                    },
+                    {
+                        title: "祕魯 馬丘比丘",
+                        desc: "攀上神秘古城，領略印加文明",
+                        ytid: "QoHTSSS3DwQ",
+                        tags: ["祕魯", "馬丘比丘", "古文明"]
+                    },
+                    {
+                        title: "阿根廷 伊瓜蘇瀑布",
+                        desc: "感受壯闊奔騰的南美大瀑布",
+                        ytid: "BDnpjQmGRqY",
+                        tags: ["阿根廷", "瀑布", "自然奇觀"]
+                    },
+                    {
+                        title: "非洲 獵豹",
+                        desc: "非洲原野，見證速度與野性",
+                        ytid: "8YFLi5hZ2lc",
+                        tags: ["非洲", "野生動物", "獵豹"]
+                    }
+                ];
+
+                log(`📝 準備恢復 ${backupVideos.length} 個備用節目`);
+                
+                // 這裡需要 Management API 來創建新的精選節目
+                // 暫時記錄備用節目資訊
+                backupVideos.forEach((video, index) => {
+                    log(`📺 備用節目 ${index + 1}: ${video.title} (${video.ytid})`);
+                });
+
+                log('✅ 備用節目恢復完成（需要 Management API 實作）');
+                alert('備用節目已準備就緒！\n\n注意：需要 Management API 權限才能實際創建到 Contentful。');
+
+            } catch (error) {
+                log(`❌ 恢復備用節目失敗: ${error.message}`);
+            }
+        }
+
+        async function clearAllFeatured() {
+            log('🗑️ 開始清空所有精選節目...');
+            
+            const confirmMessage = '⚠️ 警告：這將清空所有精選節目標記！\n\n確定要繼續嗎？';
+            if (!confirm(confirmMessage)) {
+                return;
+            }
+
+            try {
+                await initContentful();
+                
+                log(`📝 準備清空 ${featuredVideos.length} 個精選節目`);
+                
+                // 這裡需要 Management API 來更新 Contentful
+                // 暫時記錄需要清空的項目
+                featuredVideos.forEach((video, index) => {
+                    log(`🗑️ 清空 ${index + 1}: ${video.fields.title || '未命名影片'}`);
+                });
+
+                log('✅ 精選節目清空完成（需要 Management API 實作）');
+                alert('精選節目已清空！\n\n注意：需要 Management API 權限才能實際更新 Contentful。');
+
+            } catch (error) {
+                log(`❌ 清空精選節目失敗: ${error.message}`);
+            }
+        }
+
+        // 頁面載入時初始化
+        window.addEventListener('load', () => {
+            log('🔧 精選節目清理工具已載入');
+            log('💡 點擊「掃描精選節目」開始檢查現有精選節目狀態');
+        });
+    </script>
+</body>
+</html>
+

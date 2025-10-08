@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>精選節目診斷工具</title>
+    <script src="https://cdn.jsdelivr.net/npm/contentful@latest/dist/contentful.browser.min.js"></script>
+    <script src="browser-config.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .status-card {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+        .status-success {
+            border-left: 4px solid #28a745;
+            background: #d4edda;
+        }
+        .status-error {
+            border-left: 4px solid #dc3545;
+            background: #f8d7da;
+        }
+        .status-warning {
+            border-left: 4px solid #ffc107;
+            background: #fff3cd;
+        }
+        .video-item {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .video-thumbnail {
+            width: 120px;
+            height: 68px;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+        .video-info h3 {
+            margin: 0 0 5px 0;
+            color: #2c3e50;
+        }
+        .video-info p {
+            margin: 0;
+            color: #6c757d;
+            font-size: 14px;
+        }
+        .featured-badge {
+            background: #ff6b6b;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+        .btn-success {
+            background: #28a745;
+        }
+        .btn-success:hover {
+            background: #1e7e34;
+        }
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 精選節目診斷工具</h1>
+        
+        <div class="status-card">
+            <h3>📊 診斷結果</h3>
+            <div id="diagnostic-results">
+                <p>點擊下方按鈕開始診斷...</p>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin: 20px 0;">
+            <button class="btn" onclick="runDiagnostic()">🔍 開始診斷</button>
+            <button class="btn btn-success" onclick="checkContentfulConnection()">🔗 測試連線</button>
+            <button class="btn" onclick="clearResults()">🧹 清除結果</button>
+        </div>
+
+        <div class="status-card">
+            <h3>📺 精選節目列表</h3>
+            <div id="featured-videos-list">
+                <p>診斷後將顯示精選節目...</p>
+            </div>
+        </div>
+
+        <div class="status-card">
+            <h3>📝 操作日誌</h3>
+            <div id="log" class="log">等待診斷開始...</div>
+        </div>
+    </div>
+
+    <script>
+        let contentfulClient = null;
+        let logMessages = [];
+
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            const logMessage = `[${timestamp}] ${message}`;
+            logMessages.push(logMessage);
+            
+            const logElement = document.getElementById('log');
+            logElement.textContent = logMessages.join('\n');
+            logElement.scrollTop = logElement.scrollHeight;
+            
+            console.log(logMessage);
+        }
+
+        function addStatus(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            const statusClass = type === 'success' ? 'status-success' : 
+                               type === 'error' ? 'status-error' : 
+                               type === 'warning' ? 'status-warning' : '';
+            
+            element.innerHTML = `<div class="status-card ${statusClass}">${message}</div>`;
+        }
+
+        async function checkContentfulConnection() {
+            log('🔗 開始測試 Contentful 連線...');
+            
+            try {
+                if (!contentfulClient) {
+                    contentfulClient = contentful.createClient({
+                        space: 'os5wf90ljenp',
+                        accessToken: 'lODH-WLwHwVZv7O4rFdBWjSnrzaQWGD4koeOZ1Dypj0'
+                    });
+                }
+
+                // 測試基本連線
+                const response = await contentfulClient.getEntries({
+                    limit: 1
+                });
+
+                log('✅ Contentful 連線成功！');
+                addStatus('diagnostic-results', '✅ Contentful 連線正常', 'success');
+                
+                return true;
+            } catch (error) {
+                log(`❌ Contentful 連線失敗: ${error.message}`);
+                addStatus('diagnostic-results', `❌ Contentful 連線失敗: ${error.message}`, 'error');
+                return false;
+            }
+        }
+
+        async function runDiagnostic() {
+            log('🚀 開始精選節目診斷...');
+            addStatus('diagnostic-results', '🔄 正在診斷中...', 'warning');
+
+            try {
+                // 1. 檢查連線
+                const isConnected = await checkContentfulConnection();
+                if (!isConnected) {
+                    return;
+                }
+
+                // 2. 檢查 content type
+                log('📋 檢查 content type...');
+                const contentTypes = await contentfulClient.getContentTypes();
+                const videoContentType = contentTypes.items.find(ct => ct.sys.id === 'video');
+                
+                if (!videoContentType) {
+                    log('❌ 找不到 video content type');
+                    addStatus('diagnostic-results', '❌ 找不到 video content type，需要先創建', 'error');
+                    return;
+                }
+
+                log('✅ 找到 video content type');
+                log(`📝 video content type 欄位: ${videoContentType.fields.map(f => f.id).join(', ')}`);
+
+                // 3. 檢查是否有 isFeatured 欄位
+                const hasIsFeaturedField = videoContentType.fields.some(f => f.id === 'isFeatured');
+                if (!hasIsFeaturedField) {
+                    log('❌ video content type 沒有 isFeatured 欄位');
+                    addStatus('diagnostic-results', '❌ video content type 缺少 isFeatured 欄位，需要添加', 'error');
+                    return;
+                }
+
+                log('✅ video content type 有 isFeatured 欄位');
+
+                // 4. 查詢精選節目
+                log('🔍 查詢精選節目...');
+                const featuredResponse = await contentfulClient.getEntries({
+                    content_type: 'video',
+                    'fields.isFeatured': true,
+                    limit: 100
+                });
+
+                const featuredVideos = featuredResponse.items || [];
+                log(`📺 找到 ${featuredVideos.length} 個精選節目`);
+
+                if (featuredVideos.length === 0) {
+                    addStatus('diagnostic-results', '⚠️ 沒有找到精選節目，需要創建並設定 isFeatured: true', 'warning');
+                    addStatus('featured-videos-list', '❌ 目前沒有精選節目', 'error');
+                } else {
+                    addStatus('diagnostic-results', `✅ 找到 ${featuredVideos.length} 個精選節目`, 'success');
+                    displayFeaturedVideos(featuredVideos);
+                }
+
+                // 5. 檢查所有影片
+                log('📊 檢查所有影片...');
+                const allVideosResponse = await contentfulClient.getEntries({
+                    content_type: 'video',
+                    limit: 1000
+                });
+
+                const allVideos = allVideosResponse.items || [];
+                const publishedVideos = allVideos.filter(v => v.sys.publishedAt);
+                const draftVideos = allVideos.filter(v => !v.sys.publishedAt);
+
+                log(`📈 總影片數: ${allVideos.length}`);
+                log(`✅ 已發布: ${publishedVideos.length}`);
+                log(`📝 草稿: ${draftVideos.length}`);
+
+                if (draftVideos.length > 0) {
+                    log(`⚠️ 有 ${draftVideos.length} 個影片是草稿狀態，需要發布`);
+                }
+
+            } catch (error) {
+                log(`❌ 診斷過程中發生錯誤: ${error.message}`);
+                addStatus('diagnostic-results', `❌ 診斷失敗: ${error.message}`, 'error');
+            }
+        }
+
+        function displayFeaturedVideos(videos) {
+            const container = document.getElementById('featured-videos-list');
+            
+            if (videos.length === 0) {
+                container.innerHTML = '<p>❌ 沒有精選節目</p>';
+                return;
+            }
+
+            const videosHtml = videos.map(video => {
+                const fields = video.fields || {};
+                const title = fields.title || fields.影片標題 || '未命名影片';
+                const description = fields.description || fields.精選推薦影片說明文字 || '';
+                const youtubeId = fields.youTubeId || fields.youtubeId || fields.YouTubeID || '';
+                const thumbnail = fields.thumbnail?.fields?.file?.url || 
+                                (youtubeId ? `https://i.ytimg.com/vi/${youtubeId}/hqdefault.jpg` : '');
+                const isPublished = video.sys.publishedAt ? '✅ 已發布' : '📝 草稿';
+
+                return `
+                    <div class="video-item">
+                        <img src="${thumbnail}" alt="${title}" class="video-thumbnail" 
+                             onerror="this.src='https://via.placeholder.com/120x68?text=No+Image'">
+                        <div class="video-info">
+                            <h3>${title}</h3>
+                            <p>${description}</p>
+                            <p><strong>YouTube ID:</strong> ${youtubeId || '無'}</p>
+                            <p><strong>狀態:</strong> ${isPublished}</p>
+                        </div>
+                        <div class="featured-badge">精選</div>
+                    </div>
+                `;
+            }).join('');
+
+            container.innerHTML = videosHtml;
+        }
+
+        function clearResults() {
+            logMessages = [];
+            document.getElementById('log').textContent = '日誌已清除...';
+            document.getElementById('diagnostic-results').innerHTML = '<p>點擊下方按鈕開始診斷...</p>';
+            document.getElementById('featured-videos-list').innerHTML = '<p>診斷後將顯示精選節目...</p>';
+        }
+
+        // 頁面載入時自動檢查連線
+        window.addEventListener('load', () => {
+            log('🔧 精選節目診斷工具已載入');
+            log('💡 點擊「開始診斷」按鈕來檢查精選節目狀態');
+        });
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,490 @@
+{
+  "monday": {
+    "date": "2025-09-08",
+    "dayOfWeek": "一",
+    "month": "9",
+    "day": "8",
+    "schedule": [
+      {
+        "time": "00:00",
+        "title": "深夜自然音樂 - 森林夜曲",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "深夜時分的森林自然音效，幫助放鬆入眠",
+        "thumbnail": "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400&h=225&fit=crop",
+        "youtubeId": "",
+        "status": "published"
+      },
+      {
+        "time": "00:30",
+        "title": "星空下的山脈 - 夜間風景",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "欣賞星空下的壯麗山脈景色",
+        "thumbnail": "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=225&fit=crop",
+        "youtubeId": "",
+        "status": "published"
+      },
+      {
+        "time": "01:00",
+        "title": "海洋夜曲 - 海浪聲",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "夜晚的海浪聲，帶來平靜的睡眠",
+        "thumbnail": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400&h=225&fit=crop",
+        "youtubeId": "",
+        "status": "published"
+      },
+      {
+        "time": "01:30",
+        "title": "極光之夜 - 北極光",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "欣賞北極地區的極光奇觀",
+        "thumbnail": "https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=400&h=225&fit=crop",
+        "youtubeId": "",
+        "status": "published"
+      },
+      {
+        "time": "02:00",
+        "title": "深夜城市 - 東京夜景",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "東京夜晚的城市燈光",
+        "thumbnail": "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=400&h=225&fit=crop",
+        "youtubeId": "",
+        "status": "published"
+      },
+      {
+        "time": "02:30",
+        "title": "沙漠星空 - 撒哈拉之夜",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "撒哈拉沙漠的星空美景",
+        "thumbnail": "https://images.unsplash.com/photo-1506197603052-3cc9c3a201bd?w=400&h=225&fit=crop",
+        "youtubeId": "",
+        "status": "published"
+      },
+      {
+        "time": "03:00",
+        "title": "雨林夜聲 - 亞馬遜",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "亞馬遜雨林的夜晚聲音",
+        "thumbnail": "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400&h=225&fit=crop",
+        "youtubeId": "",
+        "status": "published"
+      },
+      {
+        "time": "03:30",
+        "title": "山間晨霧 - 日出前",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "山間晨霧繚繞的美景",
+        "thumbnail": "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=225&fit=crop",
+        "youtubeId": "",
+        "status": "published"
+      },
+      {
+        "time": "04:00",
+        "title": "晨光初現 - 日出時分",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "欣賞世界各地的日出美景",
+        "thumbnail": "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=225&fit=crop",
+        "youtubeId": "",
+        "status": "published"
+      },
+      {
+        "time": "04:30",
+        "title": "晨間鳥鳴 - 森林甦醒",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "森林中鳥兒的晨間歌唱",
+        "thumbnail": "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400&h=225&fit=crop",
+        "youtubeId": "",
+        "status": "published"
+      },
+      {
+        "time": "05:00",
+        "title": "早安世界 - 歐洲風情",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "歐洲各國的晨間風景",
+        "thumbnail": "https://images.unsplash.com/photo-1467269204594-9661b134dd2b?w=400&h=225&fit=crop",
+        "youtubeId": "",
+        "status": "published"
+      },
+      {
+        "time": "05:30",
+        "title": "晨間咖啡 - 義大利",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "義大利的晨間咖啡文化",
+        "thumbnail": "https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=400&h=225&fit=crop",
+        "youtubeId": "",
+        "status": "published"
+      },
+      {
+        "time": "06:00",
+        "title": "晨間市場 - 法國",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "法國傳統晨間市場",
+        "thumbnail": "https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=400&h=225&fit=crop",
+        "youtubeId": "",
+        "status": "published"
+      },
+      {
+        "time": "06:30",
+        "title": "晨間瑜伽 - 印度",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "印度傳統瑜伽練習",
+        "thumbnail": "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=400&h=225&fit=crop",
+        "youtubeId": "",
+        "status": "published"
+      },
+      {
+        "time": "07:00",
+        "title": "晨間茶道 - 日本",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "日本傳統茶道文化",
+        "thumbnail": "https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=400&h=225&fit=crop",
+        "youtubeId": "",
+        "status": "published"
+      },
+      {
+        "time": "07:30",
+        "title": "晨間太極 - 中國",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "中國傳統太極拳",
+        "thumbnail": "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=225&fit=crop",
+        "youtubeId": "",
+        "status": "published"
+      },
+      {
+        "time": "08:00",
+        "title": "晨間漫步 - 英國",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "英國鄉村晨間漫步",
+        "thumbnail": "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=400&h=225&fit=crop",
+        "youtubeId": "",
+        "status": "published"
+      },
+      {
+        "time": "08:30",
+        "title": "晨間早餐 - 德國",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "德國傳統早餐文化",
+        "thumbnail": "https://images.unsplash.com/photo-1551218808-94e220e084d2?w=400&h=225&fit=crop",
+        "youtubeId": "",
+        "status": "published"
+      },
+      {
+        "time": "09:00",
+        "title": "晨間市集 - 西班牙",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "西班牙傳統市集",
+        "thumbnail": "https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=400&h=225&fit=crop",
+        "youtubeId": "",
+        "status": "published"
+      },
+      {
+        "time": "09:30",
+        "title": "晨間咖啡 - 巴西",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "巴西咖啡文化",
+        "thumbnail": "https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=400&h=225&fit=crop",
+        "youtubeId": "",
+        "status": "published"
+      },
+      {
+        "time": "10:00",
+        "title": "晨間海灘 - 澳洲",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "澳洲海灘晨間活動",
+        "thumbnail": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400&h=225&fit=crop",
+        "youtubeId": "",
+        "status": "published"
+      },
+      {
+        "time": "10:30",
+        "title": "晨間山景 - 瑞士",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "瑞士阿爾卑斯山晨景",
+        "thumbnail": "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=225&fit=crop",
+        "youtubeId": "",
+        "status": "published"
+      },
+      {
+        "time": "11:00",
+        "title": "晨間花園 - 荷蘭",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "荷蘭鬱金香花園",
+        "thumbnail": "https://images.unsplash.com/photo-1522383225653-ed111181a951?w=400&h=225&fit=crop",
+        "youtubeId": "",
+        "status": "published"
+      },
+      {
+        "time": "11:30",
+        "title": "晨間古蹟 - 希臘",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "希臘古蹟晨間探訪",
+        "thumbnail": "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=225&fit=crop",
+        "youtubeId": "",
+        "status": "published"
+      },
+      {
+        "time": "12:00",
+        "title": "午間美食 - 義大利",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "義大利傳統午餐",
+        "thumbnail": "https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=400&h=225&fit=crop",
+        "youtubeId": "",
+        "status": "published"
+      },
+      {
+        "time": "12:30",
+        "title": "午間市集 - 摩洛哥",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "摩洛哥傳統市集",
+        "thumbnail": "https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=400&h=225&fit=crop",
+        "youtubeId": "",
+        "status": "published"
+      },
+      {
+        "time": "13:00",
+        "title": "午間海灘 - 泰國",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "泰國海灘午間時光",
+        "thumbnail": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400&h=225&fit=crop",
+        "youtubeId": "",
+        "status": "published"
+      },
+      {
+        "time": "13:30",
+        "title": "午間山景 - 尼泊爾",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "尼泊爾喜馬拉雅山景",
+        "thumbnail": "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=225&fit=crop",
+        "youtubeId": "",
+        "status": "published"
+      },
+      {
+        "time": "14:00",
+        "title": "午間花園 - 英國",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "英國皇家花園",
+        "thumbnail": "https://images.unsplash.com/photo-1522383225653-ed111181a951?w=400&h=225&fit=crop",
+        "youtubeId": "",
+        "status": "published"
+      },
+      {
+        "time": "14:30",
+        "title": "午間古蹟 - 埃及",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "埃及金字塔探訪",
+        "thumbnail": "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=225&fit=crop",
+        "youtubeId": "",
+        "status": "published"
+      },
+      {
+        "time": "15:00",
+        "title": "午間咖啡 - 土耳其",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "土耳其傳統咖啡",
+        "thumbnail": "https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=400&h=225&fit=crop",
+        "youtubeId": "",
+        "status": "published"
+      },
+      {
+        "time": "15:30",
+        "title": "午間市集 - 印度",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "印度傳統市集",
+        "thumbnail": "https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=400&h=225&fit=crop",
+        "youtubeId": "",
+        "status": "published"
+      },
+      {
+        "time": "16:00",
+        "title": "午間海灘 - 馬爾地夫",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "馬爾地夫海灘時光",
+        "thumbnail": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400&h=225&fit=crop",
+        "youtubeId": "",
+        "status": "published"
+      },
+      {
+        "time": "16:30",
+        "title": "午間山景 - 加拿大",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "加拿大洛磯山脈",
+        "thumbnail": "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=225&fit=crop",
+        "youtubeId": "",
+        "status": "published"
+      },
+      {
+        "time": "17:00",
+        "title": "午間花園 - 法國",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "法國凡爾賽花園",
+        "thumbnail": "https://images.unsplash.com/photo-1522383225653-ed111181a951?w=400&h=225&fit=crop",
+        "youtubeId": "",
+        "status": "published"
+      },
+      {
+        "time": "17:30",
+        "title": "午間古蹟 - 羅馬",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "羅馬古蹟探訪",
+        "thumbnail": "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=225&fit=crop",
+        "youtubeId": "",
+        "status": "published"
+      },
+      {
+        "time": "18:00",
+        "title": "傍晚時光 - 巴黎",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "巴黎傍晚風景",
+        "thumbnail": "https://images.unsplash.com/photo-1549144511-f099e773c147?w=400&h=225&fit=crop",
+        "youtubeId": "",
+        "status": "published"
+      },
+      {
+        "time": "18:30",
+        "title": "傍晚海灘 - 夏威夷",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "夏威夷海灘夕陽",
+        "thumbnail": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400&h=225&fit=crop",
+        "youtubeId": "",
+        "status": "published"
+      },
+      {
+        "time": "19:00",
+        "title": "傍晚山景 - 日本",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "日本富士山夕陽",
+        "thumbnail": "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=225&fit=crop",
+        "youtubeId": "",
+        "status": "published"
+      },
+      {
+        "time": "19:30",
+        "title": "傍晚市集 - 土耳其",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "土耳其傍晚市集",
+        "thumbnail": "https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=400&h=225&fit=crop",
+        "youtubeId": "",
+        "status": "published"
+      },
+      {
+        "time": "20:00",
+        "title": "夜間美食 - 韓國",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "韓國夜間美食",
+        "thumbnail": "https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=400&h=225&fit=crop",
+        "youtubeId": "",
+        "status": "published"
+      },
+      {
+        "time": "20:30",
+        "title": "夜間海灘 - 巴厘島",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "巴厘島夜間海灘",
+        "thumbnail": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400&h=225&fit=crop",
+        "youtubeId": "",
+        "status": "published"
+      },
+      {
+        "time": "21:00",
+        "title": "夜間山景 - 挪威",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "挪威夜間山景",
+        "thumbnail": "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=225&fit=crop",
+        "youtubeId": "",
+        "status": "published"
+      },
+      {
+        "time": "21:30",
+        "title": "夜間市集 - 泰國",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "泰國夜間市集",
+        "thumbnail": "https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=400&h=225&fit=crop",
+        "youtubeId": "",
+        "status": "published"
+      },
+      {
+        "time": "22:00",
+        "title": "夜間美食 - 日本",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "日本夜間美食",
+        "thumbnail": "https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=400&h=225&fit=crop",
+        "youtubeId": "",
+        "status": "published"
+      },
+      {
+        "time": "22:30",
+        "title": "夜間海灘 - 西班牙",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "西班牙夜間海灘",
+        "thumbnail": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400&h=225&fit=crop",
+        "youtubeId": "",
+        "status": "published"
+      },
+      {
+        "time": "23:00",
+        "title": "夜間山景 - 瑞士",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "瑞士夜間山景",
+        "thumbnail": "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=225&fit=crop",
+        "youtubeId": "",
+        "status": "published"
+      },
+      {
+        "time": "23:30",
+        "title": "深夜音樂 - 古典樂",
+        "duration": "30",
+        "category": "旅遊節目",
+        "description": "古典音樂欣賞",
+        "thumbnail": "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=225&fit=crop",
+        "youtubeId": "",
+        "status": "published"
+      }
+    ]
+  }
+}

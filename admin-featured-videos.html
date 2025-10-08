@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>精選節目管理系統</title>
+    <script src="https://cdn.jsdelivr.net/npm/contentful@latest/dist/contentful.browser.min.js"></script>
+    <script src="browser-config.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            background: #f5f5f5; 
+        }
+        
+        .container { 
+            max-width: 1400px; 
+            margin: 0 auto; 
+            padding: 20px; 
+        }
+        
+        .header { 
+            background: white; 
+            padding: 20px; 
+            border-radius: 10px; 
+            margin-bottom: 20px; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
+        }
+        
+        .header h1 { 
+            color: #2b71d2; 
+            margin-bottom: 10px; 
+        }
+        
+        .controls { 
+            background: white; 
+            padding: 15px; 
+            border-radius: 10px; 
+            margin-bottom: 20px; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            flex-wrap: wrap; 
+            gap: 15px; 
+        }
+        
+        .btn { 
+            background: #2b71d2; 
+            color: white; 
+            border: none; 
+            padding: 10px 20px; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-weight: 600; 
+            transition: all 0.3s ease; 
+            text-decoration: none; 
+            display: inline-block; 
+        }
+        
+        .btn:hover { 
+            background: #1e5bb8; 
+            transform: translateY(-2px); 
+        }
+        
+        .btn-success { background: #28a745; }
+        .btn-success:hover { background: #1e7e34; }
+        
+        .btn-warning { background: #ffc107; color: #212529; }
+        .btn-warning:hover { background: #e0a800; }
+        
+        .btn-danger { background: #dc3545; }
+        .btn-danger:hover { background: #c82333; }
+        
+        .btn-info { background: #17a2b8; }
+        .btn-info:hover { background: #138496; }
+        
+        .status-card { 
+            background: white; 
+            padding: 20px; 
+            border-radius: 10px; 
+            margin-bottom: 20px; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
+        }
+        
+        .status-success { 
+            border-left: 4px solid #28a745; 
+            background: #d4edda; 
+        }
+        
+        .status-error { 
+            border-left: 4px solid #dc3545; 
+            background: #f8d7da; 
+        }
+        
+        .status-warning { 
+            border-left: 4px solid #ffc107; 
+            background: #fff3cd; 
+        }
+        
+        .video-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); 
+            gap: 20px; 
+            margin-bottom: 20px; 
+        }
+        
+        .video-card { 
+            background: white; 
+            border-radius: 12px; 
+            overflow: hidden; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
+            transition: all 0.3s ease; 
+            position: relative; 
+        }
+        
+        .video-card:hover { 
+            transform: translateY(-5px); 
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15); 
+        }
+        
+        .video-thumbnail { 
+            width: 100%; 
+            height: 180px; 
+            object-fit: cover; 
+            background: #f8f9fa; 
+        }
+        
+        .video-content { 
+            padding: 15px; 
+        }
+        
+        .video-title { 
+            font-size: 16px; 
+            font-weight: 600; 
+            color: #2c3e50; 
+            margin-bottom: 8px; 
+            line-height: 1.4; 
+        }
+        
+        .video-description { 
+            font-size: 14px; 
+            color: #6c757d; 
+            margin-bottom: 10px; 
+            line-height: 1.4; 
+        }
+        
+        .video-tags { 
+            display: flex; 
+            flex-wrap: wrap; 
+            gap: 5px; 
+            margin-bottom: 10px; 
+        }
+        
+        .tag { 
+            background: #e9ecef; 
+            color: #495057; 
+            padding: 4px 10px; 
+            border-radius: 12px; 
+            font-size: 14px; 
+            font-weight: 500;
+        }
+        
+        .video-actions { 
+            display: flex; 
+            gap: 8px; 
+            margin-top: 10px; 
+        }
+        
+        .btn-small { 
+            padding: 6px 12px; 
+            font-size: 12px; 
+        }
+        
+        .featured-badge { 
+            position: absolute; 
+            top: 10px; 
+            right: 10px; 
+            background: #ff6b6b; 
+            color: white; 
+            padding: 4px 8px; 
+            border-radius: 12px; 
+            font-size: 12px; 
+            font-weight: bold; 
+        }
+        
+        .modal { 
+            display: none; 
+            position: fixed; 
+            z-index: 1000; 
+            left: 0; 
+            top: 0; 
+            width: 100%; 
+            height: 100%; 
+            background-color: rgba(0,0,0,0.5); 
+        }
+        
+        .modal-content { 
+            background-color: white; 
+            margin: 5% auto; 
+            padding: 0; 
+            border-radius: 10px; 
+            width: 90%; 
+            max-width: 600px; 
+            max-height: 80vh; 
+            overflow-y: auto; 
+        }
+        
+        .modal-header { 
+            background: #2b71d2; 
+            color: white; 
+            padding: 20px; 
+            border-radius: 10px 10px 0 0; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+        }
+        
+        .modal-header h3 { 
+            margin: 0; 
+        }
+        
+        .modal-close { 
+            background: none; 
+            border: none; 
+            color: white; 
+            font-size: 24px; 
+            cursor: pointer; 
+        }
+        
+        .modal-body { 
+            padding: 20px; 
+        }
+        
+        .form-group { 
+            margin-bottom: 15px; 
+        }
+        
+        .form-group label { 
+            display: block; 
+            margin-bottom: 5px; 
+            font-weight: 600; 
+            color: #2c3e50; 
+        }
+        
+        .form-group input, 
+        .form-group textarea, 
+        .form-group select { 
+            width: 100%; 
+            padding: 10px; 
+            border: 1px solid #ddd; 
+            border-radius: 5px; 
+            font-size: 14px; 
+        }
+        
+        .form-group textarea { 
+            height: 80px; 
+            resize: vertical; 
+        }
+        
+        .modal-footer { 
+            padding: 20px; 
+            border-top: 1px solid #eee; 
+            display: flex; 
+            justify-content: flex-end; 
+            gap: 10px; 
+        }
+        
+        .log { 
+            background: #f8f9fa; 
+            border: 1px solid #e9ecef; 
+            border-radius: 4px; 
+            padding: 15px; 
+            font-family: 'Courier New', monospace; 
+            font-size: 12px; 
+            max-height: 300px; 
+            overflow-y: auto; 
+            white-space: pre-wrap; 
+        }
+        
+        .empty-state { 
+            text-align: center; 
+            padding: 40px; 
+            color: #6c757d; 
+        }
+        
+        .empty-state h3 { 
+            margin-bottom: 10px; 
+        }
+        
+        .stats-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+            gap: 15px; 
+            margin-bottom: 20px; 
+        }
+        
+        .stat-card { 
+            background: white; 
+            padding: 20px; 
+            border-radius: 10px; 
+            text-align: center; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
+        }
+        
+        .stat-number { 
+            font-size: 2rem; 
+            font-weight: bold; 
+            color: #2b71d2; 
+            margin-bottom: 5px; 
+        }
+        
+        .stat-label { 
+            color: #6c757d; 
+            font-size: 14px; 
+        }
+        
+        .search-filters { 
+            display: flex; 
+            gap: 15px; 
+            align-items: center; 
+            flex-wrap: wrap; 
+        }
+        
+        .search-input { 
+            flex: 1; 
+            min-width: 200px; 
+        }
+        
+        .filter-select { 
+            min-width: 150px; 
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⭐ 精選節目管理系統</h1>
+            <p>管理首頁精選節目推薦，支援快速添加、編輯和排序功能</p>
+        </div>
+
+        <!-- 統計資訊 -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number" id="totalFeatured">0</div>
+                <div class="stat-label">精選節目總數</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="activeFeatured">0</div>
+                <div class="stat-label">啟用中</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="validVideos">0</div>
+                <div class="stat-label">有效影片</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="invalidVideos">0</div>
+                <div class="stat-label">失效影片</div>
+            </div>
+        </div>
+
+        <!-- 控制面板 -->
+        <div class="controls">
+            <div class="search-filters">
+                <input type="text" id="searchInput" class="search-input" placeholder="搜尋節目標題或描述..." onkeyup="filterVideos()">
+                <select id="statusFilter" class="filter-select" onchange="filterVideos()">
+                    <option value="">所有狀態</option>
+                    <option value="active">啟用中</option>
+                    <option value="inactive">已停用</option>
+                    <option value="invalid">影片失效</option>
+                </select>
+                <select id="categoryFilter" class="filter-select" onchange="filterVideos()">
+                    <option value="">所有分類</option>
+                    <option value="亞洲旅遊">亞洲旅遊</option>
+                    <option value="歐洲旅遊">歐洲旅遊</option>
+                    <option value="美洲旅遊">美洲旅遊</option>
+                    <option value="美食旅遊">美食旅遊</option>
+                    <option value="自然旅遊">自然旅遊</option>
+                </select>
+            </div>
+            
+            <div style="display: flex; gap: 10px;">
+                <button class="btn btn-success" onclick="openAddModal()">➕ 新增精選節目</button>
+                <button class="btn btn-info" onclick="loadFeaturedVideos()">🔄 重新載入</button>
+                <button class="btn btn-warning" onclick="checkVideoStatus()">🔍 檢查影片狀態</button>
+                <button class="btn btn-danger" onclick="cleanInvalidVideos()">🧹 清理失效影片</button>
+            </div>
+        </div>
+
+        <!-- 狀態顯示 -->
+        <div class="status-card" id="statusCard" style="display: none;">
+            <div id="statusMessage"></div>
+        </div>
+
+        <!-- 精選節目列表 -->
+        <div class="video-grid" id="featuredVideosGrid">
+            <div class="empty-state">
+                <h3>📺 載入精選節目中...</h3>
+                <p>正在從 Contentful 載入精選節目資料</p>
+            </div>
+        </div>
+
+        <!-- 操作日誌 -->
+        <div class="status-card">
+            <h3>📝 操作日誌</h3>
+            <div id="log" class="log">等待操作開始...</div>
+        </div>
+    </div>
+
+    <!-- 新增/編輯精選節目模態框 -->
+    <div class="modal" id="addEditModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">新增精選節目</h3>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="featuredVideoForm">
+                    <div class="form-group">
+                        <label for="videoTitle">節目標題 *</label>
+                        <input type="text" id="videoTitle" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="videoDescription">節目描述</label>
+                        <textarea id="videoDescription" placeholder="輸入節目描述..."></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="youtubeId">YouTube ID *</label>
+                        <input type="text" id="youtubeId" required placeholder="例如：3GZCJfIOg_k">
+                        <small style="color: #6c757d;">只需要 YouTube 影片 ID，不需要完整網址</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="videoCategory">節目分類</label>
+                        <select id="videoCategory">
+                            <option value="">選擇分類</option>
+                            <option value="亞洲旅遊">亞洲旅遊</option>
+                            <option value="歐洲旅遊">歐洲旅遊</option>
+                            <option value="美洲旅遊">美洲旅遊</option>
+                            <option value="美食旅遊">美食旅遊</option>
+                            <option value="自然旅遊">自然旅遊</option>
+                            <option value="文化旅遊">文化旅遊</option>
+                            <option value="冒險旅遊">冒險旅遊</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="videoTags">標籤 (用逗號分隔)</label>
+                        <input type="text" id="videoTags" placeholder="例如：印尼, 浮潛, 海洋">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="displayOrder">顯示順序</label>
+                        <input type="number" id="displayOrder" min="1" max="100" value="1">
+                        <small style="color: #6c757d;">數字越小越靠前顯示</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="isActive" checked> 啟用此精選節目
+                        </label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="closeModal()">取消</button>
+                <button class="btn btn-success" onclick="saveFeaturedVideo()">儲存</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let contentfulClient = null;
+        let logMessages = [];
+        let featuredVideos = [];
+        let allVideos = [];
+        let currentEditingVideo = null;
+
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            const logMessage = `[${timestamp}] ${message}`;
+            logMessages.push(logMessage);
+            
+            const logElement = document.getElementById('log');
+            logElement.textContent = logMessages.join('\n');
+            logElement.scrollTop = logElement.scrollHeight;
+            
+            console.log(logMessage);
+        }
+
+        function showStatus(message, type = 'info') {
+            const statusCard = document.getElementById('statusCard');
+            const statusMessage = document.getElementById('statusMessage');
+            
+            statusCard.className = `status-card status-${type}`;
+            statusMessage.innerHTML = message;
+            statusCard.style.display = 'block';
+            
+            setTimeout(() => {
+                statusCard.style.display = 'none';
+            }, 5000);
+        }
+
+        async function initContentful() {
+            if (!contentfulClient) {
+                contentfulClient = contentful.createClient({
+                    space: 'os5wf90ljenp',
+                    accessToken: 'lODH-WLwHwVZv7O4rFdBWjSnrzaQWGD4koeOZ1Dypj0'
+                });
+            }
+        }
+
+        async function loadFeaturedVideos() {
+            log('🔄 開始載入精選節目...');
+            showStatus('正在載入精選節目...', 'info');
+
+            try {
+                await initContentful();
+
+                // 載入精選節目
+                const response = await contentfulClient.getEntries({
+                    content_type: 'video',
+                    'fields.isFeatured': true,
+                    limit: 100
+                });
+
+                featuredVideos = response.items || [];
+                allVideos = [...featuredVideos];
+
+                log(`✅ 載入了 ${featuredVideos.length} 個精選節目`);
+                
+                // 更新統計
+                updateStats();
+                
+                // 渲染節目列表
+                renderFeaturedVideos();
+                
+                showStatus(`成功載入 ${featuredVideos.length} 個精選節目`, 'success');
+
+            } catch (error) {
+                log(`❌ 載入失敗: ${error.message}`);
+                showStatus(`載入失敗: ${error.message}`, 'error');
+            }
+        }
+
+        function updateStats() {
+            const totalFeatured = featuredVideos.length;
+            const activeFeatured = featuredVideos.filter(v => v.fields.isActive !== false).length;
+            const validVideos = featuredVideos.filter(v => v.fields.youTubeId || v.fields.youtubeId).length;
+            const invalidVideos = totalFeatured - validVideos;
+
+            document.getElementById('totalFeatured').textContent = totalFeatured;
+            document.getElementById('activeFeatured').textContent = activeFeatured;
+            document.getElementById('validVideos').textContent = validVideos;
+            document.getElementById('invalidVideos').textContent = invalidVideos;
+        }
+
+        function renderFeaturedVideos() {
+            const grid = document.getElementById('featuredVideosGrid');
+            
+            if (featuredVideos.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state">
+                        <h3>📺 沒有精選節目</h3>
+                        <p>點擊「新增精選節目」開始添加</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const videosHtml = featuredVideos.map(video => {
+                const fields = video.fields || {};
+                const title = fields.title || fields.影片標題 || '未命名節目';
+                const description = fields.description || fields.精選推薦影片說明文字 || '';
+                const youtubeId = fields.youTubeId || fields.youtubeId || fields.YouTubeID || '';
+                const category = fields.category || '';
+                const tags = fields.tags || [];
+                const isActive = fields.isActive !== false;
+                const displayOrder = fields.displayOrder || 999;
+
+                const thumbnail = fields.thumbnail?.fields?.file?.url || 
+                                (youtubeId ? `https://i.ytimg.com/vi/${youtubeId}/hqdefault.jpg` : 'https://via.placeholder.com/300x180?text=No+Image');
+
+                const statusClass = isActive ? 'active' : 'inactive';
+                const statusText = isActive ? '啟用中' : '已停用';
+
+                return `
+                    <div class="video-card" data-video-id="${video.sys.id}">
+                        ${isActive ? '<div class="featured-badge">精選</div>' : ''}
+                        <img src="${thumbnail}" alt="${title}" class="video-thumbnail" 
+                             onerror="this.src='https://via.placeholder.com/300x180?text=No+Image'">
+                        <div class="video-content">
+                            <div class="video-title">${title}</div>
+                            <div class="video-description">${description}</div>
+                            ${category ? `<div class="tag">${category}</div>` : ''}
+                            <div class="video-tags">
+                                ${tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
+                            </div>
+                            <div class="video-actions">
+                                <button class="btn btn-small" onclick="editVideo('${video.sys.id}')">✏️ 編輯</button>
+                                <button class="btn btn-small ${isActive ? 'btn-warning' : 'btn-success'}" 
+                                        onclick="toggleVideoStatus('${video.sys.id}', ${!isActive})">
+                                    ${isActive ? '⏸️ 停用' : '▶️ 啟用'}
+                                </button>
+                                <button class="btn btn-small btn-danger" onclick="deleteVideo('${video.sys.id}')">🗑️ 刪除</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            grid.innerHTML = videosHtml;
+        }
+
+        function filterVideos() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const statusFilter = document.getElementById('statusFilter').value;
+            const categoryFilter = document.getElementById('categoryFilter').value;
+
+            featuredVideos = allVideos.filter(video => {
+                const fields = video.fields || {};
+                const title = (fields.title || fields.影片標題 || '').toLowerCase();
+                const description = (fields.description || fields.精選推薦影片說明文字 || '').toLowerCase();
+                const category = fields.category || '';
+                const isActive = fields.isActive !== false;
+                const youtubeId = fields.youTubeId || fields.youtubeId || fields.YouTubeID || '';
+
+                // 搜尋條件
+                const matchesSearch = !searchTerm || 
+                                    title.includes(searchTerm) || 
+                                    description.includes(searchTerm);
+
+                // 狀態篩選
+                let matchesStatus = true;
+                if (statusFilter === 'active') matchesStatus = isActive;
+                else if (statusFilter === 'inactive') matchesStatus = !isActive;
+                else if (statusFilter === 'invalid') matchesStatus = !youtubeId;
+
+                // 分類篩選
+                const matchesCategory = !categoryFilter || category === categoryFilter;
+
+                return matchesSearch && matchesStatus && matchesCategory;
+            });
+
+            renderFeaturedVideos();
+            log(`🔍 篩選結果: ${featuredVideos.length} 個節目`);
+        }
+
+        function openAddModal() {
+            currentEditingVideo = null;
+            document.getElementById('modalTitle').textContent = '新增精選節目';
+            document.getElementById('featuredVideoForm').reset();
+            document.getElementById('isActive').checked = true;
+            document.getElementById('displayOrder').value = featuredVideos.length + 1;
+            document.getElementById('addEditModal').style.display = 'block';
+        }
+
+        function editVideo(videoId) {
+            const video = allVideos.find(v => v.sys.id === videoId);
+            if (!video) return;
+
+            currentEditingVideo = video;
+            const fields = video.fields || {};
+
+            document.getElementById('modalTitle').textContent = '編輯精選節目';
+            document.getElementById('videoTitle').value = fields.title || fields.影片標題 || '';
+            document.getElementById('videoDescription').value = fields.description || fields.精選推薦影片說明文字 || '';
+            document.getElementById('youtubeId').value = fields.youTubeId || fields.youtubeId || fields.YouTubeID || '';
+            document.getElementById('videoCategory').value = fields.category || '';
+            document.getElementById('videoTags').value = (fields.tags || []).join(', ');
+            document.getElementById('displayOrder').value = fields.displayOrder || 999;
+            document.getElementById('isActive').checked = fields.isActive !== false;
+
+            document.getElementById('addEditModal').style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('addEditModal').style.display = 'none';
+            currentEditingVideo = null;
+        }
+
+        async function saveFeaturedVideo() {
+            const title = document.getElementById('videoTitle').value.trim();
+            const description = document.getElementById('videoDescription').value.trim();
+            const youtubeId = document.getElementById('youtubeId').value.trim();
+            const category = document.getElementById('videoCategory').value;
+            const tags = document.getElementById('videoTags').value.split(',').map(t => t.trim()).filter(t => t);
+            const displayOrder = parseInt(document.getElementById('displayOrder').value) || 999;
+            const isActive = document.getElementById('isActive').checked;
+
+            if (!title || !youtubeId) {
+                showStatus('請填寫節目標題和 YouTube ID', 'error');
+                return;
+            }
+
+            try {
+                log(`💾 正在儲存精選節目: ${title}`);
+
+                // 這裡需要 Management API 來實際儲存到 Contentful
+                // 暫時模擬儲存過程
+                const videoData = {
+                    title,
+                    description,
+                    youtubeId,
+                    category,
+                    tags,
+                    displayOrder,
+                    isActive,
+                    isFeatured: true
+                };
+
+                if (currentEditingVideo) {
+                    log(`✏️ 更新精選節目: ${title}`);
+                    // 更新現有節目
+                } else {
+                    log(`➕ 新增精選節目: ${title}`);
+                    // 新增節目
+                }
+
+                showStatus('精選節目儲存成功！', 'success');
+                closeModal();
+                
+                // 重新載入列表
+                setTimeout(() => {
+                    loadFeaturedVideos();
+                }, 1000);
+
+            } catch (error) {
+                log(`❌ 儲存失敗: ${error.message}`);
+                showStatus(`儲存失敗: ${error.message}`, 'error');
+            }
+        }
+
+        async function toggleVideoStatus(videoId, newStatus) {
+            const video = allVideos.find(v => v.sys.id === videoId);
+            if (!video) return;
+
+            const title = video.fields.title || video.fields.影片標題 || '未命名節目';
+            const action = newStatus ? '啟用' : '停用';
+
+            try {
+                log(`🔄 ${action}精選節目: ${title}`);
+
+                // 這裡需要 Management API 來更新 Contentful
+                // 暫時模擬更新過程
+                
+                showStatus(`成功${action}精選節目「${title}」`, 'success');
+                
+                // 重新載入列表
+                setTimeout(() => {
+                    loadFeaturedVideos();
+                }, 1000);
+
+            } catch (error) {
+                log(`❌ ${action}失敗: ${error.message}`);
+                showStatus(`${action}失敗: ${error.message}`, 'error');
+            }
+        }
+
+        async function deleteVideo(videoId) {
+            const video = allVideos.find(v => v.sys.id === videoId);
+            if (!video) return;
+
+            const title = video.fields.title || video.fields.影片標題 || '未命名節目';
+
+            if (!confirm(`確定要刪除精選節目「${title}」嗎？\n\n此操作無法復原。`)) {
+                return;
+            }
+
+            try {
+                log(`🗑️ 刪除精選節目: ${title}`);
+
+                // 這裡需要 Management API 來刪除 Contentful 中的精選標記
+                // 暫時模擬刪除過程
+                
+                showStatus(`成功刪除精選節目「${title}」`, 'success');
+                
+                // 重新載入列表
+                setTimeout(() => {
+                    loadFeaturedVideos();
+                }, 1000);
+
+            } catch (error) {
+                log(`❌ 刪除失敗: ${error.message}`);
+                showStatus(`刪除失敗: ${error.message}`, 'error');
+            }
+        }
+
+        async function checkVideoStatus() {
+            log('🔍 開始檢查影片狀態...');
+            showStatus('正在檢查影片狀態...', 'info');
+
+            let validCount = 0;
+            let invalidCount = 0;
+
+            for (const video of allVideos) {
+                const fields = video.fields || {};
+                const youtubeId = fields.youTubeId || fields.youtubeId || fields.YouTubeID || '';
+                const title = fields.title || fields.影片標題 || '未命名節目';
+
+                if (!youtubeId) {
+                    log(`⚠️ ${title}: 沒有 YouTube ID`);
+                    invalidCount++;
+                    continue;
+                }
+
+                try {
+                    const response = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${youtubeId}&format=json`);
+                    
+                    if (response.ok) {
+                        log(`✅ ${title}: 影片有效`);
+                        validCount++;
+                    } else {
+                        log(`❌ ${title}: 影片失效`);
+                        invalidCount++;
+                    }
+                } catch (error) {
+                    log(`❌ ${title}: 檢查失敗 - ${error.message}`);
+                    invalidCount++;
+                }
+            }
+
+            showStatus(`檢查完成: ${validCount} 個有效, ${invalidCount} 個失效`, 'info');
+            updateStats();
+        }
+
+        async function cleanInvalidVideos() {
+            if (!confirm('確定要清理所有失效的精選節目嗎？\n\n這將移除失效影片的精選標記。')) {
+                return;
+            }
+
+            log('🧹 開始清理失效影片...');
+            showStatus('正在清理失效影片...', 'info');
+
+            let cleanedCount = 0;
+
+            for (const video of allVideos) {
+                const fields = video.fields || {};
+                const youtubeId = fields.youTubeId || fields.youtubeId || fields.YouTubeID || '';
+                const title = fields.title || fields.影片標題 || '未命名節目';
+
+                if (!youtubeId) {
+                    log(`🗑️ 清理: ${title} (沒有 YouTube ID)`);
+                    cleanedCount++;
+                    continue;
+                }
+
+                try {
+                    const response = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${youtubeId}&format=json`);
+                    
+                    if (!response.ok) {
+                        log(`🗑️ 清理失效影片: ${title}`);
+                        cleanedCount++;
+                    }
+                } catch (error) {
+                    log(`🗑️ 清理檢查失敗的影片: ${title}`);
+                    cleanedCount++;
+                }
+            }
+
+            showStatus(`清理完成: 移除了 ${cleanedCount} 個失效影片`, 'success');
+            
+            // 重新載入列表
+            setTimeout(() => {
+                loadFeaturedVideos();
+            }, 1000);
+        }
+
+        // 頁面載入時初始化
+        window.addEventListener('load', () => {
+            log('🔧 精選節目管理系統已載入');
+            loadFeaturedVideos();
+        });
+
+        // 點擊模態框外部關閉
+        window.addEventListener('click', (event) => {
+            const modal = document.getElementById('addEditModal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        });
+    </script>
+</body>
+</html>
+

@@ -41,11 +41,26 @@ document.addEventListener('DOMContentLoaded', () => {
         if (response.items && response.items.length > 0) {
           console.log(`✅ 從 Contentful 載入 ${response.items.length} 個節目`);
           scheduleData = convertContentfulToScheduleFormat(response.items);
+          
+          // 檢查標籤數據
+          let programsWithTags = 0;
+          Object.keys(scheduleData).forEach(day => {
+            if (scheduleData[day].schedule) {
+              scheduleData[day].schedule.forEach(program => {
+                if (program.tags && program.tags.length > 0) {
+                  programsWithTags++;
+                  console.log('🔍 節目標籤:', { title: program.title, tags: program.tags });
+                }
+              });
+            }
+          });
+          console.log(`📊 總共 ${programsWithTags} 個節目有標籤數據`);
+          
           return;
         }
       }
       
-      // 如果 Contentful 失敗，嘗試載入本地 JSON
+      // 直接載入本地 JSON
       const response = await fetch('schedule.json');
       scheduleData = await response.json();
       console.log('✅ 從本地 schedule.json 載入節目數據');
@@ -61,6 +76,35 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
   
+  // 從備註中提取主題標籤
+  function extractTopicsFromNotes(notes) {
+    if (!notes) return [];
+    const matches = notes.match(/\[主題:(.*?)\]/g);
+    if (!matches) return [];
+    
+    // 提取所有主題標記的內容
+    const topics = matches.map(m => m.replace(/\[主題:(.*?)\]/, '$1'));
+    
+    // 如果主題包含逗號分隔的多個主題，則分割它們
+    const allTopics = [];
+    topics.forEach(topic => {
+      if (topic.includes(',')) {
+        allTopics.push(...topic.split(',').map(t => t.trim()));
+      } else {
+        allTopics.push(topic.trim());
+      }
+    });
+    
+    return allTopics.filter(topic => topic.length > 0);
+  }
+
+  // 從備註中提取分類
+  function extractCategoryFromNotes(notes) {
+    if (!notes) return '旅遊節目';
+    const match = notes.match(/\[分類:(.*?)\]/);
+    return match ? match[1] : '旅遊節目';
+  }
+
   // 將 Contentful 數據轉換為節目表格式
   function convertContentfulToScheduleFormat(items) {
     const scheduleData = {};
@@ -99,6 +143,8 @@ document.addEventListener('DOMContentLoaded', () => {
       let cleanDescription = notes
         .replace(/\[時間:\d{2}:\d{2}\]/g, '')
         .replace(/\[YouTube:[^\]]+\]/g, '')
+        .replace(/\[分類:.*?\]/g, '')
+        .replace(/\[主題:.*?\]/g, '')
         .trim();
       
       // 如果沒有描述，使用標題
@@ -111,10 +157,11 @@ document.addEventListener('DOMContentLoaded', () => {
         time: actualTime,
         title: title,
         duration: '30', // 預設 30 分鐘
-        category: '旅遊節目',
+        category: extractCategoryFromNotes(notes),
         description: cleanDescription,
         thumbnail: youtubeId ? `https://img.youtube.com/vi/${youtubeId}/maxresdefault.jpg` : 'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop',
         youtubeId: youtubeId,
+        tags: extractTopicsFromNotes(notes),
         status: 'published'
       };
       
@@ -261,19 +308,8 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    // 過濾節目：只顯示當前和未來的節目
-    const filteredPrograms = programs.filter(program => !isPastProgram(program));
-
-    if (filteredPrograms.length === 0) {
-      contentEl.innerHTML = `
-        <div class="schedule-empty">
-          <div class="empty-icon">📺</div>
-          <h3>今日節目已結束</h3>
-          <p>今日的節目已全部播放完畢，請查看其他日期的節目表</p>
-        </div>
-      `;
-      return;
-    }
+    // 顯示所有節目，不過濾已播放的節目
+    const filteredPrograms = programs;
 
     // 創建節目表
     const scheduleHTML = `
@@ -294,22 +330,33 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 創建節目項目
   function createProgramItem(program) {
-    const isCurrent = isCurrentProgram(program);
-    const isNext = isNextProgram(program);
-    
-    let statusClass = '';
-    let statusText = '';
-    
-    if (isCurrent) {
-      statusClass = 'current';
-      statusText = '● 現正播放';
-    } else if (isNext) {
-      statusClass = 'next';
-      statusText = '▶ 即將播出';
-    }
-    
+    // 標籤翻譯映射（與 admin-calendar-unified.html 中的 TOPICS_DATA 保持一致）
+    const TAG_TRANSLATIONS = {
+      'city-secrets': '城市秘境',
+      'taste-journal': '味覺日誌',
+      'travel-talk': '旅途談',
+      'around-world': '繞著地球跑',
+      'food-talk': '食話實說',
+      'play-fun': '玩樂FUN',
+      'time-walk': '時光漫遊',
+      'nature-secrets': '自然秘境'
+    };
+
+    // 翻譯標籤函數
+    const translateTags = (tags) => {
+      if (!Array.isArray(tags)) return [];
+      return tags.map(tag => TAG_TRANSLATIONS[tag] || tag);
+    };
+
+    // 處理標籤
+    const tags = program.tags ? translateTags(program.tags) : [];
+    const tagsHtml = tags.length > 0 ? 
+      `<div class="program-tags">
+        ${tags.map(tag => `<span class="tag">${escapeHtml(tag)}</span>`).join('')}
+      </div>` : '';
+
     return `
-      <div class="schedule-item ${statusClass}">
+      <div class="schedule-item">
         <div class="schedule-thumbnail">
           <img src="${program.thumbnail}" alt="${escapeHtml(program.title)}" loading="lazy">
           <div class="schedule-time">${program.time}</div>
@@ -321,7 +368,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="program-category">${escapeHtml(program.category)}</div>
             <div class="schedule-duration">${program.duration}分</div>
           </div>
-          ${statusText ? `<div class="program-status">${statusText}</div>` : ''}
+          ${tagsHtml}
         </div>
       </div>
     `;

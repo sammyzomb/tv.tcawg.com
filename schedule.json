@@ -6,33 +6,36 @@
     "day": "11",
     "schedule": [
       {
-        "time": "11:00",
+        "time": "00:00",
         "title": "How to Spend 4 Days in SEVILLE Spain | The Perfect Travel Guide",
         "duration": "30",
-        "category": "旅遊節目",
+        "category": "歐洲旅遊",
         "description": "How to Spend 4 Days in SEVILLE Spain | The Perfect Travel Guide",
         "thumbnail": "https://img.youtube.com/vi/kcalkfcK6ZA/maxresdefault.jpg",
         "youtubeId": "kcalkfcK6ZA",
+        "tags": ["city-secrets", "around-world"],
         "status": "published"
       },
       {
-        "time": "11:30",
+        "time": "00:30",
         "title": "Kyrgyzstan 4K - Scenic Relaxation Film With Calming Music",
         "duration": "30",
-        "category": "旅遊節目",
+        "category": "中亞旅遊",
         "description": "Kyrgyzstan 4K - Scenic Relaxation Film With Calming Music",
         "thumbnail": "https://img.youtube.com/vi/Qp37q2-Gjvw/maxresdefault.jpg",
         "youtubeId": "Qp37q2-Gjvw",
+        "tags": ["nature-secrets", "around-world"],
         "status": "published"
       },
       {
-        "time": "12:00",
+        "time": "01:00",
         "title": "MONTANA 4K Scenic Relaxation Film with Country Music | Glacier National Park",
         "duration": "30",
-        "category": "旅遊節目",
+        "category": "北美旅遊",
         "description": "MONTANA 4K Scenic Relaxation Film with Country Music | Glacier National Park",
         "thumbnail": "https://img.youtube.com/vi/QMCa79JZQBg/maxresdefault.jpg",
         "youtubeId": "QMCa79JZQBg",
+        "tags": ["nature-secrets", "travel-talk"],
         "status": "published"
       },
       {
