@@ -15,8 +15,34 @@
 
   <!-- 本頁樣式 -->
   <style>
-    :root{ --bg:#ffffff; --text:#111827; --card:#ffffff; --card-border:rgba(0,0,0,.06); --accent:#e0b46a; --active-bg:#f6f6f6; }
-    .dark-theme{ --bg:#0b1620; --text:#e5eef9; --card:#0f2133; --card-border:rgba(255,255,255,.08); --active-bg:#0f2133; }
+    :root{ 
+      /* 白天主題 */
+      --bg:#f0f4f9; 
+      --text:#28445e; 
+      --text-light:#666;
+      --card:#f9f9f9; 
+      --card-border:rgba(0,0,0,.06); 
+      --accent:#2b71d2; 
+      --active-bg:#f6f6f6;
+      --navbar-bg:white;
+      --navbar-border:rgba(0,0,0,0.08);
+      --shadow:rgba(0,0,0,0.05);
+      --section-bg:#fff;
+    }
+    .dark-theme{ 
+      /* 夜晚主題 */
+      --bg:#121821; 
+      --text:#EAEAEA; 
+      --text-light:#999;
+      --card:#1A222F; 
+      --card-border:rgba(255,255,255,.1); 
+      --accent:#FFD700; 
+      --active-bg:#0f2133;
+      --navbar-bg:rgba(18, 24, 33, 0.8);
+      --navbar-border:rgba(255,255,255,0.1);
+      --shadow:rgba(0,0,0,0.2);
+      --section-bg:#121821;
+    }
     
     body{ 
       background:var(--bg); 
@@ -24,6 +50,7 @@
       margin:0 !important; 
       padding: 0 !important;
       min-height: 100vh !important;
+      transition: background-color 0.3s, color 0.3s;
     }
 
     .page-wrap { 
@@ -276,6 +303,31 @@
       font-weight: 500;
     }
 
+    /* 響應式設計 */
+    @media (max-width: 768px) {
+      .navbar {
+        padding: 12px 16px;
+      }
+      
+      .desktop-nav {
+        gap: 16px;
+      }
+      
+      .desktop-nav a {
+        padding: 6px 12px;
+        font-size: 14px;
+      }
+      
+      .nav-actions {
+        gap: 12px;
+      }
+      
+      .nav-actions a {
+        padding: 6px 12px;
+        font-size: 14px;
+      }
+    }
+
     .search-tag.active {
       background: var(--accent);
       color: white;
@@ -293,6 +345,75 @@
       margin-bottom: 30px;
       color: var(--text);
       text-align: center;
+    }
+
+    /* 導覽列樣式 */
+    .navbar {
+      background: var(--navbar-bg);
+      border-bottom: 1px solid var(--navbar-border);
+      padding: 16px 20px;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      backdrop-filter: blur(10px);
+      transition: background-color 0.3s, border-color 0.3s;
+    }
+
+    .navbar .logo img {
+      height: 40px;
+    }
+
+    .desktop-nav {
+      display: flex;
+      gap: 24px;
+      align-items: center;
+    }
+
+    .desktop-nav a {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text);
+      text-decoration: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+    }
+
+    .desktop-nav a:hover {
+      background: var(--active-bg);
+    }
+
+    .desktop-nav a.active {
+      background: var(--accent);
+      color: white;
+    }
+
+    .nav-icon {
+      width: 20px;
+      height: 20px;
+      stroke: currentColor;
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .nav-actions a {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text);
+      text-decoration: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+    }
+
+    .nav-actions a:hover {
+      background: var(--active-bg);
     }
 
     /* Reset 可能來自全域樣式的干擾 */
@@ -646,8 +767,6 @@
   <div id="topics-debug" style="max-width:1200px;margin:20px auto;padding:12px 16px;border:1px dashed #ccc;font:12px/1.4 monospace;color:#555;background:#fafafa;display:none"></div>
 
   <script src="https://www.youtube.com/iframe_api"></script>
-  <!-- 移除 script.js 引用，避免載入節目表功能 -->
-  
   <!-- 內嵌 JavaScript 確保功能正常 -->
   <script>
     function dbg(msg){
@@ -658,30 +777,93 @@
       console.log('[topics]', msg);
     }
 
-    // 主題切換：支援太陽/月亮按鈕，並記住使用者選擇
+    // 智能主題管理系統
     function applyTheme(theme){
-      const isDark = theme === 'dark';
+      const isDark = theme === 'dark-theme';
       document.body.classList.toggle('dark-theme', isDark);
       const sun = document.getElementById('theme-icon-sun');
       const moon = document.getElementById('theme-icon-moon');
       if (sun && moon){
-        sun.style.display = isDark ? 'none' : '';
-        moon.style.display = isDark ? '' : 'none';
+        sun.style.display = isDark ? 'none' : 'inline-block';
+        moon.style.display = isDark ? 'inline-block' : 'none';
       }
-      try { localStorage.setItem('site-theme', theme); } catch(e) {}
+      try { localStorage.setItem('theme', theme); } catch(e) {}
     }
 
     function initThemeToggle(){
-      let saved = 'light';
-      try { saved = localStorage.getItem('site-theme') || 'light'; } catch(e) {}
-      applyTheme(saved);
+      const savedTheme = localStorage.getItem('theme');
+      const savedTime = localStorage.getItem('theme-time');
+      const currentTime = new Date().getTime();
+      const currentHour = new Date().getHours();
+      
+      // 檢查是否超過24小時未更新
+      const isExpired = !savedTime || (currentTime - parseInt(savedTime)) > 24 * 60 * 60 * 1000;
+      
+      console.log('🎨 [topics] 智能主題檢查:', {
+        savedTheme,
+        savedTime: savedTime ? new Date(parseInt(savedTime)).toLocaleString() : '無',
+        currentTime: new Date(currentTime).toLocaleString(),
+        isExpired,
+        currentHour
+      });
+      
+      if (isExpired) {
+        // 超過24小時，根據時間自動選擇
+        const shouldBeDark = currentHour >= 18 || currentHour < 6;
+        const autoTheme = shouldBeDark ? 'dark-theme' : '';
+        
+        console.log('⏰ [topics] 主題已過期，自動切換:', {
+          shouldBeDark,
+          autoTheme,
+          reason: shouldBeDark ? '夜晚時間' : '白天時間'
+        });
+        
+        document.body.classList.toggle('dark-theme', shouldBeDark);
+        localStorage.setItem('theme', autoTheme);
+        localStorage.setItem('theme-time', currentTime.toString());
+        updateThemeIcon(autoTheme);
+      } else {
+        // 24小時內，使用用戶選擇
+        console.log('✅ [topics] 使用用戶選擇的主題:', savedTheme);
+        if (savedTheme && savedTheme.trim() !== '') {
+          document.body.classList.add(savedTheme);
+          updateThemeIcon(savedTheme);
+        }
+      }
+      
       const switcher = document.getElementById('theme-switcher');
       if (switcher){
         switcher.addEventListener('click', (ev)=>{
           ev.preventDefault();
-          const next = document.body.classList.contains('dark-theme') ? 'light' : 'dark';
-          applyTheme(next);
+          const currentTime = new Date().getTime();
+          
+          document.body.classList.toggle('dark-theme');
+          const cur = document.body.classList.contains('dark-theme') ? 'dark-theme' : '';
+          
+          // 保存用戶選擇和時間戳
+          localStorage.setItem('theme', cur);
+          localStorage.setItem('theme-time', currentTime.toString());
+          
+          console.log('🔄 [topics] 用戶手動切換主題:', {
+            newTheme: cur,
+            timestamp: new Date(currentTime).toLocaleString()
+          });
+          
+          updateThemeIcon(cur);
         });
+      }
+    }
+
+    function updateThemeIcon(theme) {
+      const sun = document.getElementById('theme-icon-sun');
+      const moon = document.getElementById('theme-icon-moon');
+      if (!sun || !moon) return;
+      if (theme === 'dark-theme') {
+        sun.style.display = 'none';
+        moon.style.display = 'inline-block';
+      } else {
+        sun.style.display = 'inline-block';
+        moon.style.display = 'none';
       }
     }
 

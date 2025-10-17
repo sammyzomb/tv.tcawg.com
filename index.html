@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <meta http-equiv="Permissions-Policy" content="autoplay=*, encrypted-media=*, accelerometer=*, gyroscope=*, picture-in-picture=*, clipboard-write=*, web-share=*">
+  <meta http-equiv="Permissions-Policy" content="autoplay=(), encrypted-media=(), accelerometer=(), gyroscope=(), picture-in-picture=(), clipboard-write=(), web-share=()">
   <title>航向世界旅遊頻道</title>
   
   <link rel="stylesheet" href="style.css?v=20250926v2">
@@ -66,6 +66,12 @@
     <a href="topics.html">主題探索</a>
   </div>
   <div id="menu-overlay" class="menu-overlay"></div>
+
+  <!-- 載入指示器 -->
+  <div id="loading-indicator" class="loading-indicator">
+    <div class="loading-spinner"></div>
+    <p>載入中...</p>
+  </div>
 
   <div class="hero">
     <div class="yt-bg-wrapper">
@@ -149,19 +155,157 @@
             <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><path d="M8 21h8m-4-4v4"/></svg>
             <h2>精選節目推薦</h2>
         </div>
-        <div class="title-right">
-            <!-- 空的右側區域，保持佈局平衡 -->
-        </div>
     </div>
     <div class="video-grid" id="featured-videos"></div>
   </section>
 
-  <!-- 新增：節目表預告區塊 -->
+  <!-- 熱門主題分類區塊 -->
+  <section class="topics-section">
+    <div class="section-title-container">
+        <div class="title-left">
+            <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <h2>熱門主題探索</h2>
+        </div>
+        <div class="title-right">
+            <a href="topics.html" class="view-all-btn">探索更多主題</a>
+        </div>
+    </div>
+    <div class="topics-grid" id="homepage-topics">
+        <!-- 熱門主題將由 JavaScript 動態載入 -->
+    </div>
+  </section>
+
+  <!-- 最新上架節目區塊 -->
+  <section class="latest-section">
+    <div class="section-title-container">
+        <div class="title-left">
+            <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>
+            <h2>最新上架節目</h2>
+        </div>
+        <div class="title-right">
+            <span class="update-time" id="last-update">最後更新：剛剛</span>
+        </div>
+    </div>
+    <div class="video-grid" id="latest-videos">
+        <!-- 最新節目將由 JavaScript 動態載入 -->
+    </div>
+  </section>
+
+  <!-- 旅遊資訊區塊 -->
+  <section class="info-section">
+    <div class="info-grid">
+        <div class="info-card">
+            <div class="info-icon">🌍</div>
+            <h3>探索世界</h3>
+            <p>帶您走遍全球，發現每個角落的美麗與故事</p>
+        </div>
+        <div class="info-card">
+            <div class="info-icon">🍽️</div>
+            <h3>品味美食</h3>
+            <p>品嘗各地特色料理，感受不同文化的味覺饗宴</p>
+        </div>
+        <div class="info-card">
+            <div class="info-icon">🏛️</div>
+            <h3>文化體驗</h3>
+            <p>深入了解當地歷史文化，體驗最真實的在地生活</p>
+        </div>
+        <div class="info-card">
+            <div class="info-icon">📱</div>
+            <h3>互動分享</h3>
+            <p>與觀眾互動交流，分享您的旅遊心得與經驗</p>
+        </div>
+    </div>
+  </section>
+
+  <!-- 統計數據展示 -->
+  <section class="stats-section">
+    <div class="stats-container">
+        <div class="stat-item">
+            <div class="stat-number" id="total-programs">0</div>
+            <div class="stat-label">總節目數</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-number" id="total-countries">0</div>
+            <div class="stat-label">探索國家</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-number" id="total-hours">0</div>
+            <div class="stat-label">節目時長</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-number" id="viewer-count">0</div>
+            <div class="stat-label">觀看次數</div>
+        </div>
+    </div>
+  </section>
   
   <div class="fullscreen-player" id="fullscreenPlayer"></div>
 
   <script src="https://www.youtube.com/iframe_api"></script>
   <script src="media.js"></script>
   <script src="script.js?v=20250909"></script>
+  
+  <!-- 首頁新增功能 -->
+  <script>
+    setTimeout(() => {
+      // 載入主題分類
+      const topicsContainer = document.getElementById('homepage-topics');
+      if (topicsContainer) {
+        const topics = [
+          { title: '城市秘境', desc: '深入城市角落，發現隱藏的美好', icon: '🏙️' },
+          { title: '自然秘境', desc: '探索大自然的奧秘與美麗', icon: '🌲' },
+          { title: '味覺日誌', desc: '品嘗世界各地的美食文化', icon: '🍽️' },
+          { title: '旅途談', desc: '分享旅遊心得與實用技巧', icon: '💬' }
+        ];
+        topicsContainer.innerHTML = topics.map(t => `
+          <div class="topic-card" onclick="location.href='topics.html'">
+            <div class="topic-icon">${t.icon}</div>
+            <div class="topic-title">${t.title}</div>
+            <div class="topic-desc">${t.desc}</div>
+          </div>
+        `).join('');
+      }
+
+      // 載入最新節目（使用已載入的 HERO 影片）
+      const latestContainer = document.getElementById('latest-videos');
+      if (latestContainer && window.heroVideos && heroVideos.length > 0) {
+        latestContainer.innerHTML = heroVideos.slice(0, 6).map(v => `
+          <div class="video-card" onclick="playVideo('${v.youtubeId}')">
+            <div class="video-thumbnail">
+              <img src="${v.thumbnail}" alt="${v.title}" loading="lazy">
+              <div class="video-overlay">
+                <div class="play-button">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="5,3 19,12 5,21"></polygon>
+                  </svg>
+                </div>
+                <div class="video-duration">${v.duration}分鐘</div>
+              </div>
+            </div>
+            <div class="video-info">
+              <h3 class="video-title">${v.title}</h3>
+              <div class="video-meta"><span class="video-category">${v.category}</span></div>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      // 更新統計數據
+      const animateNum = (id, target) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        let curr = 0, inc = target / 50;
+        const timer = setInterval(() => {
+          curr += inc;
+          if (curr >= target) { curr = target; clearInterval(timer); }
+          el.textContent = Math.floor(curr).toLocaleString();
+        }, 30);
+      };
+      animateNum('total-programs', window.heroVideos?.length || 150);
+      animateNum('total-countries', 25);
+      animateNum('total-hours', Math.round((window.heroVideos?.length || 150) * 0.5));
+      animateNum('viewer-count', 85000);
+    }, 2000);
+  </script>
 </body>
 </html>

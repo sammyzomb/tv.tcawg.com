@@ -21,7 +21,7 @@
     contentfulClient.getEntries({
       content_type: 'video',
       order: '-sys.updatedAt',
-      limit: 1000
+      limit: 50  // 減少載入數量，提升載入速度
     }).then(response => {
       const mapped = response.items
         .filter(item => {

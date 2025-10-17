@@ -2003,16 +2003,150 @@ body.dark-theme .schedule-item:hover .program-category {
 
 /* 節目表頁面專用的兩列排列樣式 - 僅在 schedule.html 頁面使用 */
 .schedule-page .schedule-list {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-  padding: 20px;
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 24px !important;
+  padding: 20px !important;
+  max-width: 1400px;
+  margin: 0 auto;
+  overflow: visible !important;
 }
 
 /* 節目表頁面專用的網格樣式 - 僅在 schedule.html 頁面使用 */
 .schedule-page .schedule-item {
-  display: flex;
-  align-items: center;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  gap: 0 !important;
+  padding: 0 !important;
+  background: var(--card-bg);
+  border-radius: 16px;
+  border: 1px solid var(--card-border);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  overflow: hidden;
+  cursor: pointer;
+  width: 100% !important;
+  flex: none !important;
+}
+
+.schedule-page .schedule-item:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.schedule-page .schedule-thumbnail {
+  position: relative !important;
+  width: 100% !important;
+  height: 160px !important;
+  overflow: hidden;
+  flex: none !important;
+}
+
+.schedule-page .schedule-thumbnail img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  transition: transform 0.3s ease;
+}
+
+.schedule-page .schedule-item:hover .schedule-thumbnail img {
+  transform: scale(1.05);
+}
+
+.schedule-page .schedule-time {
+  position: absolute !important;
+  top: 12px !important;
+  left: 12px !important;
+  background: rgba(0, 0, 0, 0.8) !important;
+  color: white !important;
+  padding: 6px 12px !important;
+  border-radius: 20px !important;
+  font-size: 0.85rem !important;
+  font-weight: 600 !important;
+  backdrop-filter: blur(10px);
+}
+
+.schedule-page .schedule-content {
+  padding: 16px !important;
+  flex: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+}
+
+.schedule-page .program-title {
+  font-size: 1rem !important;
+  font-weight: 700 !important;
+  color: var(--text-color) !important;
+  line-height: 1.2 !important;
+  margin: 0 !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 2 !important;
+  -webkit-box-orient: vertical !important;
+  overflow: hidden !important;
+}
+
+.schedule-page .program-description {
+  font-size: 0.85rem !important;
+  color: var(--text-color-light) !important;
+  line-height: 1.3 !important;
+  margin: 0 !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 2 !important;
+  -webkit-box-orient: vertical !important;
+  overflow: hidden !important;
+}
+
+.schedule-page .schedule-meta {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  margin-top: auto !important;
+  gap: 8px !important;
+  margin-top: 8px !important;
+}
+
+.schedule-page .program-category {
+  background: var(--primary-color) !important;
+  color: white !important;
+  padding: 4px 10px !important;
+  border-radius: 16px !important;
+  font-size: 0.75rem !important;
+  font-weight: 600 !important;
+  flex-shrink: 0 !important;
+}
+
+.schedule-page .schedule-duration {
+  color: var(--text-color-light) !important;
+  font-size: 0.75rem !important;
+  font-weight: 500 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+}
+
+.schedule-page .schedule-duration::before {
+  content: '⏱' !important;
+  font-size: 0.7rem !important;
+}
+
+.schedule-page .program-tags {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 6px !important;
+  margin-top: 8px !important;
+}
+
+.schedule-page .program-tags .tag {
+  background: var(--section-bg) !important;
+  color: var(--text-color) !important;
+  padding: 4px 8px !important;
+  border-radius: 12px !important;
+  font-size: 0.75rem !important;
+  font-weight: 500 !important;
+  border: 1px solid var(--card-border) !important;
+}
   gap: 20px;
   padding: 0;
   border: 1px solid var(--card-border);
@@ -2547,20 +2681,66 @@ body.dark-theme .schedule-item.next {
 
   
   
-  /* 小螢幕時節目表頁面改為單列顯示 */
+  /* 中等螢幕尺寸的響應式設計 */
   .schedule-page .schedule-list {
-    grid-template-columns: 1fr;
-    padding: 16px;
-    gap: 16px;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 20px !important;
+    padding: 16px !important;
   }
   
   .schedule-page .schedule-item {
-    height: 180px;
+    flex-direction: column !important;
   }
   
   .schedule-page .schedule-thumbnail {
-    flex: 0 0 280px;
-    height: 180px;
+    height: 140px !important;
+  }
+  
+  .schedule-page .schedule-content {
+    padding: 12px !important;
+  }
+  
+  .schedule-page .program-title {
+    font-size: 1rem !important;
+  }
+  
+  .schedule-page .program-description {
+    font-size: 0.85rem !important;
+    -webkit-line-clamp: 2 !important;
+  }
+}
+
+/* 小螢幕時節目表頁面改為單列顯示 */
+@media (max-width: 768px) {
+  .schedule-page .schedule-list {
+    grid-template-columns: 1fr !important;
+    padding: 16px !important;
+    gap: 16px !important;
+  }
+  
+  .schedule-page .schedule-item {
+    flex-direction: row !important;
+    height: 180px !important;
+  }
+  
+  .schedule-page .schedule-thumbnail {
+    flex: 0 0 280px !important;
+    height: 100% !important;
+  }
+  
+  .schedule-page .schedule-content {
+    padding: 16px !important;
+    flex: 1 !important;
+  }
+  
+  .schedule-page .program-title {
+    font-size: 1rem !important;
+    -webkit-line-clamp: 2 !important;
+  }
+  
+  .schedule-page .program-description {
+    font-size: 0.85rem !important;
+    -webkit-line-clamp: 2 !important;
   }
 
   .schedule-list {
