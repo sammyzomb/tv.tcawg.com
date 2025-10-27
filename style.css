@@ -185,6 +185,46 @@ body.menu-open {
   border-top-right-radius: 20px;
   transition: background-color 0.3s;
 }
+
+.topics-section {
+  background: var(--section-bg);
+  padding: 60px 5%;
+  margin-top: 0;
+  position: relative;
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+  transition: background-color 0.3s;
+}
+
+.latest-section {
+  background: var(--section-bg);
+  padding: 60px 5%;
+  margin-top: 0;
+  position: relative;
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+  transition: background-color 0.3s;
+}
+
+.info-section {
+  background: var(--section-bg);
+  padding: 60px 5%;
+  margin-top: 0;
+  position: relative;
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+  transition: background-color 0.3s;
+}
+
+.stats-section {
+  background: var(--section-bg);
+  padding: 60px 5%;
+  margin-top: 0;
+  position: relative;
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+  transition: background-color 0.3s;
+}
 .section-title-container { 
   display: flex !important; 
   justify-content: space-between !important; 
@@ -194,6 +234,8 @@ body.menu-open {
   max-width: none !important;
   min-height: auto !important;
   height: auto !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
 }
 
 .title-left {
@@ -223,6 +265,49 @@ body.menu-open {
   flex-direction: column !important;
   align-items: flex-end !important;
   gap: 2px !important; /* 從 4px 減少到 2px，讓右側更緊湊 */
+}
+
+.view-all-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(43, 113, 210, 0.2);
+}
+
+.view-all-btn:hover {
+  background: var(--primary-color-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(43, 113, 210, 0.3);
+  text-decoration: none;
+  color: white;
+}
+
+.view-all-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(43, 113, 210, 0.2);
+}
+
+/* 深色主題調整 */
+body.dark-theme .view-all-btn {
+  background: linear-gradient(135deg, var(--primary-color) 0%, #ffd700 100%);
+  color: #121821;
+  box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
+}
+
+body.dark-theme .view-all-btn:hover {
+  background: linear-gradient(135deg, #ffd700 0%, var(--primary-color) 100%);
+  box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4);
+  color: #121821;
 }
 
 .current-datetime-text {

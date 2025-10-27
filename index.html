@@ -10,6 +10,327 @@
   <!-- 簡化美觀套件 CSS - 保持原有設計風格 -->
   <link rel="stylesheet" href="simple-enhanced-styles.css?v=20250926v2">
   
+  <!-- 主題探索頁面樣式 -->
+  <style>
+    /* 主題探索頁面專用樣式 */
+    .topics-page-wrapper {
+      padding: 5px 5%;
+      background: var(--section-bg);
+      border-radius: 20px;
+      margin-top: -10px;
+    }
+
+    .page-header {
+      text-align: center;
+      margin-bottom: 2px;
+    }
+
+    .page-header h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--text-color);
+      margin: 0 0 10px 0;
+    }
+
+    .page-header p {
+      font-size: 1.1rem;
+      color: var(--text-color-light);
+      margin: 0;
+    }
+
+    .search-section {
+      margin-bottom: 5px;
+    }
+
+    .search-box {
+      display: flex;
+      max-width: 600px;
+      margin: 0 auto 2px;
+      background: var(--card-bg);
+      border: 2px solid var(--card-border);
+      border-radius: 25px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s ease;
+    }
+
+    .search-box:focus-within {
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px rgba(43, 113, 210, 0.1);
+    }
+
+    .search-input {
+      flex: 1;
+      padding: 12px 20px;
+      border: none;
+      outline: none;
+      font-size: 15px;
+      background: transparent;
+      color: var(--text-color);
+      border-radius: 25px 0 0 25px;
+    }
+
+    .search-input::placeholder {
+      color: #9ca3af;
+    }
+
+    .search-btn {
+      padding: 12px 20px;
+      border: none;
+      background: #ffd700;
+      color: #121821;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      border-radius: 0 25px 25px 0;
+    }
+
+    .search-btn:hover {
+      background: #ffed4e;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
+    }
+
+    .search-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+    }
+
+    .search-tag {
+      padding: 6px 12px;
+      background: var(--card-bg);
+      color: var(--text-color);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .search-tag:hover {
+      background: var(--primary-color);
+      color: white;
+      border-color: var(--primary-color);
+    }
+
+    .section-title {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--text-color);
+      text-align: center;
+      margin: 0 0 3px 0;
+    }
+
+    .topics-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 30px;
+      margin-top: 0;
+    }
+
+    .topic-card {
+      position: relative;
+      height: 320px;
+      border-radius: 16px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+
+    .topic-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    }
+
+    .topic-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.3) 100%);
+      z-index: 1;
+    }
+
+    .topic-content {
+      position: relative;
+      z-index: 2;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 24px;
+      color: white;
+    }
+
+    .topic-icon {
+      font-size: 2rem;
+      margin-bottom: 12px;
+    }
+
+    .topic-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin: 0 0 8px 0;
+      line-height: 1.2;
+    }
+
+    .topic-desc {
+      font-size: 0.95rem;
+      line-height: 1.4;
+      margin: 0 0 16px 0;
+      opacity: 0.9;
+    }
+
+    .topic-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .topic-stats,
+    .topic-tags {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.85rem;
+      opacity: 0.8;
+    }
+
+    .meta-icon {
+      width: 16px;
+      height: 16px;
+      stroke: currentColor;
+    }
+
+    .videos-section {
+      margin-top: 40px;
+    }
+
+    .search-results-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 24px;
+    }
+
+    .video-card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      cursor: pointer;
+    }
+
+    .video-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    .video-thumbnail {
+      position: relative;
+      height: 160px;
+      overflow: hidden;
+    }
+
+    .video-thumbnail img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .video-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .video-card:hover .video-overlay {
+      opacity: 1;
+    }
+
+    .play-button {
+      width: 50px;
+      height: 50px;
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--primary-color);
+    }
+
+    .video-info {
+      padding: 16px;
+    }
+
+    .video-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--text-color);
+      margin: 0 0 8px 0;
+      line-height: 1.3;
+    }
+
+    .video-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .video-category {
+      background: var(--primary-color);
+      color: white;
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+
+    /* 響應式設計 - 3x3 佈局 */
+    @media (max-width: 1200px) {
+      .topics-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 24px;
+      }
+    }
+
+    @media (max-width: 900px) {
+      .topics-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .topics-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+      }
+      
+      .topic-card {
+        height: 240px;
+      }
+    }
+  </style>
+  
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <script src="https://cdn.jsdelivr.net/npm/contentful@latest/dist/contentful.browser.min.js"></script>
   <script src="browser-config.js"></script>
@@ -155,89 +476,160 @@
             <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><path d="M8 21h8m-4-4v4"/></svg>
             <h2>精選節目推薦</h2>
         </div>
+        <div class="title-right">
+            <a href="videos.html" class="view-all-btn">查看所有節目</a>
+        </div>
     </div>
     <div class="video-grid" id="featured-videos"></div>
   </section>
 
-  <!-- 熱門主題分類區塊 -->
+  <!-- 主題探索區塊 - 嵌入完整 topics.html 內容 -->
   <section class="topics-section">
-    <div class="section-title-container">
-        <div class="title-left">
-            <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <h2>熱門主題探索</h2>
+    <!-- 嵌入完整的 topics.html 內容 -->
+    <div class="topics-page-wrapper">
+      <!-- 頁面標題 -->
+      <div class="page-header">
+        <h1>主題探索</h1>
+        <p>搜尋和探索不同主題的旅遊節目</p>
+      </div>
+
+      <!-- 搜尋框 -->
+      <div class="search-section">
+        <div class="search-box">
+          <input type="text" id="search-input" class="search-input" placeholder="搜尋節目、主題或關鍵字..." onkeypress="handleSearchKeypress(event)">
+          <button class="search-btn" onclick="performSearch()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+          </button>
         </div>
-        <div class="title-right">
-            <a href="topics.html" class="view-all-btn">探索更多主題</a>
+        <div class="search-tags" id="search-tags">
+          <!-- 熱門搜尋標籤將由 JavaScript 動態載入 -->
         </div>
     </div>
-    <div class="topics-grid" id="homepage-topics">
-        <!-- 熱門主題將由 JavaScript 動態載入 -->
+
+      <!-- 主題分類網格 -->
+      <div class="topics-section">
+        <h2 class="section-title">熱門主題分類</h2>
+        <div class="topics-grid" id="topics-grid">
+          <div class="topic-card" data-topic-id="city-secrets" style="background-image: url('https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=400&h=300&fit=crop')">
+            <div class="topic-content">
+              <div class="topic-icon">🏙️</div>
+              <h3 class="topic-title">城市秘境</h3>
+              <p class="topic-desc">深入城市角落、市集、文化景點,用實地體驗呈現城市故事</p>
+              <div class="topic-meta">
+                <div class="topic-stats">
+                  <svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><path d="M8 21h8m-4-4v4"/></svg>
+                  <span>0個節目</span>
+                </div>
+                <div class="topic-tags">
+                  <svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+                  <span>小眾景點、在地生活</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="topic-card" data-topic-id="taste-journal" style="background-image: url('https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=400&h=300&fit=crop')">
+            <div class="topic-content">
+              <div class="topic-icon">🍽️</div>
+              <h3 class="topic-title">味覺日誌</h3>
+              <p class="topic-desc">品嘗當地料理與街頭小吃,訪問餐廳老闆或廚師,分享食物背後的故事</p>
+              <div class="topic-meta">
+                <div class="topic-stats"><svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><path d="M8 21h8m-4-4v4"/></svg><span>0個節目</span></div>
+                <div class="topic-tags"><svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg><span>美食故事、街頭小吃</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="topic-card" data-topic-id="travel-talk" style="background-image: url('https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=400&h=300&fit=crop')">
+            <div class="topic-content">
+              <div class="topic-icon">💬</div>
+              <h3 class="topic-title">旅途談</h3>
+              <p class="topic-desc">邀請旅遊達人、部落客、在地人,分享旅行心得、技巧與趣聞</p>
+              <div class="topic-meta">
+                <div class="topic-stats"><svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><path d="M8 21h8m-4-4v4"/></svg><span>0個節目</span></div>
+                <div class="topic-tags"><svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg><span>旅遊技巧、節省預算</span></div>
+              </div>
+            </div>
+        </div>
+          <div class="topic-card" data-topic-id="around-world" style="background-image: url('https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=400&h=300&fit=crop')">
+            <div class="topic-content">
+              <div class="topic-icon">🌍</div>
+              <h3 class="topic-title">繞著地球跑</h3>
+              <p class="topic-desc">走訪小鎮或鄉村,介紹當地文化、手作工藝、市場與特色美食</p>
+              <div class="topic-meta">
+                <div class="topic-stats"><svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><path d="M8 21h8m-4-4v4"/></svg><span>4個節目</span></div>
+                <div class="topic-tags"><svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg><span>慢節奏、輕旅行</span></div>
+        </div>
+    </div>
+    </div>
+          <div class="topic-card" data-topic-id="food-talk" style="background-image: url('https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=400&h=300&fit=crop')">
+            <div class="topic-content">
+              <div class="topic-icon">🔍</div>
+              <h3 class="topic-title">食話實說</h3>
+              <p class="topic-desc">討論特定食材、料理或美食文化,結合討論與實地示範</p>
+              <div class="topic-meta">
+                <div class="topic-stats"><svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><path d="M8 21h8m-4-4v4"/></svg><span>0個節目</span></div>
+                <div class="topic-tags"><svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg><span>食材討論、料理文化</span></div>
+        </div>
+        </div>
+        </div>
+          <div class="topic-card" data-topic-id="play-fun" style="background-image: url('https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop')">
+            <div class="topic-content">
+              <div class="topic-icon">🎮</div>
+              <h3 class="topic-title">玩樂FUN</h3>
+              <p class="topic-desc">專為家庭設計,探索適合親子活動的景點、遊樂園、動物園</p>
+              <div class="topic-meta">
+                <div class="topic-stats"><svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><path d="M8 21h8m-4-4v4"/></svg><span>0個節目</span></div>
+                <div class="topic-tags"><svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg><span>親子活動、遊樂園</span></div>
+              </div>
+            </div>
+        </div>
+          <div class="topic-card" data-topic-id="nature-secrets" style="background-image: url('https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400&h=300&fit=crop')">
+            <div class="topic-content">
+              <div class="topic-icon">🌲</div>
+              <h3 class="topic-title">自然秘境</h3>
+              <p class="topic-desc">探索大自然的奧秘與美麗,發現隱藏的自然景觀</p>
+              <div class="topic-meta">
+                <div class="topic-stats"><svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><path d="M8 21h8m-4-4v4"/></svg><span>0個節目</span></div>
+                <div class="topic-tags"><svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg><span>自然景觀、戶外探險</span></div>
+        </div>
+    </div>
+    </div>
+          <div class="topic-card" data-topic-id="culture-heritage" style="background-image: url('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop')">
+            <div class="topic-content">
+              <div class="topic-icon">🏛️</div>
+              <h3 class="topic-title">文化遺產</h3>
+              <p class="topic-desc">探訪世界文化遺產,了解歷史建築與傳統工藝</p>
+              <div class="topic-meta">
+                <div class="topic-stats"><svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><path d="M8 21h8m-4-4v4"/></svg><span>0個節目</span></div>
+                <div class="topic-tags"><svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg><span>歷史建築、傳統工藝</span></div>
+        </div>
+        </div>
+        </div>
+          <div class="topic-card" data-topic-id="adventure-sports" style="background-image: url('https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=400&h=300&fit=crop')">
+            <div class="topic-content">
+              <div class="topic-icon">🏔️</div>
+              <h3 class="topic-title">冒險運動</h3>
+              <p class="topic-desc">體驗極限運動與戶外冒險,挑戰自我極限</p>
+              <div class="topic-meta">
+                <div class="topic-stats"><svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><path d="M8 21h8m-4-4v4"/></svg><span>0個節目</span></div>
+                <div class="topic-tags"><svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg><span>極限運動、戶外挑戰</span></div>
+        </div>
+    </div>
+        </div>
+        </div>
+
+      <!-- 精選節目 -->
+      <div class="videos-section" id="featured-videos-section" style="display: none;">
+        <h2 class="section-title">精選節目</h2>
+        <div class="search-results-grid" id="featured-videos">
+          <!-- 節目卡片將由 JavaScript 動態載入 -->
+        </div>
+        </div>
     </div>
   </section>
 
-  <!-- 最新上架節目區塊 -->
-  <section class="latest-section">
-    <div class="section-title-container">
-        <div class="title-left">
-            <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>
-            <h2>最新上架節目</h2>
-        </div>
-        <div class="title-right">
-            <span class="update-time" id="last-update">最後更新：剛剛</span>
-        </div>
-    </div>
-    <div class="video-grid" id="latest-videos">
-        <!-- 最新節目將由 JavaScript 動態載入 -->
-    </div>
-  </section>
-
-  <!-- 旅遊資訊區塊 -->
-  <section class="info-section">
-    <div class="info-grid">
-        <div class="info-card">
-            <div class="info-icon">🌍</div>
-            <h3>探索世界</h3>
-            <p>帶您走遍全球，發現每個角落的美麗與故事</p>
-        </div>
-        <div class="info-card">
-            <div class="info-icon">🍽️</div>
-            <h3>品味美食</h3>
-            <p>品嘗各地特色料理，感受不同文化的味覺饗宴</p>
-        </div>
-        <div class="info-card">
-            <div class="info-icon">🏛️</div>
-            <h3>文化體驗</h3>
-            <p>深入了解當地歷史文化，體驗最真實的在地生活</p>
-        </div>
-        <div class="info-card">
-            <div class="info-icon">📱</div>
-            <h3>互動分享</h3>
-            <p>與觀眾互動交流，分享您的旅遊心得與經驗</p>
-        </div>
-    </div>
-  </section>
-
-  <!-- 統計數據展示 -->
-  <section class="stats-section">
-    <div class="stats-container">
-        <div class="stat-item">
-            <div class="stat-number" id="total-programs">0</div>
-            <div class="stat-label">總節目數</div>
-        </div>
-        <div class="stat-item">
-            <div class="stat-number" id="total-countries">0</div>
-            <div class="stat-label">探索國家</div>
-        </div>
-        <div class="stat-item">
-            <div class="stat-number" id="total-hours">0</div>
-            <div class="stat-label">節目時長</div>
-        </div>
-        <div class="stat-item">
-            <div class="stat-number" id="viewer-count">0</div>
-            <div class="stat-label">觀看次數</div>
-        </div>
-    </div>
-  </section>
   
   <div class="fullscreen-player" id="fullscreenPlayer"></div>
 
@@ -247,65 +639,281 @@
   
   <!-- 首頁新增功能 -->
   <script>
-    setTimeout(() => {
-      // 載入主題分類
-      const topicsContainer = document.getElementById('homepage-topics');
-      if (topicsContainer) {
-        const topics = [
-          { title: '城市秘境', desc: '深入城市角落，發現隱藏的美好', icon: '🏙️' },
-          { title: '自然秘境', desc: '探索大自然的奧秘與美麗', icon: '🌲' },
-          { title: '味覺日誌', desc: '品嘗世界各地的美食文化', icon: '🍽️' },
-          { title: '旅途談', desc: '分享旅遊心得與實用技巧', icon: '💬' }
-        ];
-        topicsContainer.innerHTML = topics.map(t => `
-          <div class="topic-card" onclick="location.href='topics.html'">
-            <div class="topic-icon">${t.icon}</div>
-            <div class="topic-title">${t.title}</div>
-            <div class="topic-desc">${t.desc}</div>
-          </div>
+    // 主題探索頁面的完整功能 - 與 topics.html 完全一致
+    const TOPICS_DATA = [
+      { 
+        id: 'city-secrets', 
+        title: '城市秘境', 
+        desc: '深入城市角落、市集、文化景點,用實地體驗呈現城市故事', 
+        icon: '🏙️', 
+        backgroundImage: 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=400&h=300&fit=crop',
+        programCount: 0,
+        tags: ['小眾景點', '在地生活']
+      },
+      { 
+        id: 'taste-journal', 
+        title: '味覺日誌', 
+        desc: '品嘗當地料理與街頭小吃,訪問餐廳老闆或廚師,分享食物背後的故事', 
+        icon: '🍽️', 
+        backgroundImage: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=400&h=300&fit=crop',
+        programCount: 0,
+        tags: ['美食故事', '街頭小吃']
+      },
+      { 
+        id: 'travel-talk', 
+        title: '旅途談', 
+        desc: '邀請旅遊達人、部落客、在地人,分享旅行心得、技巧與趣聞', 
+        icon: '💬', 
+        backgroundImage: 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=400&h=300&fit=crop',
+        programCount: 0,
+        tags: ['旅遊技巧', '節省預算']
+      },
+      { 
+        id: 'around-world', 
+        title: '繞著地球跑', 
+        desc: '走訪小鎮或鄉村,介紹當地文化、手作工藝、市場與特色美食', 
+        icon: '🌍', 
+        backgroundImage: 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=400&h=300&fit=crop',
+        programCount: 4,
+        tags: ['慢節奏', '輕旅行']
+      },
+      { 
+        id: 'food-talk', 
+        title: '食話實說', 
+        desc: '討論特定食材、料理或美食文化,結合討論與實地示範', 
+        icon: '🔍', 
+        backgroundImage: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=400&h=300&fit=crop',
+        programCount: 0,
+        tags: ['食材討論', '料理文化']
+      },
+      { 
+        id: 'play-fun', 
+        title: '玩樂FUN', 
+        desc: '專為家庭設計,探索適合親子活動的景點、遊樂園、動物園', 
+        icon: '🎮', 
+        backgroundImage: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop',
+        programCount: 0,
+        tags: ['親子活動', '遊樂園']
+      }
+    ];
+
+    let currentSearchQuery = '';
+    let allPrograms = [];
+
+    function initTopicsSection() {
+      // 載入搜尋標籤
+      renderSearchTags();
+      // 載入主題分類（立即顯示六張卡片）
+      renderTopicsGrid();
+      // 載入節目數據（供搜尋結果使用）
+      loadProgramsData();
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initTopicsSection);
+    } else {
+      // 文件已就緒，直接執行
+      initTopicsSection();
+    }
+
+    // 渲染搜尋標籤
+    function renderSearchTags() {
+      const container = document.getElementById('search-tags');
+      if (!container) return;
+
+      const tags = ['城市秘境', '味覺日誌', '旅途談', '繞著地球跑', '食話實說', '玩樂FUN'];
+      container.innerHTML = tags.map(tag => `
+        <span class="search-tag" onclick="searchByTag('${tag}')">${tag}</span>
         `).join('');
       }
 
-      // 載入最新節目（使用已載入的 HERO 影片）
-      const latestContainer = document.getElementById('latest-videos');
-      if (latestContainer && window.heroVideos && heroVideos.length > 0) {
-        latestContainer.innerHTML = heroVideos.slice(0, 6).map(v => `
-          <div class="video-card" onclick="playVideo('${v.youtubeId}')">
+    // 渲染主題分類網格 - 與 topics.html 完全一致的樣式
+    function renderTopicsGrid() {
+      const container = document.getElementById('topics-grid');
+      if (!container) return;
+
+      container.innerHTML = TOPICS_DATA.map(topic => `
+        <div class="topic-card" data-topic-id="${topic.id}" style="background-image: url('${topic.backgroundImage}')">
+          <div class="topic-content">
+            <div class="topic-icon">${topic.icon}</div>
+            <h3 class="topic-title">${topic.title}</h3>
+            <p class="topic-desc">${topic.desc}</p>
+            <div class="topic-meta">
+              <div class="topic-stats">
+                <svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+                  <path d="M8 21h8m-4-4v4"/>
+                </svg>
+                <span>${topic.programCount}個節目</span>
+              </div>
+              <div class="topic-tags">
+                <svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
+                  <line x1="7" y1="7" x2="7.01" y2="7"/>
+                </svg>
+                <span>${topic.tags.join('、')}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      `).join('');
+
+      // 添加點擊事件
+      container.querySelectorAll('.topic-card').forEach(card => {
+        card.addEventListener('click', () => {
+          const topicId = card.dataset.topicId;
+          const topic = TOPICS_DATA.find(t => t.id === topicId);
+          if (topic) {
+            searchByTag(topic.title);
+          }
+        });
+      });
+    }
+
+    // 載入節目數據
+    async function loadProgramsData() {
+      try {
+        if (typeof contentful !== 'undefined') {
+          const client = contentful.createClient({
+            space: 'os5wf90ljenp',
+            accessToken: 'lODH-WLwHwVZv7O4rFdBWjSnrzaQWGD4koeOZ1Dypj0'
+          });
+          
+          const response = await client.getEntries({
+            content_type: 'scheduleItem',
+            include: 2,
+            limit: 1000
+          });
+          
+          if (response.items && response.items.length > 0) {
+            allPrograms = response.items.map(item => ({
+              id: item.sys.id,
+              title: item.fields.title,
+              description: item.fields.notes || '',
+              thumbnail: item.fields.thumbnail || 'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop',
+              youtubeId: extractYouTubeId(item.fields.notes),
+              category: extractCategory(item.fields.notes),
+              topics: extractTopics(item.fields.notes)
+            }));
+          }
+        }
+      } catch (error) {
+        console.error('載入節目數據失敗:', error);
+      }
+    }
+
+    // 輔助函數
+    function extractYouTubeId(notes) {
+      if (!notes) return '';
+      const match = notes.match(/\[YouTube:([^\]]+)\]/);
+      return match ? match[1] : '';
+    }
+
+    function extractCategory(notes) {
+      if (!notes) return '旅遊節目';
+      const match = notes.match(/\[分類:(.*?)\]/);
+      return match ? match[1] : '旅遊節目';
+    }
+
+    function extractTopics(notes) {
+      if (!notes) return [];
+      const matches = notes.match(/\[主題:(.*?)\]/g);
+      if (!matches) return [];
+      return matches.map(m => m.replace(/\[主題:(.*?)\]/, '$1'));
+    }
+
+    // 搜尋功能
+    function searchByTag(tag) {
+      const searchInput = document.getElementById('search-input');
+      if (searchInput) {
+        searchInput.value = tag;
+      }
+      performSearch(tag);
+    }
+
+    // 處理 Enter 鍵搜尋
+    function handleSearchKeypress(event) {
+      if (event.key === 'Enter') {
+        const searchInput = document.getElementById('search-input');
+        if (searchInput && searchInput.value.trim()) {
+          performSearch(searchInput.value.trim());
+        }
+      }
+    }
+
+    function performSearch(query) {
+      const container = document.getElementById('featured-videos');
+      const section = document.getElementById('featured-videos-section');
+      
+      if (!container || !section) return;
+
+      currentSearchQuery = query;
+      container.innerHTML = '<div style="text-align: center; padding: 40px; color: #6b7280;">搜尋中...</div>';
+      section.style.display = 'block';
+
+      // 模擬搜尋結果
+      setTimeout(() => {
+        const results = allPrograms.filter(program => 
+          program.title.toLowerCase().includes(query.toLowerCase()) ||
+          program.description.toLowerCase().includes(query.toLowerCase()) ||
+          program.category.toLowerCase().includes(query.toLowerCase()) ||
+          program.topics.some(topic => topic.toLowerCase().includes(query.toLowerCase()))
+        );
+
+        if (results.length > 0) {
+          container.innerHTML = results.map(program => `
+            <div class="video-card" onclick="openVideoModal('${program.youtubeId}')">
             <div class="video-thumbnail">
-              <img src="${v.thumbnail}" alt="${v.title}" loading="lazy">
+                <img src="${program.thumbnail}" alt="${program.title}" loading="lazy">
               <div class="video-overlay">
                 <div class="play-button">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <polygon points="5,3 19,12 5,21"></polygon>
                   </svg>
                 </div>
-                <div class="video-duration">${v.duration}分鐘</div>
               </div>
             </div>
             <div class="video-info">
-              <h3 class="video-title">${v.title}</h3>
-              <div class="video-meta"><span class="video-category">${v.category}</span></div>
+                <h3 class="video-title">${program.title}</h3>
+                <div class="video-meta">
+                  <span class="video-category">${program.category}</span>
+                </div>
             </div>
           </div>
         `).join('');
-      }
+        } else {
+          container.innerHTML = '<div style="text-align: center; padding: 40px; color: #6b7280;">沒有找到相關節目</div>';
+        }
+      }, 500);
+    }
 
-      // 更新統計數據
-      const animateNum = (id, target) => {
-        const el = document.getElementById(id);
-        if (!el) return;
-        let curr = 0, inc = target / 50;
-        const timer = setInterval(() => {
-          curr += inc;
-          if (curr >= target) { curr = target; clearInterval(timer); }
-          el.textContent = Math.floor(curr).toLocaleString();
-        }, 30);
-      };
-      animateNum('total-programs', window.heroVideos?.length || 150);
-      animateNum('total-countries', 25);
-      animateNum('total-hours', Math.round((window.heroVideos?.length || 150) * 0.5));
-      animateNum('viewer-count', 85000);
-    }, 2000);
+    // 開啟影片模態框
+    function openVideoModal(youtubeId) {
+      if (!youtubeId) return;
+      
+      const modal = document.getElementById('fullscreenPlayer');
+      if (modal) {
+        modal.innerHTML = `
+          <div class="fullscreen-player-content">
+            <button class="close-player-btn" onclick="closeFullscreenPlayer()">&times;</button>
+            <iframe src="https://www.youtube.com/embed/${youtubeId}?autoplay=1" 
+                    frameborder="0" allowfullscreen></iframe>
+          </div>
+        `;
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+      }
+    }
+
+    // 關閉全螢幕播放器
+    function closeFullscreenPlayer() {
+      const modal = document.getElementById('fullscreenPlayer');
+      if (modal) {
+        modal.classList.remove('active');
+        modal.innerHTML = '';
+        document.body.style.overflow = '';
+      }
+    }
   </script>
 </body>
 </html>

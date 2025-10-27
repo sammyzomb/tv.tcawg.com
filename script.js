@@ -150,22 +150,94 @@ document.addEventListener('DOMContentLoaded', () => {
   const themeIconSun = document.getElementById('theme-icon-sun');
   const themeIconMoon = document.getElementById('theme-icon-moon');
   const savedTheme = localStorage.getItem('theme');
-  if (savedTheme) body.classList.add(savedTheme);
-  else {
+  if (savedTheme) {
+    body.classList.add(savedTheme);
+  } else {
+    // 根據時間自動切換主題
     const h = new Date().getHours();
     if (h >= 18 || h < 6) {
+      // 晚上 6 點到早上 6 點：深色主題
       body.classList.add('dark-theme');
       localStorage.setItem('theme', 'dark-theme');
+    } else {
+      // 早上 6 點到晚上 6 點：淺色主題
+      body.classList.remove('dark-theme');
+      localStorage.setItem('theme', '');
     }
   }
   updateThemeIcon(body.classList.contains('dark-theme') ? 'dark-theme' : '');
+  
+  // 每分鐘檢查一次時間，如果沒有手動設定主題則自動更新
+  setInterval(() => {
+    const manualTheme = localStorage.getItem('theme');
+    if (!manualTheme) {
+      const h = new Date().getHours();
+      const shouldBeDark = h >= 18 || h < 6;
+      const isCurrentlyDark = body.classList.contains('dark-theme');
+      
+      if (shouldBeDark && !isCurrentlyDark) {
+        body.classList.add('dark-theme');
+        updateThemeIcon('dark-theme');
+      } else if (!shouldBeDark && isCurrentlyDark) {
+        body.classList.remove('dark-theme');
+        updateThemeIcon('');
+      }
+    }
+  }, 60000); // 每分鐘檢查一次
+  
   themeSwitcher?.addEventListener('click', e => {
     e.preventDefault();
+    
+    // 如果用戶手動切換主題，則保存設定
     body.classList.toggle('dark-theme');
     const cur = body.classList.contains('dark-theme') ? 'dark-theme' : '';
     localStorage.setItem('theme', cur);
     updateThemeIcon(cur);
+    
+    // 顯示提示訊息
+    showThemeChangeMessage(cur);
   });
+  
+  // 顯示主題切換提示
+  function showThemeChangeMessage(theme) {
+    const message = theme === 'dark-theme' ? '已切換到深色主題' : '已切換到淺色主題';
+    console.log(`🎨 ${message}`);
+    
+    // 可以添加一個短暫的提示訊息到頁面上
+    const notification = document.createElement('div');
+    notification.textContent = message;
+    notification.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: var(--primary-color);
+      color: white;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      z-index: 10000;
+      opacity: 0;
+      transform: translateY(-20px);
+      transition: all 0.3s ease;
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // 顯示動畫
+    setTimeout(() => {
+      notification.style.opacity = '1';
+      notification.style.transform = 'translateY(0)';
+    }, 100);
+    
+    // 3秒後移除
+    setTimeout(() => {
+      notification.style.opacity = '0';
+      notification.style.transform = 'translateY(-20px)';
+      setTimeout(() => {
+        document.body.removeChild(notification);
+      }, 300);
+    }, 3000);
+  }
   function updateThemeIcon(theme) {
     if (!themeIconSun || !themeIconMoon) return;
     if (theme === 'dark-theme') {
