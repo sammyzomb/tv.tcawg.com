@@ -131,6 +131,32 @@ function extractTopicsFromNotes(notes) {
   return uniqueTopics;
 }
 
+// 隱藏載入指示器（在 DOM 載入前就準備好）
+function hideLoadingIndicator() {
+  const loadingIndicator = document.getElementById('loading-indicator');
+  if (loadingIndicator && !loadingIndicator.classList.contains('hidden')) {
+    console.log('🔄 隱藏載入指示器');
+    loadingIndicator.classList.add('hidden');
+    setTimeout(() => {
+      loadingIndicator.style.display = 'none';
+    }, 300);
+  }
+}
+
+// 盡早隱藏載入指示器
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(hideLoadingIndicator, 300);
+  });
+} else {
+  setTimeout(hideLoadingIndicator, 300);
+}
+
+// 備用：確保在頁面完全載入後隱藏
+window.addEventListener('load', () => {
+  setTimeout(hideLoadingIndicator, 100);
+});
+
 document.addEventListener('DOMContentLoaded', () => {
   // === 漢堡選單 ===
   const hamburgerBtn = document.getElementById('hamburger-btn');
@@ -1407,14 +1433,6 @@ document.addEventListener('DOMContentLoaded', () => {
     return taiwanTime;
   }
 
-  // 獲取台灣時間
-  function getTaiwanTime() {
-    // 使用 Intl.DateTimeFormat 來獲取精確的台灣時間
-    const now = new Date();
-    const taiwanTime = now;
-    return taiwanTime;
-  }
-
   function getProgramStatus(program) {
     const taiwanTime = getTaiwanTime();
     const currentTime = taiwanTime.getHours() * 60 + taiwanTime.getMinutes();
@@ -1690,6 +1708,11 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // 頁面載入完成
   console.log('✅ 頁面初始化完成');
+  
+  // 確保載入指示器已隱藏（備用檢查）
+  setTimeout(() => {
+    hideLoadingIndicator();
+  }, 1000);
   
   // 添加調試函數到全域
   window.debugScheduleData = function() {

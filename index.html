@@ -329,6 +329,58 @@
         height: 240px;
       }
     }
+
+    /* 載入指示器樣式 */
+    .loading-indicator {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.95);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+
+    body.dark-theme .loading-indicator {
+      background: rgba(18, 24, 33, 0.95);
+    }
+
+    .loading-indicator.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .loading-spinner {
+      width: 50px;
+      height: 50px;
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid var(--primary-color);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 20px;
+    }
+
+    body.dark-theme .loading-spinner {
+      border-color: rgba(255, 255, 255, 0.1);
+      border-top-color: var(--primary-color);
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .loading-indicator p {
+      color: var(--text-color);
+      font-size: 1rem;
+      margin: 0;
+    }
   </style>
   
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
@@ -551,7 +603,7 @@
                 <div class="topic-tags"><svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg><span>旅遊技巧、節省預算</span></div>
               </div>
             </div>
-        </div>
+          </div>
           <div class="topic-card" data-topic-id="around-world" style="background-image: url('https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=400&h=300&fit=crop')">
             <div class="topic-content">
               <div class="topic-icon">🌍</div>
@@ -560,9 +612,9 @@
               <div class="topic-meta">
                 <div class="topic-stats"><svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><path d="M8 21h8m-4-4v4"/></svg><span>4個節目</span></div>
                 <div class="topic-tags"><svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg><span>慢節奏、輕旅行</span></div>
-        </div>
-    </div>
-    </div>
+              </div>
+            </div>
+          </div>
           <div class="topic-card" data-topic-id="food-talk" style="background-image: url('https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=400&h=300&fit=crop')">
             <div class="topic-content">
               <div class="topic-icon">🔍</div>
@@ -571,9 +623,9 @@
               <div class="topic-meta">
                 <div class="topic-stats"><svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><path d="M8 21h8m-4-4v4"/></svg><span>0個節目</span></div>
                 <div class="topic-tags"><svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg><span>食材討論、料理文化</span></div>
-        </div>
-        </div>
-        </div>
+              </div>
+            </div>
+          </div>
           <div class="topic-card" data-topic-id="play-fun" style="background-image: url('https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop')">
             <div class="topic-content">
               <div class="topic-icon">🎮</div>
@@ -593,9 +645,9 @@
               <div class="topic-meta">
                 <div class="topic-stats"><svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><path d="M8 21h8m-4-4v4"/></svg><span>0個節目</span></div>
                 <div class="topic-tags"><svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg><span>自然景觀、戶外探險</span></div>
-        </div>
-    </div>
-    </div>
+              </div>
+            </div>
+          </div>
           <div class="topic-card" data-topic-id="culture-heritage" style="background-image: url('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop')">
             <div class="topic-content">
               <div class="topic-icon">🏛️</div>
