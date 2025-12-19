@@ -3,21 +3,21 @@
 
 /* --- 主題顏色變數定義 --- */
 :root {
-  /* 預設：淺色主題 */
-  --bg-color: #f0f4f9;
-  --text-color: #28445e;
-  --text-color-light: #666;
+  /* 預設：淺色主題 - 更明亮的配色 */
+  --bg-color: #ffffff;
+  --text-color: #1a1a1a;
+  --text-color-light: #555;
   --primary-color: #2b71d2;
   --primary-color-hover: #e8f3ff;
-  --card-bg: #f9f9f9;
-  --navbar-bg: white;
+  --card-bg: #ffffff;
+  --navbar-bg: #ffffff;
   --navbar-border: rgba(0, 0, 0, 0.08);
   --shadow-color: rgba(0,0,0,0.05);
   --hero-title-font: 'Noto Sans TC', sans-serif;
   --hero-title-size: 1.9rem;
   --hero-title-shadow: rgba(0,0,0,0.25);
-  --section-bg: #fff;
-  --card-border: transparent;
+  --section-bg: #ffffff;
+  --card-border: rgba(0, 0, 0, 0.08);
   --card-shadow-hover: rgba(0,0,0,0.1);
   --cta-text-color: white;
 }
@@ -166,6 +166,8 @@ body.menu-open {
 }
 .yt-bg-wrapper, #ytPlayer, #ytPlayer > div, #ytPlayer iframe { position: absolute; width: 160vw !important; height: 130vh !important; left: 50%; top: 50%; transform: translate(-50%, -50%); border: none; pointer-events: none; z-index: 1; background: #222; }
 #ytPlayer iframe { transform: scale(1.25); transform-origin: center; transition: transform 0.4s ease-in-out; }
+
+
 #heroMask { position: absolute; inset: 0; background: #121821; opacity: 0; z-index: 3; pointer-events: none; transition: opacity 0.38s; }
 #heroMask.show { opacity: 0.66; }
 .hero-main-title { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; z-index: 4; text-align: center; width: 100%; font-family: var(--hero-title-font); font-weight: 700; font-size: var(--hero-title-size); text-shadow: 0 2px 20px var(--hero-title-shadow); }
@@ -174,6 +176,7 @@ body.menu-open {
 .hero-caption.visible { opacity: 1; transform: translateY(0); }
 .cap-title { font-size: 1em; font-weight: 700; color: #fff; letter-spacing: 1px; }
 .cap-desc { font-size: 0.88em; color: #e9f6fd; font-weight: 400; }
+
 
 /* --- 影片內容區塊 --- */
 .video-section {
@@ -381,7 +384,7 @@ body.dark-theme .view-all-btn:hover {
 /* --- 節目表預告區塊 (樣式更新) --- */
 .schedule-section {
   padding: 40px 5% 60px;
-  background: var(--bg-color);
+  background: var(--section-bg);
   transition: background-color 0.3s;
 }
 .schedule-spotlight-grid {

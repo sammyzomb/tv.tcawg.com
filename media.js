@@ -68,6 +68,10 @@
         return; // 直接返回，不初始化播放器
       } else {
         console.log(`✅ 成功從 Contentful 載入 ${data.length} 個 HERO 影片`);
+        console.log('📹 HERO 影片列表:', data.map(v => ({ id: v.id, title: v.title })));
+        if (data.length === 1) {
+          console.warn('⚠️ 只有 1 個 HERO 影片，輪播效果不明顯');
+        }
       }
 
       // 洗牌
@@ -129,8 +133,19 @@
     heroPlayer = new YT.Player('ytPlayer', {
       videoId: heroOrder[0],
       playerVars: {
-        autoplay: 1, mute: 1, controls: 0, rel: 0, showinfo: 0, modestbranding: 1,
-        playsinline: 1, fs: 0, disablekb: 1, iv_load_policy: 3
+        autoplay: 1, 
+        mute: 1, 
+        controls: 0, 
+        rel: 0, 
+        showinfo: 0, 
+        modestbranding: 1,
+        playsinline: 1, 
+        fs: 0, 
+        disablekb: 1, 
+        iv_load_policy: 3,
+        cc_load_policy: 0,
+        enablejsapi: 1,
+        origin: window.location.origin
       },
       events: {
         onReady: e => {
@@ -185,6 +200,7 @@
   }
 
   function nextHero() {
+    console.log(`🔄 切換到下一個 HERO 影片 (目前位置: ${heroPos}/${heroOrder.length})`);
     heroPos++;
     if (heroPos >= heroOrder.length) {
       // 重洗新一輪
@@ -211,9 +227,12 @@
     const mask = document.getElementById('heroMask');
     if (mask) mask.classList.add('show');
 
+    const nextVideo = heroVideos[ytIdToIndex[nextId]];
+    console.log(`▶️ 載入 HERO 影片: ${nextVideo?.title || nextId} (ID: ${nextId})`);
     heroPlayer.loadVideoById(nextId);
     try { heroPlayer.playVideo(); } catch {}
   }
+
 
   // === 全螢幕播放器（點精選卡片播放）===
   const fullscreenPlayerEl = document.getElementById('fullscreenPlayer');

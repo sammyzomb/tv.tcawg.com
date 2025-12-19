@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <meta http-equiv="Permissions-Policy" content="autoplay=(), encrypted-media=(), accelerometer=(), gyroscope=(), picture-in-picture=(), clipboard-write=(), web-share=()">
+  <!-- Permissions-Policy: 本地開發時可暫時註解，正式環境建議保留 -->
+  <!-- <meta http-equiv="Permissions-Policy" content="autoplay=(self 'https://www.youtube.com' 'https://www.youtube-nocookie.com'), encrypted-media=(self 'https://www.youtube.com' 'https://www.youtube-nocookie.com'), accelerometer=(self 'https://www.youtube.com' 'https://www.youtube-nocookie.com'), gyroscope=(self 'https://www.youtube.com' 'https://www.youtube-nocookie.com'), picture-in-picture=(self 'https://www.youtube.com' 'https://www.youtube-nocookie.com'), clipboard-write=(self), web-share=(self)"> -->
   <title>航向世界旅遊頻道</title>
   
   <link rel="stylesheet" href="style.css?v=20250926v2">
@@ -446,7 +447,7 @@
     <p>載入中...</p>
   </div>
 
-  <div class="hero">
+  <div class="hero" id="heroSection">
     <div class="yt-bg-wrapper">
       <div id="ytPlayer"></div>
       <div id="heroMask"></div>
