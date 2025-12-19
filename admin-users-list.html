@@ -496,7 +496,7 @@
             </div>
             <div class="nav-buttons">
                 <button class="nav-btn" onclick="openSyncFixTool()" style="background: #ffc107; color: #212529;">🔧 同步修復</button>
-                <a href="create-admin-simple.html" class="nav-btn">➕ 新增管理員</a>
+                <button class="nav-btn" onclick="openAddAdminModal()">➕ 新增管理員</button>
                 <a href="admin-dashboard.html" class="nav-btn secondary">← 返回主控台</a>
             </div>
         </div>
@@ -574,22 +574,20 @@
     </script>
 
     <!-- 管理員帳號服務 -->
-    <script src="admin-accounts-firebase.js"></script>
+    <script src="admin-accounts-service.js"></script>
 
     <script>
-        // 等待 Firebase 初始化完成後再初始化管理員服務
+        // 初始化管理員服務
         document.addEventListener('DOMContentLoaded', function() {
-            // 等待 Firebase 模組載入完成
+            // 初始化管理員服務
             const initAdminService = () => {
-                if (window.firebaseAuth && window.firebaseDb && window.firebase9Loaded) {
-                    if (window.AdminAccountsFirebaseService && !window.adminAccountsService) {
-                        window.adminAccountsService = new AdminAccountsFirebaseService();
-                        console.log('管理員帳號服務已延遲初始化');
-                        // 載入管理員數據
-                        loadAllAdmins();
-                    }
-                } else {
-                    // 如果 Firebase 還沒初始化，等待一下再試
+                if (window.AdminAccountsService && !window.adminAccountsService) {
+                    window.adminAccountsService = new AdminAccountsService();
+                    console.log('管理員帳號服務已初始化');
+                    // 載入管理員數據
+                    loadAllAdmins();
+                } else if (!window.AdminAccountsService) {
+                    // 如果服務還沒載入，等待一下再試
                     setTimeout(initAdminService, 500);
                 }
             };
@@ -635,54 +633,150 @@
             const currentUser = checkSuperAdminAuth();
             if (!currentUser) return;
 
-            try {
-                // 嘗試從 Firebase 載入管理員數據
-                if (window.adminAccountsService) {
-                    console.log('從 Firebase 載入管理員數據...');
-                    const accountsData = await window.adminAccountsService.fetchAccountsData();
-                    const allAdmins = accountsData.accounts || [];
-                    
-                    // 過濾掉有問題的帳號，但保留更多調試資訊
-                    const validAdmins = allAdmins.filter(admin => {
-                        const isValid = admin.email && admin.email !== 'undefined' && admin.email.trim() !== '';
-                        if (!isValid) {
-                            console.warn('過濾掉無效帳號:', admin);
-                        }
-                        return isValid;
-                    });
-                    console.log('過濾前帳號數量:', allAdmins.length, '過濾後帳號數量:', validAdmins.length);
-                    console.log('有效帳號列表:', validAdmins.map(admin => ({ email: admin.email, name: admin.name, status: admin.status })));
-                    
-                    // 更新統計
-                    updateStats(validAdmins);
-                    
-                    // 渲染管理員列表
-                    renderAdminList(validAdmins);
-                    return;
+            // 載入本地管理員（localStorage）
+            const systemAdmins = JSON.parse(localStorage.getItem('system_admins') || '[]');
+            console.log('從 localStorage 載入的管理員:', systemAdmins.length, '個');
+            
+            // 確定超級管理員的名稱
+            let superAdminName = currentUser.name || 'Sammy Zomb';
+            if (currentUser.email === 'sammyzomb@gmail.com') {
+                superAdminName = 'Sammy Zomb';
+            }
+            
+            // 建立管理員集合（使用 Map 避免重複）
+            const adminMap = new Map();
+            
+            // 1. 先添加超級管理員（硬編碼）
+            adminMap.set(currentUser.email, {
+                email: currentUser.email,
+                name: superAdminName,
+                role: 'super_admin',
+                status: 'active',
+                createdAt: '2024-01-01T00:00:00Z',
+                createdBy: 'system',
+                isSystem: true // 標記為系統管理員，不可刪除
+            });
+            
+            // 2. 添加本地管理員（localStorage）
+            systemAdmins.forEach(admin => {
+                if (admin.email && admin.email !== 'undefined' && admin.email.trim() !== '') {
+                    // 如果 email 已存在，跳過（超級管理員優先）
+                    if (!adminMap.has(admin.email)) {
+                        adminMap.set(admin.email, {
+                            ...admin,
+                            isSystem: false
+                        });
+                    }
                 }
-            } catch (error) {
-                console.warn('從 Firebase 載入失敗，使用本地數據:', error);
+            });
+
+            // 3. 優先讀取本地 admin-accounts.json（包含最新資料）
+            try {
+                console.log('📄 嘗試讀取本地 admin-accounts.json...');
+                const localResponse = await fetch('admin-accounts.json?t=' + Date.now());
+                if (localResponse.ok) {
+                    const localData = await localResponse.json();
+                    console.log(`✅ 從本地檔案讀取到 ${localData.accounts.length} 個管理員`);
+                    
+                    // 添加本地檔案中的管理員
+                    localData.accounts.forEach(admin => {
+                        if (admin.email && admin.email !== 'undefined' && admin.email.trim() !== '') {
+                            const existing = adminMap.get(admin.email);
+                            if (existing && existing.isSystem) {
+                                // 保留系統管理員標記，但更新其他資料
+                                adminMap.set(admin.email, {
+                                    ...admin,
+                                    isSystem: existing.isSystem
+                                });
+                            } else if (!existing) {
+                                // 新增管理員
+                                adminMap.set(admin.email, {
+                                    ...admin,
+                                    isSystem: false
+                                });
+                            } else {
+                                // 更新現有管理員
+                                adminMap.set(admin.email, {
+                                    ...admin,
+                                    isSystem: existing.isSystem
+                                });
+                            }
+                        }
+                    });
+                }
+            } catch (e) {
+                console.warn('無法讀取本地檔案:', e);
             }
 
-            // 備用方案：載入本地數據
-            const systemAdmins = JSON.parse(localStorage.getItem('system_admins') || '[]');
-            
-            // 添加超級管理員（硬編碼）
-            const allAdmins = [
-                {
-                    email: currentUser.email,
-                    name: currentUser.name || '超級管理員',
-                    role: 'super_admin',
-                    status: 'active',
-                    createdAt: '2024-01-01T00:00:00Z',
-                    createdBy: 'system',
-                    isSystem: true // 標記為系統管理員，不可刪除
-                },
-                ...systemAdmins
-            ];
+            try {
+                // 4. 嘗試從 Firebase/GitHub 載入管理員數據（強制刷新快取）
+                if (window.adminAccountsService) {
+                    console.log('從服務載入管理員數據（強制刷新）...');
+                    // 強制刷新快取
+                    await window.adminAccountsService.forceRefresh();
+                    const accountsData = await window.adminAccountsService.fetchAccountsData();
+                    const remoteAdmins = accountsData.accounts || [];
+                    
+                    console.log('從遠端載入的管理員:', remoteAdmins.length, '個');
+                    
+                    // 添加遠端管理員（如果不存在）
+                    remoteAdmins.forEach(admin => {
+                        if (admin.email && admin.email !== 'undefined' && admin.email.trim() !== '') {
+                            // 如果 email 已存在，更新資料（遠端優先，但保留 isSystem 標記）
+                            const existing = adminMap.get(admin.email);
+                            if (existing && existing.isSystem) {
+                                // 保留系統管理員標記
+                                adminMap.set(admin.email, {
+                                    ...admin,
+                                    isSystem: existing.isSystem
+                                });
+                            } else if (!existing) {
+                                // 新增管理員
+                                adminMap.set(admin.email, {
+                                    ...admin,
+                                    isSystem: false
+                                });
+                            } else {
+                                // 更新現有管理員（遠端資料優先）
+                                adminMap.set(admin.email, {
+                                    ...admin,
+                                    isSystem: existing.isSystem
+                                });
+                            }
+                        }
+                    });
+                }
+            } catch (error) {
+                console.warn('從遠端載入失敗，使用本地數據:', error);
+            }
 
+            // 轉換 Map 為陣列
+            const allAdmins = Array.from(adminMap.values());
+            
             // 過濾掉有問題的帳號
-            const validAdmins = allAdmins.filter(admin => admin.email && admin.email !== 'undefined' && admin.email.trim() !== '');
+            const validAdmins = allAdmins.filter(admin => {
+                const isValid = admin.email && admin.email !== 'undefined' && admin.email.trim() !== '';
+                if (!isValid) {
+                    console.warn('過濾掉無效帳號:', admin);
+                }
+                return isValid;
+            });
+            
+            // 確保超級管理員的名稱正確
+            validAdmins.forEach(admin => {
+                if (admin.email === 'sammyzomb@gmail.com' && admin.role === 'super_admin') {
+                    admin.name = 'Sammy Zomb';
+                }
+            });
+            
+            console.log('總管理員數量:', validAdmins.length);
+            console.log('管理員列表:', validAdmins.map(admin => ({ 
+                email: admin.email, 
+                name: admin.name, 
+                role: admin.role,
+                status: admin.status,
+                source: admin.isSystem ? '系統' : '其他'
+            })));
             
             // 更新統計
             updateStats(validAdmins);
@@ -842,7 +936,7 @@
                         
                         <div class="form-group">
                             <label for="newPassword">新密碼 *</label>
-                            <input type="password" id="newPassword" placeholder="至少8個字符" 
+                            <input type="password" id="newPassword" placeholder="至少6個字符，包含大小寫字母和數字" 
                                    oninput="checkPasswordStrength(this.value)">
                             <div class="password-strength" id="passwordStrength" style="display: none;">
                                 <small>密碼強度：<span id="strengthText">弱</span></small>
@@ -854,17 +948,18 @@
                         
                         <div class="form-group">
                             <label for="confirmPassword">確認新密碼 *</label>
-                            <input type="password" id="confirmPassword" placeholder="再次輸入新密碼">
+                            <input type="password" id="confirmPassword" placeholder="再次輸入新密碼"
+                                   oninput="checkPasswordMatchForChange()">
+                            <div id="passwordMatchMessageChange" style="margin-top: 5px; font-size: 12px; min-height: 18px;"></div>
                         </div>
                         
                         <div class="password-requirements">
                             <h4>🔒 密碼要求</h4>
                             <ul>
-                                <li>至少 8 個字符</li>
+                                <li>至少 6 個字符</li>
                                 <li>包含大寫字母 (A-Z)</li>
                                 <li>包含小寫字母 (a-z)</li>
                                 <li>包含數字 (0-9)</li>
-                                <li>包含特殊符號 (!@#$%^&*)</li>
                             </ul>
                         </div>
                         
@@ -903,18 +998,21 @@
             
             let score = 0;
             
-            // 長度檢查
-            if (password.length >= 8) score += 1;
-            if (password.length >= 12) score += 1;
+            // 長度檢查（至少 6 個字符）
+            if (password.length >= 6) score += 1;
+            if (password.length >= 10) score += 1;
             
-            // 字符類型檢查
-            if (/[A-Z]/.test(password)) score += 1;
-            if (/[a-z]/.test(password)) score += 1;
-            if (/\d/.test(password)) score += 1;
-            if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) score += 1;
+            // 字符類型檢查（必須包含大小寫和數字）
+            const hasUpperCase = /[A-Z]/.test(password);
+            const hasLowerCase = /[a-z]/.test(password);
+            const hasNumbers = /\d/.test(password);
             
-            // 複雜度檢查
-            if (password.length > 8 && /[A-Z]/.test(password) && /[a-z]/.test(password) && /\d/.test(password)) {
+            if (hasUpperCase) score += 1;
+            if (hasLowerCase) score += 1;
+            if (hasNumbers) score += 1;
+            
+            // 複雜度檢查（同時包含大小寫和數字）
+            if (password.length >= 6 && hasUpperCase && hasLowerCase && hasNumbers) {
                 score += 1;
             }
             
@@ -926,7 +1024,7 @@
             } else if (score <= 4) {
                 strength = '中等';
                 className = 'strength-medium';
-            } else if (score <= 6) {
+            } else if (score <= 5) {
                 strength = '強';
                 className = 'strength-strong';
             } else {
@@ -937,31 +1035,61 @@
             strengthText.textContent = strength;
             strengthFill.className = `strength-fill ${className}`;
         }
+        
+        // 檢查密碼是否一致（用於修改密碼）
+        function checkPasswordMatchForChange() {
+            const password = document.getElementById('newPassword').value;
+            const passwordConfirm = document.getElementById('confirmPassword').value;
+            const messageDiv = document.getElementById('passwordMatchMessageChange');
+            
+            if (passwordConfirm.length === 0) {
+                messageDiv.innerHTML = '';
+                return;
+            }
+            
+            if (password === passwordConfirm) {
+                messageDiv.innerHTML = '<span style="color: #28a745;">✓ 密碼一致</span>';
+                document.getElementById('confirmPassword').style.borderColor = '#28a745';
+            } else {
+                messageDiv.innerHTML = '<span style="color: #dc3545;">✗ 密碼不一致</span>';
+                document.getElementById('confirmPassword').style.borderColor = '#dc3545';
+            }
+        }
 
         // 確認密碼修改
         async function confirmPasswordChange(email) {
             const newPassword = document.getElementById('newPassword').value;
             const confirmPassword = document.getElementById('confirmPassword').value;
             
-            // 驗證密碼
-            if (newPassword.length < 8) {
-                showMessage('密碼至少需要8個字符', 'error');
+            // 驗證密碼長度（至少 6 個字符）
+            if (newPassword.length < 6) {
+                showMessage('密碼至少需要 6 個字符', 'error');
                 return;
             }
             
+            // 驗證密碼是否一致
             if (newPassword !== confirmPassword) {
                 showMessage('兩次輸入的密碼不一致', 'error');
                 return;
             }
             
-            // 驗證密碼強度
+            // 驗證密碼強度（必須包含大小寫字母和數字）
             const hasUpperCase = /[A-Z]/.test(newPassword);
             const hasLowerCase = /[a-z]/.test(newPassword);
             const hasNumbers = /\d/.test(newPassword);
-            const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(newPassword);
             
-            if (!hasUpperCase || !hasLowerCase || !hasNumbers || !hasSpecialChar) {
-                showMessage('密碼不符合安全要求，請檢查密碼規則', 'error');
+            if (!hasUpperCase) {
+                showMessage('密碼必須包含至少一個大寫字母 (A-Z)', 'error');
+                return;
+            }
+            
+            if (!hasLowerCase) {
+                showMessage('密碼必須包含至少一個小寫字母 (a-z)', 'error');
+                return;
+            }
+            
+            if (!hasNumbers) {
+                showMessage('密碼必須包含至少一個數字 (0-9)', 'error');
                 return;
             }
             
@@ -1137,6 +1265,8 @@
                     
                     <div style="margin: 20px 0;">
                         <button class="btn btn-primary" onclick="startSyncFix()" style="margin-right: 10px;">🚀 開始修復</button>
+                        <button class="btn btn-secondary" onclick="syncToFirebase()" style="margin-right: 10px; background: #ff9800;">🔥 同步到 Firebase</button>
+                        <button class="btn btn-secondary" onclick="syncToGitHub()" style="margin-right: 10px;">☁️ 同步到 GitHub</button>
                         <button class="btn btn-secondary" onclick="testSystem()" style="margin-right: 10px;">🧪 測試系統</button>
                         <button class="btn btn-secondary" onclick="clearCache()">🧹 清除快取</button>
                     </div>
@@ -1180,41 +1310,239 @@
             window.startSyncFix = async function() {
                 log('🚀 開始修復管理員同步問題...');
                 try {
-                    // 初始化 Firebase
-                    log('初始化 Firebase...');
-                    if (!window.firebase9Loaded) {
-                        log('❌ Firebase 未載入，嘗試重新初始化...');
-                        // 嘗試重新初始化 Firebase
-                        if (window.firebaseAuth && window.firebaseDb && window.firebaseApp) {
-                            window.firebase9Loaded = true;
-                            log('✅ Firebase 重新初始化成功');
+                    // 檢查管理員服務是否已初始化
+                    if (!window.adminAccountsService) {
+                        log('初始化管理員服務...');
+                        if (window.AdminAccountsService) {
+                            window.adminAccountsService = new AdminAccountsService();
+                            log('✅ 管理員服務初始化成功');
                         } else {
-                            log('❌ Firebase 未載入');
-                            updateStatus('error', 'Firebase 未載入');
+                            log('❌ 管理員服務類別未載入');
+                            updateStatus('error', '管理員服務未載入，請重新整理頁面');
                             return;
                         }
+                    } else {
+                        log('✅ 管理員服務已載入');
                     }
-                    log('✅ Firebase 初始化成功');
                     
-                    // 從 Firestore 讀取管理員資料
-                    log('從 Firestore 讀取管理員資料...');
+                    // 檢查所有資料來源
+                    log('\n📊 檢查所有資料來源...');
+                    
+                    // 1. 檢查 localStorage 的 system_admins
+                    const systemAdmins = JSON.parse(localStorage.getItem('system_admins') || '[]');
+                    log(`📦 localStorage (system_admins): ${systemAdmins.length} 個管理員`);
+                    if (systemAdmins.length > 0) {
+                        systemAdmins.forEach((admin, index) => {
+                            log(`   ${index + 1}. ${admin.name || '未命名'} (${admin.email})`);
+                        });
+                    }
+                    
+                    // 2. 檢查 localStorage 的 admin_accounts_backup
+                    const backupData = localStorage.getItem('admin_accounts_backup');
+                    if (backupData) {
+                        try {
+                            const backup = JSON.parse(backupData);
+                            const backupAccounts = backup.accounts || [];
+                            log(`💾 localStorage (admin_accounts_backup): ${backupAccounts.length} 個管理員`);
+                            if (backupAccounts.length > 0) {
+                                backupAccounts.forEach((admin, index) => {
+                                    log(`   ${index + 1}. ${admin.name || '未命名'} (${admin.email})`);
+                                });
+                            }
+                        } catch (e) {
+                            log(`⚠️ 本地備份資料解析失敗: ${e.message}`);
+                        }
+                    } else {
+                        log('💾 localStorage (admin_accounts_backup): 無備份資料');
+                    }
+                    
+                    // 3. 從服務讀取管理員資料（GitHub）
+                    log('\n🌐 從 GitHub 服務讀取管理員資料...');
                     const accountsData = await window.adminAccountsService.fetchAccountsData();
-                    const accounts = accountsData.accounts || [];
-                    log(`✅ 從 Firestore 讀取到 ${accounts.length} 個管理員帳號`);
+                    const remoteAccounts = accountsData.accounts || [];
+                    log(`✅ 從 GitHub 讀取到 ${remoteAccounts.length} 個管理員帳號`);
+                    if (remoteAccounts.length > 0) {
+                        remoteAccounts.forEach((admin, index) => {
+                            log(`   ${index + 1}. ${admin.name || '未命名'} (${admin.email}) - ${admin.role}`);
+                        });
+                    }
                     
-                    // 純 Firebase 模式，不更新本地快取
-                    log('✅ 純 Firebase 模式，資料直接從 Firestore 讀取');
+                    // 4. 合併所有來源
+                    log('\n🔄 合併所有資料來源...');
+                    const adminMap = new Map();
                     
-                    // 顯示 Firestore 帳號
-                    displayFirestoreAccounts(accounts);
+                    // 添加遠端管理員（GitHub）
+                    remoteAccounts.forEach(admin => {
+                        if (admin.email && admin.email.trim() !== '') {
+                            adminMap.set(admin.email, {
+                                ...admin,
+                                source: 'GitHub'
+                            });
+                        }
+                    });
                     
-                    log('✅ 修復完成！管理員系統現在應該可以正常工作了');
-                    log('請點擊「測試系統」按鈕確認修復結果');
-                    updateStatus('success', `修復完成！同步了 ${accounts.length} 個帳號`);
+                    // 添加本地管理員（system_admins）
+                    systemAdmins.forEach(admin => {
+                        if (admin.email && admin.email.trim() !== '') {
+                            if (!adminMap.has(admin.email)) {
+                                adminMap.set(admin.email, {
+                                    ...admin,
+                                    source: 'localStorage'
+                                });
+                            }
+                        }
+                    });
+                    
+                    const allAccounts = Array.from(adminMap.values());
+                    log(`✅ 合併後總共 ${allAccounts.length} 個管理員`);
+                    
+                    // 顯示帳號列表
+                    displayFirestoreAccounts(allAccounts);
+                    
+                    log('\n✅ 修復完成！管理員系統現在應該可以正常工作了');
+                    log('請重新整理頁面查看完整的管理員列表');
+                    updateStatus('success', `修復完成！找到 ${allAccounts.length} 個管理員（GitHub: ${remoteAccounts.length}, 本地: ${systemAdmins.length}）`);
                     
                 } catch (error) {
                     log('❌ 修復失敗: ' + error.message);
+                    console.error('修復錯誤詳情:', error);
                     updateStatus('error', '修復失敗: ' + error.message);
+                }
+            };
+            
+            window.syncToFirebase = async function() {
+                log('🔥 開始同步管理員到 Firebase Firestore...');
+                try {
+                    if (!window.adminAccountsService) {
+                        log('❌ 管理員服務未載入');
+                        updateStatus('error', '管理員服務未載入');
+                        return;
+                    }
+                    
+                    // 檢查 Firebase 是否已初始化
+                    if (!window.firebaseDb || !window.firebase9Loaded) {
+                        log('❌ Firebase 未初始化');
+                        log('請重新整理頁面以初始化 Firebase');
+                        updateStatus('error', 'Firebase 未初始化');
+                        return;
+                    }
+                    
+                    // 1. 先嘗試讀取本地 admin-accounts.json（包含最新資料）
+                    log('📄 讀取本地 admin-accounts.json...');
+                    let accountsData = null;
+                    try {
+                        const localResponse = await fetch('admin-accounts.json');
+                        if (localResponse.ok) {
+                            accountsData = await localResponse.json();
+                            log(`✅ 從本地檔案讀取到 ${accountsData.accounts.length} 個管理員`);
+                        }
+                    } catch (e) {
+                        log('⚠️ 無法讀取本地檔案，將從服務獲取');
+                    }
+                    
+                    // 2. 如果本地檔案讀取失敗，從服務獲取
+                    if (!accountsData || !accountsData.accounts || accountsData.accounts.length === 0) {
+                        log('📥 從服務獲取管理員資料...');
+                        accountsData = await window.adminAccountsService.fetchAccountsData();
+                        log(`✅ 從服務獲取到 ${accountsData.accounts.length} 個管理員`);
+                    }
+                    
+                    // 3. 同步到 Firebase（傳入本地讀取的資料）
+                    log('🔥 正在同步到 Firebase Firestore...');
+                    const syncResult = await window.adminAccountsService.syncToFirebase(accountsData);
+                    
+                    if (syncResult) {
+                        log(`✅ 同步到 Firebase 成功！已同步 ${accountsData.accounts.length} 個管理員`);
+                        log('所有管理員帳號已儲存到 Firestore');
+                        updateStatus('success', `同步成功！已同步 ${accountsData.accounts.length} 個管理員到 Firebase`);
+                        
+                        // 重新載入管理員列表
+                        setTimeout(() => {
+                            loadAllAdmins();
+                        }, 1000);
+                    } else {
+                        throw new Error('同步到 Firebase 失敗');
+                    }
+                } catch (error) {
+                    log('❌ 同步失敗: ' + error.message);
+                    console.error('同步錯誤詳情:', error);
+                    updateStatus('error', '同步失敗: ' + error.message);
+                }
+            };
+            
+            window.syncToGitHub = async function() {
+                log('☁️ 開始同步管理員到 GitHub...');
+                try {
+                    if (!window.adminAccountsService) {
+                        log('❌ 管理員服務未載入');
+                        updateStatus('error', '管理員服務未載入');
+                        return;
+                    }
+                    
+                    // 檢查 GitHub Token
+                    const githubToken = localStorage.getItem('github_token');
+                    if (!githubToken) {
+                        log('❌ 未設定 GitHub Token');
+                        log('請先到「GitHub Token 設定」頁面設定 Token');
+                        updateStatus('error', '未設定 GitHub Token');
+                        return;
+                    }
+                    
+                    // 1. 先從服務獲取最新資料（會自動合併本地和遠端）
+                    log('📥 從服務獲取最新管理員資料...');
+                    const accountsData = await window.adminAccountsService.fetchAccountsData();
+                    log(`✅ 獲取到 ${accountsData.accounts.length} 個管理員`);
+                    
+                    // 2. 檢查本地 admin-accounts.json 是否有新管理員
+                    log('📄 檢查本地 admin-accounts.json...');
+                    try {
+                        const localResponse = await fetch('admin-accounts.json');
+                        if (localResponse.ok) {
+                            const localData = await localResponse.json();
+                            log(`📄 本地檔案有 ${localData.accounts.length} 個管理員`);
+                            
+                            // 合併本地新管理員到資料中
+                            localData.accounts.forEach(localAdmin => {
+                                const exists = accountsData.accounts.find(acc => acc.email === localAdmin.email);
+                                if (!exists) {
+                                    log(`➕ 發現新管理員: ${localAdmin.email}，將添加到同步列表`);
+                                    accountsData.accounts.push(localAdmin);
+                                }
+                            });
+                            
+                            log(`✅ 合併後總共 ${accountsData.accounts.length} 個管理員`);
+                        }
+                    } catch (e) {
+                        log('⚠️ 無法讀取本地檔案，將使用服務資料');
+                    }
+                    
+                    // 3. 更新 last_updated 時間
+                    accountsData.last_updated = new Date().toISOString();
+                    
+                    // 4. 同步到 GitHub
+                    log('☁️ 正在同步到 GitHub...');
+                    const syncResult = await window.adminAccountsService.updateGitHubAccounts(accountsData);
+                    
+                    if (syncResult) {
+                        log('✅ 同步到 GitHub 成功！');
+                        log('所有設備將在下次載入時自動獲取最新資料');
+                        updateStatus('success', `同步成功！已同步 ${accountsData.accounts.length} 個管理員到 GitHub`);
+                        
+                        // 強制刷新服務快取
+                        await window.adminAccountsService.forceRefresh();
+                        log('✅ 已刷新服務快取');
+                        
+                        // 重新載入管理員列表
+                        setTimeout(() => {
+                            loadAllAdmins();
+                        }, 1000);
+                    } else {
+                        throw new Error('同步失敗，請檢查 GitHub Token 是否有效');
+                    }
+                } catch (error) {
+                    log('❌ 同步失敗: ' + error.message);
+                    console.error('同步錯誤詳情:', error);
+                    updateStatus('error', '同步失敗: ' + error.message);
                 }
             };
             
@@ -1223,6 +1551,12 @@
                 try {
                     if (window.adminAccountsService) {
                         log('✅ 管理員服務已載入');
+                        const githubToken = localStorage.getItem('github_token');
+                        if (githubToken) {
+                            log('✅ GitHub Token 已設定');
+                        } else {
+                            log('⚠️ GitHub Token 未設定');
+                        }
                         updateStatus('success', '管理員系統正常');
                     } else {
                         log('❌ 管理員服務未載入');
@@ -1252,16 +1586,17 @@
             
             function displayFirestoreAccounts(accounts) {
                 if (accounts.length === 0) {
-                    accountsArea.innerHTML = '<p>Firestore 中沒有管理員帳號</p>';
+                    accountsArea.innerHTML = '<p style="color: #666;">沒有找到管理員帳號</p>';
                     return;
                 }
                 
                 accountsArea.innerHTML = accounts.map(account => `
-                    <div style="padding: 8px; margin: 5px 0; background: white; border-radius: 4px; border-left: 3px solid #2b71d2;">
-                        <strong>${account.name || '未命名'}</strong><br>
-                        <small>Email: ${account.email}</small><br>
-                        <small>角色: ${account.role}</small><br>
-                        <small>狀態: ${account.status}</small>
+                    <div style="padding: 10px; margin: 5px 0; background: white; border-radius: 4px; border-left: 3px solid #2b71d2; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                        <strong style="color: #2b71d2;">${account.name || '未命名'}</strong>
+                        ${account.source ? `<span style="float: right; font-size: 10px; color: #999; background: #f0f0f0; padding: 2px 6px; border-radius: 3px;">${account.source === 'GitHub' ? '🌐 GitHub' : '💾 本地'}</span>` : ''}<br>
+                        <small style="color: #666;">Email: ${account.email || '未設定'}</small><br>
+                        <small style="color: #666;">角色: ${account.role === 'super_admin' ? '超級管理員' : '普通管理員'}</small><br>
+                        <small style="color: ${account.status === 'active' ? '#28a745' : '#dc3545'};">狀態: ${account.status === 'active' ? '啟用' : '停用'}</small>
                     </div>
                 `).join('');
             }
@@ -1280,12 +1615,183 @@
             log('同步修復工具已啟動');
         }
 
+        // 打開新增管理員模態框
+        window.openAddAdminModal = function() {
+            console.log('openAddAdminModal 被調用');
+            const modal = document.createElement('div');
+            modal.className = 'password-dialog';
+            modal.style.display = 'flex';
+            modal.style.zIndex = '10000';
+            modal.innerHTML = `
+                <div class="password-dialog-content" style="max-width: 500px;">
+                    <h3>➕ 新增管理員</h3>
+                    <form id="addAdminForm" style="margin-top: 20px;">
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; margin-bottom: 5px; font-weight: 600;">Email 地址 *</label>
+                            <input type="email" id="newAdminEmail" required 
+                                   style="width: 100%; padding: 10px; border: 2px solid #e1e5e9; border-radius: 8px; font-size: 14px;">
+                        </div>
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; margin-bottom: 5px; font-weight: 600;">姓名 *</label>
+                            <input type="text" id="newAdminName" required 
+                                   style="width: 100%; padding: 10px; border: 2px solid #e1e5e9; border-radius: 8px; font-size: 14px;">
+                        </div>
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; margin-bottom: 5px; font-weight: 600;">角色 *</label>
+                            <select id="newAdminRole" required 
+                                    style="width: 100%; padding: 10px; border: 2px solid #e1e5e9; border-radius: 8px; font-size: 14px;">
+                                <option value="">請選擇角色</option>
+                                <option value="admin">普通管理員</option>
+                                <option value="super_admin">超級管理員</option>
+                            </select>
+                        </div>
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; margin-bottom: 5px; font-weight: 600;">密碼 *</label>
+                            <input type="password" id="newAdminPassword" required 
+                                   style="width: 100%; padding: 10px; border: 2px solid #e1e5e9; border-radius: 8px; font-size: 14px;"
+                                   placeholder="至少 6 個字元"
+                                   oninput="checkPasswordMatch()">
+                        </div>
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; margin-bottom: 5px; font-weight: 600;">確認密碼 *</label>
+                            <input type="password" id="newAdminPasswordConfirm" required 
+                                   style="width: 100%; padding: 10px; border: 2px solid #e1e5e9; border-radius: 8px; font-size: 14px;"
+                                   placeholder="請再次輸入密碼以確認"
+                                   oninput="checkPasswordMatch()">
+                            <div id="passwordMatchMessage" style="margin-top: 5px; font-size: 12px; min-height: 18px;"></div>
+                        </div>
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: block; margin-bottom: 5px; font-weight: 600;">狀態</label>
+                            <select id="newAdminStatus" 
+                                    style="width: 100%; padding: 10px; border: 2px solid #e1e5e9; border-radius: 8px; font-size: 14px;">
+                                <option value="active">啟用</option>
+                                <option value="inactive">停用</option>
+                            </select>
+                        </div>
+                        <div id="addAdminMessage" style="margin-bottom: 15px; display: none;"></div>
+                        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                            <button type="button" class="btn btn-secondary" onclick="this.closest('.password-dialog').remove()">取消</button>
+                            <button type="submit" class="btn btn-primary">新增管理員</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // 等待 DOM 更新後再綁定事件
+            setTimeout(() => {
+                // 密碼確認檢查函數
+                window.checkPasswordMatch = function() {
+                    const password = document.getElementById('newAdminPassword').value;
+                    const passwordConfirm = document.getElementById('newAdminPasswordConfirm').value;
+                    const messageDiv = document.getElementById('passwordMatchMessage');
+                    
+                    if (!messageDiv) return;
+                    
+                    if (passwordConfirm.length === 0) {
+                        messageDiv.innerHTML = '';
+                        return;
+                    }
+                    
+                    if (password === passwordConfirm) {
+                        messageDiv.innerHTML = '<span style="color: #28a745;">✓ 密碼一致</span>';
+                        const confirmInput = document.getElementById('newAdminPasswordConfirm');
+                        if (confirmInput) confirmInput.style.borderColor = '#28a745';
+                    } else {
+                        messageDiv.innerHTML = '<span style="color: #dc3545;">✗ 密碼不一致</span>';
+                        const confirmInput = document.getElementById('newAdminPasswordConfirm');
+                        if (confirmInput) confirmInput.style.borderColor = '#dc3545';
+                    }
+                };
+                
+                // 綁定表單提交事件
+                const form = document.getElementById('addAdminForm');
+                if (!form) {
+                    console.error('找不到表單元素 addAdminForm');
+                    return;
+                }
+                
+                form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const email = document.getElementById('newAdminEmail').value.trim();
+                const name = document.getElementById('newAdminName').value.trim();
+                const role = document.getElementById('newAdminRole').value;
+                const password = document.getElementById('newAdminPassword').value;
+                const passwordConfirm = document.getElementById('newAdminPasswordConfirm').value;
+                const status = document.getElementById('newAdminStatus').value;
+                
+                const messageDiv = document.getElementById('addAdminMessage');
+                messageDiv.style.display = 'block';
+                
+                // 驗證輸入
+                if (!email || !name || !role || !password || !passwordConfirm) {
+                    messageDiv.innerHTML = '<div class="message error">請填寫所有必填欄位</div>';
+                    return;
+                }
+                
+                // 驗證密碼是否一致
+                if (password !== passwordConfirm) {
+                    messageDiv.innerHTML = '<div class="message error">❌ 密碼不一致，請確認兩次輸入的密碼相同</div>';
+                    return;
+                }
+                
+                // 驗證密碼強度
+                if (password.length < 6) {
+                    messageDiv.innerHTML = '<div class="message error">密碼長度至少需要 6 個字元</div>';
+                    return;
+                }
+                
+                try {
+                    messageDiv.innerHTML = '<div class="message" style="color: #666;">正在創建管理員...</div>';
+                    
+                    if (!window.adminAccountsService) {
+                        throw new Error('管理員帳號服務未載入');
+                    }
+                    
+                    const accountData = {
+                        email: email,
+                        name: name,
+                        role: role,
+                        password: password,
+                        status: status
+                    };
+                    
+                    const result = await window.adminAccountsService.addAdminAccount(accountData);
+                    
+                    if (result) {
+                        messageDiv.innerHTML = '<div class="message success">✅ 管理員創建成功！正在同步到雲端...</div>';
+                        
+                        // 等待一下讓用戶看到成功訊息
+                        setTimeout(() => {
+                            modal.remove();
+                            showMessage('✅ 管理員創建成功並已同步到雲端', 'success');
+                            loadAllAdmins(); // 重新載入列表
+                        }, 1500);
+                    } else {
+                        throw new Error('創建失敗');
+                    }
+                } catch (error) {
+                    console.error('創建管理員失敗:', error);
+                    messageDiv.innerHTML = `<div class="message error">❌ 創建失敗: ${error.message}</div>`;
+                }
+                });
+            }, 100);
+        };
+
         // 頁面載入時初始化
         document.addEventListener('DOMContentLoaded', function() {
             const user = checkSuperAdminAuth();
             if (!user) return;
             
-            document.getElementById('userDetails').textContent = `👤 ${user.name} (超級管理員)`;
+            // 確保超級管理員的名稱正確
+            let displayName = user.name || 'Sammy Zomb';
+            if (user.email === 'sammyzomb@gmail.com') {
+                displayName = 'Sammy Zomb';
+            }
+            
+            document.getElementById('userDetails').textContent = `👤 ${displayName} (超級管理員)`;
             loadAllAdmins();
         });
     </script>

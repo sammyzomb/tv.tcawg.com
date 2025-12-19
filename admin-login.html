@@ -493,14 +493,23 @@
         const ipAddress = await window.loginAuditSystem.getClientIP();
         const userAgent = window.loginAuditSystem.getUserAgent();
         
-        // 檢查 IP 是否被封鎖
+        // 檢查 IP 是否被封鎖（超級管理員可以繞過封鎖）
+        const isSuperAdminEmail = email === 'sammyzomb@gmail.com';
         const blockedIP = window.loginAuditSystem.isIPBlocked(ipAddress);
-        if (blockedIP) {
+        
+        if (blockedIP && !isSuperAdminEmail) {
           const blockTime = new Date(blockedIP.blockedAt);
           const remainingTime = Math.ceil((15 * 60 * 1000 - (Date.now() - blockTime.getTime())) / 1000 / 60);
           showError(`此 IP 已被封鎖，請 ${remainingTime} 分鐘後再試`);
           showLoading(false);
           return;
+        }
+        
+        // 如果是超級管理員且 IP 被封鎖，自動解除封鎖
+        if (blockedIP && isSuperAdminEmail) {
+          console.log('超級管理員登入，自動解除 IP 封鎖');
+          window.loginAuditSystem.unblockIP(ipAddress, email);
+          showSuccess('超級管理員登入，已自動解除 IP 封鎖');
         }
         
         // 使用 Firebase 認證

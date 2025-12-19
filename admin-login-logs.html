@@ -568,18 +568,76 @@
 
     // 載入被封鎖的 IP
     function loadBlockedIPs() {
-      const blockedIPs = window.loginAuditSystem.blockedIPs;
+      // 確保 loginAuditSystem 已初始化
+      if (!window.loginAuditSystem) {
+        console.error('loginAuditSystem 未初始化');
+        const container = document.getElementById('blockedIPsContainer');
+        container.innerHTML = '<div class="no-logs">系統未初始化</div>';
+        return;
+      }
+      
+      // 重新從 localStorage 讀取，確保資料是最新的
+      const blockedIPsData = localStorage.getItem('blockedIPs');
+      let blockedIPs = [];
+      
+      if (blockedIPsData) {
+        try {
+          blockedIPs = JSON.parse(blockedIPsData);
+          console.log('從 localStorage 讀取被封鎖 IP:', blockedIPs);
+        } catch (e) {
+          console.error('解析被封鎖 IP 資料失敗:', e);
+          blockedIPs = [];
+        }
+      } else {
+        console.log('localStorage 中沒有 blockedIPs 資料');
+      }
+      
+      // 同步到 loginAuditSystem
+      window.loginAuditSystem.blockedIPs = blockedIPs;
+      
+      // 過濾掉已過期的封鎖（超過15分鐘）
+      const now = new Date().getTime();
+      const lockoutDuration = 15 * 60 * 1000; // 15分鐘
+      const activeBlockedIPs = blockedIPs.filter(block => {
+        const blockTime = new Date(block.blockedAt).getTime();
+        const timeDiff = now - blockTime;
+        const isActive = timeDiff < lockoutDuration;
+        
+        console.log(`檢查 IP ${block.ipAddress}:`, {
+          blockTime: new Date(block.blockedAt).toLocaleString(),
+          now: new Date(now).toLocaleString(),
+          timeDiff: Math.round(timeDiff / 1000 / 60) + ' 分鐘',
+          isActive: isActive
+        });
+        
+        return isActive;
+      });
+      
+      console.log(`有效封鎖 IP 數量: ${activeBlockedIPs.length} / ${blockedIPs.length}`);
+      
+      // 更新 loginAuditSystem 的 blockedIPs（移除已過期的）
+      if (activeBlockedIPs.length !== blockedIPs.length) {
+        window.loginAuditSystem.blockedIPs = activeBlockedIPs;
+        localStorage.setItem('blockedIPs', JSON.stringify(activeBlockedIPs));
+        console.log('已清理過期的封鎖記錄');
+      }
+      
       const container = document.getElementById('blockedIPsContainer');
 
-      if (blockedIPs.length === 0) {
-        container.innerHTML = '<div class="no-logs">沒有被封鎖的 IP</div>';
+      if (activeBlockedIPs.length === 0) {
+        // 如果沒有有效封鎖，但原始資料中有，顯示提示
+        if (blockedIPs.length > 0) {
+          container.innerHTML = '<div class="no-logs">所有封鎖已過期（超過15分鐘）</div>';
+        } else {
+          container.innerHTML = '<div class="no-logs">沒有被封鎖的 IP</div>';
+        }
         return;
       }
 
-             const user = window.currentAdminUser;
-       const isSuperAdmin = user && user.role === 'super_admin';
-       
-       const blockedHTML = blockedIPs.map(block => `
+      const user = window.currentAdminUser;
+      const isSuperAdmin = user && user.role === 'super_admin';
+      
+      const blockedHTML = activeBlockedIPs.map(block => `
          <div class="blocked-ip-entry">
            <div class="blocked-ip-info">
              <div class="blocked-ip-address">${block.ipAddress}</div>

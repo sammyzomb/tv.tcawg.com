@@ -61,8 +61,15 @@ class LoginAuditSystem {
     return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
   }
 
-  // 檢查並封鎖 IP
+  // 檢查並封鎖 IP（超級管理員不會被封鎖）
   async checkAndBlockIP(ipAddress, email) {
+    // 超級管理員不會被封鎖
+    const superAdminEmails = ['sammyzomb@gmail.com'];
+    if (superAdminEmails.includes(email)) {
+      console.log(`超級管理員 ${email} 登入失敗，但不執行 IP 封鎖`);
+      return;
+    }
+    
     const attempts = this.getRecentAttempts(ipAddress, 15 * 60 * 1000); // 15分鐘內
     const failedAttempts = attempts.filter(attempt => !attempt.success);
 
