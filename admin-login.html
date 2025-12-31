@@ -5,6 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>管理員登入 - 航向世界旅遊頻道</title>
   
+  <!-- AdminLTE 3 CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <!-- Google Font: Source Sans Pro -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
+  
      <!-- Firebase SDK -->
    <script type="module">
      // Import the functions you need from the SDKs you need
@@ -93,90 +100,57 @@
    <script src="browser-config.js"></script>
    <script src="admin-login-audit.js"></script>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
     body { 
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       min-height: 100vh;
+    }
+    
+    .login-container {
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+      padding: 40px;
+      width: 90%;
+      max-width: 450px;
+      text-align: center;
+      margin: 0 auto;
+    }
+    
+    .logo {
+      width: 100px;
+      height: 100px;
+      background: linear-gradient(135deg, #2b71d2, #1e5bb8);
+      border-radius: 10px;
+      margin: 0 auto 25px;
       display: flex;
       align-items: center;
       justify-content: center;
+      position: relative;
+      box-shadow: 0 3px 10px rgba(43, 113, 210, 0.3);
+    }
+
+    .logo-icon {
+      font-size: 50px;
+      color: white;
     }
     
-         .login-container {
-       background: white;
-       border-radius: 20px;
-       box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-       padding: 40px;
-       width: 90%;
-       max-width: 450px;
-       text-align: center;
-     }
-    
-                         .logo {
-           width: 100px;
-           height: 100px;
-           background: linear-gradient(135deg, #2b71d2, #1e5bb8);
-           border-radius: 20px;
-           margin: 0 auto 25px;
-           display: flex;
-           align-items: center;
-           justify-content: center;
-           position: relative;
-           box-shadow: 0 8px 25px rgba(43, 113, 210, 0.3);
-           overflow: hidden;
-         }
-
-        .logo::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%);
-          animation: shimmer 3s infinite;
-        }
-
-        @keyframes shimmer {
-          0% { transform: translateX(-100%); }
-          100% { transform: translateX(100%); }
-        }
-
-                 .logo-icon {
-           width: 50px;
-           height: 50px;
-           position: relative;
-           z-index: 2;
-         }
-
-        .logo-icon svg {
-          width: 100%;
-          height: 100%;
-          fill: none;
-          stroke: white;
-          stroke-width: 2;
-          stroke-linecap: round;
-          stroke-linejoin: round;
-        }
-    
-         .login-title {
-       color: #333;
-       margin-bottom: 12px;
-       font-size: 1.6rem;
-       font-weight: 600;
-     }
+    .login-title {
+      color: #333;
+      margin-bottom: 12px;
+      font-size: 1.6rem;
+      font-weight: 600;
+    }
      
-     .login-subtitle {
-       color: #666;
-       margin-bottom: 30px;
-       font-size: 0.95rem;
-     }
+    .login-subtitle {
+      color: #666;
+      margin-bottom: 30px;
+      font-size: 0.95rem;
+    }
     
-         .form-group {
-       margin-bottom: 20px;
-       text-align: left;
-     }
+    .form-group {
+      margin-bottom: 20px;
+      text-align: left;
+    }
     
     .form-group label {
       display: flex;
@@ -244,45 +218,43 @@
       opacity: 0.7;
     }
     
-         .form-group input {
-       width: 100%;
-       padding: 12px 15px;
-       border: 2px solid #e1e5e9;
-       border-radius: 10px;
-       font-size: 1rem;
-       transition: all 0.3s ease;
-     }
+    .form-group input {
+      width: 100%;
+      padding: 12px 15px;
+      border: 1px solid #ced4da;
+      border-radius: 4px;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+    }
     
     .form-group input:focus {
       outline: none;
-      border-color: #2b71d2;
-      box-shadow: 0 0 0 3px rgba(43, 113, 210, 0.1);
+      border-color: #80bdff;
+      box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
     }
     
-         .login-btn {
-       width: 100%;
-       background: linear-gradient(135deg, #2b71d2, #1e5bb8);
-       color: white;
-       border: none;
-       padding: 15px;
-       border-radius: 10px;
-       font-size: 1rem;
-       font-weight: 600;
-       cursor: pointer;
-       transition: all 0.3s ease;
-       margin-bottom: 25px;
-     }
+    .login-btn {
+      width: 100%;
+      background: #007bff;
+      color: white;
+      border: none;
+      padding: 12px;
+      border-radius: 4px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-bottom: 25px;
+    }
     
     .login-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 20px rgba(43, 113, 210, 0.3);
+      background: #0056b3;
     }
     
     .login-btn:disabled {
-      background: #ccc;
+      background: #6c757d;
       cursor: not-allowed;
-      transform: none;
-      box-shadow: none;
+      opacity: 0.65;
     }
 
     .btn-icon {
@@ -295,23 +267,25 @@
     }
     
     .error-message {
-      background: #fee;
-      color: #c33;
+      background: #f8d7da;
+      color: #721c24;
       padding: 10px;
-      border-radius: 8px;
+      border-radius: 4px;
       margin-bottom: 20px;
       font-size: 0.9rem;
       display: none;
+      border: 1px solid #f5c6cb;
     }
     
     .success-message {
-      background: #efe;
-      color: #3c3;
+      background: #d4edda;
+      color: #155724;
       padding: 10px;
-      border-radius: 8px;
+      border-radius: 4px;
       margin-bottom: 20px;
       font-size: 0.9rem;
       display: none;
+      border: 1px solid #c3e6cb;
     }
     
     .loading {
@@ -329,13 +303,13 @@
       to { transform: rotate(360deg); }
     }
     
-         .footer {
-       margin-top: 30px;
-       padding-top: 20px;
-       border-top: 1px solid #eee;
-       color: #999;
-       font-size: 0.85rem;
-     }
+    .footer {
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 1px solid #dee2e6;
+      color: #6c757d;
+      font-size: 0.85rem;
+    }
     
     .contentful-info {
       background: #f8f9fa;
@@ -379,24 +353,13 @@
   </style>
 </head>
 <body>
-  <div class="login-container">
-    <div class="logo">
-      <div class="logo-icon">
-        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <!-- 電視機外框 -->
-          <rect x="2" y="6" width="20" height="12" rx="2" ry="2"/>
-          <!-- 電視機底座 -->
-          <rect x="9" y="18" width="6" height="2" rx="1" ry="1"/>
-          <!-- 螢幕內容 -->
-          <rect x="4" y="8" width="16" height="8" rx="1" ry="1" fill="none" stroke="white" stroke-width="0.5" opacity="0.3"/>
-          <!-- 控制按鈕 -->
-          <circle cx="18" cy="8" r="0.8" fill="none" stroke="white" stroke-width="0.5" opacity="0.5"/>
-          <!-- 信號波紋 -->
-          <path d="M 2 4 Q 4 2 6 4 Q 8 6 10 4 Q 12 2 14 4 Q 16 6 18 4 Q 20 2 22 4" 
-                fill="none" stroke="white" stroke-width="0.8" opacity="0.6"/>
-        </svg>
+  <div class="login-page" style="min-height: 100vh; display: flex; align-items: center; justify-content: center;">
+    <div class="login-container">
+      <div class="logo">
+        <div class="logo-icon">
+          <i class="fas fa-tv"></i>
+        </div>
       </div>
-    </div>
     <h1 class="login-title">管理員登入</h1>
     <p class="login-subtitle">航向世界旅遊頻道 - 節目管理系統</p>
     
@@ -406,10 +369,7 @@
     <form id="loginForm">
       <div class="form-group">
         <label for="email">
-          <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-            <polyline points="22,6 12,13 2,6"/>
-          </svg>
+          <i class="fas fa-envelope input-icon"></i>
           電子郵件
         </label>
         <input type="email" id="email" name="email" required placeholder="請輸入您的電子郵件">
@@ -417,39 +377,24 @@
       
       <div class="form-group">
         <label for="password">
-          <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-            <circle cx="12" cy="16" r="1"/>
-            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-          </svg>
+          <i class="fas fa-lock input-icon"></i>
           密碼
         </label>
         <div class="password-input-container">
           <input type="password" id="password" name="password" required placeholder="請輸入您的密碼">
           <button type="button" id="togglePassword" class="password-toggle">
-            <svg class="toggle-icon" id="toggleIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-              <circle cx="12" cy="12" r="3"/>
-            </svg>
+            <i class="fas fa-eye toggle-icon" id="toggleIcon"></i>
           </button>
         </div>
-        <small style="color: #666; font-size: 0.8rem; margin-top: 5px; display: block;">
-          <svg class="hint-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline; margin-right: 4px;">
-            <circle cx="12" cy="12" r="10"/>
-            <line x1="12" y1="16" x2="12" y2="12"/>
-            <line x1="12" y1="8" x2="12.01" y2="8"/>
-          </svg>
+        <small style="color: #6c757d; font-size: 0.8rem; margin-top: 5px; display: block;">
+          <i class="fas fa-info-circle hint-icon" style="margin-right: 4px;"></i>
           提示：密碼應包含大小寫字母、數字和特殊符號
         </small>
       </div>
       
       <button type="submit" class="login-btn" id="loginBtn">
         <span class="loading" id="loadingSpinner" style="display: none;"></span>
-        <svg class="btn-icon" id="btnIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
-          <polyline points="10,17 15,12 10,7"/>
-          <line x1="15" y1="12" x2="3" y2="12"/>
-        </svg>
+        <i class="fas fa-sign-in-alt btn-icon" id="btnIcon" style="margin-right: 8px;"></i>
         <span id="loginText">登入系統</span>
       </button>
     </form>
@@ -459,7 +404,15 @@
          <div class="footer">
        <p>© 2025 航向世界旅遊頻道</p>
      </div>
+    </div>
   </div>
+
+  <!-- jQuery -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <!-- Bootstrap 4 -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- AdminLTE 3 -->
+  <script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
 
   <script>
     // Contentful 設定 - 使用環境變數
@@ -782,20 +735,14 @@
           const passwordInput = document.getElementById('password');
           const toggleIcon = document.getElementById('toggleIcon');
           
-          if (passwordInput.type === 'password') {
+            if (passwordInput.type === 'password') {
             passwordInput.type = 'text';
-            toggleIcon.innerHTML = `
-              <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
-              <line x1="1" y1="1" x2="23" y2="23"/>
-            `;
+            toggleIcon.className = 'fas fa-eye-slash toggle-icon';
             toggleIcon.title = '隱藏密碼';
             console.log('Login page - Password now visible');
           } else {
             passwordInput.type = 'password';
-            toggleIcon.innerHTML = `
-              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-              <circle cx="12" cy="12" r="3"/>
-            `;
+            toggleIcon.className = 'fas fa-eye toggle-icon';
             toggleIcon.title = '顯示密碼';
             console.log('Login page - Password now hidden');
           }
