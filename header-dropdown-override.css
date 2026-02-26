@@ -1,0 +1,26 @@
+/* 下拉選單毛玻璃半透明 - 必須在官網 CSS 之後載入 */
+/* 清除可能蓋住背景的偽元素 */
+#header .target .nav .dropdown::before,
+#header .target .nav .dropdown::after,
+#header .target .nav .dropdown .container::before,
+#header .target .nav .dropdown .container::after {
+  display: none !important;
+  background: none !important;
+}
+/* 外層透明 */
+#header .target .nav ul.level1 li .dropdown {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+/* 內層：半透明白 + 毛玻璃 */
+#header .target .nav ul.level1 li .dropdown .container.width-1430 {
+  background: rgba(255, 255, 255, 0.7) !important;
+  background-color: rgba(255, 255, 255, 0.7) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.1);
+}
+#header .target .nav .dropdown .item .title,
+#header .target .nav .dropdown a {
+  text-shadow: 0 0 1px rgba(255,255,255,0.9);
+}

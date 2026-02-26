@@ -390,6 +390,29 @@
     html.embed-mode .navbar,
     html.embed-mode #side-menu,
     html.embed-mode #menu-overlay { display: none !important; }
+
+    /* 官網導航：脫離文件流，下拉展開時不擠壓 hero；無邊框無陰影，避免邊界線 */
+    #tcawg-official-header { position: absolute; top: 0; left: 0; right: 0; z-index: 1000; margin: 0; padding: 0; line-height: 0; background: transparent; backdrop-filter: none; -webkit-backdrop-filter: none; border: none; outline: none; box-shadow: none; }
+    #tcawg-header-iframe { vertical-align: top; background: transparent; display: block; border: none !important; outline: none; box-shadow: none; }
+    /* hero 上移 1px 遮住導覽列底緣次像素縫隙，消除邊界線 */
+    .hero { margin-top: -1px; }
+    body { padding-top: var(--header-closed-height, 220px); }
+    html.embed-mode body { padding-top: 0; }
+
+    /* 以下保留供參考，現已改為 iframe 載入 header.html */
+    .tcawg-official-nav { background: #fafafa; border-bottom: 1px solid #e5e5e5; position: sticky; top: 0; z-index: 1000; font-family: "Microsoft JhengHei", "PingFang TC", "Helvetica Neue", sans-serif; }
+    .tcawg-official-nav .tcawg-nav-inner { max-width: 1430px; margin: 0 auto; padding: 14px 4%; display: flex; align-items: center; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
+    .tcawg-nav-brand { display: flex; flex-direction: column; gap: 2px; }
+    .tcawg-nav-brand .tcawg-logo { display: block; color: #1a1a1a; text-decoration: none; font-size: 18px; font-weight: 700; line-height: 1.3; }
+    .tcawg-nav-brand .tcawg-logo:hover { color: #1a1a1a; }
+    .tcawg-nav-brand .tcawg-nav-current { display: block; color: #0066cc; text-decoration: none; font-size: 15px; font-weight: 500; line-height: 1.3; }
+    .tcawg-nav-brand .tcawg-nav-current:hover { color: #0052a3; text-decoration: underline; }
+    .tcawg-nav-links { display: flex; flex-direction: column; gap: 10px; align-items: flex-end; }
+    .tcawg-nav-row1 { display: flex; align-items: center; gap: 6px 16px; flex-wrap: wrap; justify-content: flex-end; }
+    .tcawg-nav-row2 { display: flex; align-items: center; gap: 6px 14px; flex-wrap: wrap; justify-content: flex-end; }
+    .tcawg-official-nav .tcawg-nav-links a { color: #333; text-decoration: none; font-size: 14px; }
+    .tcawg-official-nav .tcawg-nav-links a:hover { color: #0066cc; }
+    @media (max-width: 991px) { .tcawg-official-nav .tcawg-nav-inner { flex-direction: column; align-items: flex-start; } .tcawg-nav-links { align-items: flex-start; } .tcawg-nav-row1, .tcawg-nav-row2 { justify-content: flex-start; } }
   </style>
   
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
@@ -398,55 +421,16 @@
   <script src="featured.js"></script>
 </head>
 <body>
-  <!-- 導覽列（embed=1 時隱藏，由官方網站保留其導航列） -->
-  <div class="navbar">
-    <a class="logo" href="index.html"><img src="logo.png" alt="航向世界旅遊頻道 LOGO" /></a>
-    
-    <nav class="desktop-nav">
-      <a href="index.html" class="active">
-        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9L12 2L21 9V20a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-        <span class="nav-text">首頁</span>
-      </a>
-      <a href="videos.html">
-        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><path d="M8 21h8m-4-4v4"/></svg>
-        <span class="nav-text">所有節目</span>
-      </a>
-      <a href="schedule.html">
-        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-        <span class="nav-text">節目表</span>
-      </a>
-      <a href="topics.html">
-        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <span class="nav-text">主題探索</span>
-      </a>
-    </nav>
-
-    <div class="nav-actions">
-        <a href="#" id="theme-switcher" title="切換主題">
-            <svg id="theme-icon-sun" class="nav-icon" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
-            <svg id="theme-icon-moon" class="nav-icon" style="display: none;" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
-        </a>
-        <a href="login.html" class="login-link">
-            <svg class="nav-icon" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="10" cy="7" r="4.5" stroke-width="2"/><ellipse cx="10" cy="15.2" rx="6.8" ry="3.2" stroke-width="2"/></svg>
-            <span class="nav-text">會員登入</span>
-        </a>
-        <button id="hamburger-btn" class="hamburger-btn">
-            <svg viewBox="0 0 100 80" width="24" height="24">
-              <rect width="100" height="15" rx="8"></rect>
-              <rect y="30" width="100" height="15" rx="8"></rect>
-              <rect y="60" width="100" height="15" rx="8"></rect>
-            </svg>
-        </button>
-    </div>
-  </div>
-
-  <div id="side-menu" class="side-menu">
-    <a href="index.html">首頁</a>
-    <a href="videos.html">所有節目</a>
-    <a href="schedule.html">節目表</a>
-    <a href="topics.html">主題探索</a>
-  </div>
-  <div id="menu-overlay" class="menu-overlay"></div>
+  <!-- 官網導航列：與 航向世界旅遊 官網完全一致（iframe 載入 header.html）；embed=1 時隱藏 -->
+  <header class="navbar" id="tcawg-official-header">
+    <iframe
+      id="tcawg-header-iframe"
+      src="header.html"
+      title="航向世界旅遊 官網導航"
+      scrolling="no"
+      style="display:block; width:100%; min-height:200px; height:220px; border:0; margin:0; padding:0; overflow:visible;"
+    ></iframe>
+  </header>
 
   <!-- 載入指示器 -->
   <div id="loading-indicator" class="loading-indicator">
@@ -974,6 +958,64 @@
         document.body.style.overflow = '';
       }
     }
+  </script>
+
+  <!-- 依 iframe 內下拉開關動態調整導航高度，避免一大段空白 -->
+  <script>
+    (function(){
+      window.addEventListener('message', function(e) {
+        if (e.data && e.data.type === 'tcawg-header-height' && typeof e.data.height === 'number') {
+          var ifr = document.getElementById('tcawg-header-iframe');
+          if (ifr) ifr.style.height = e.data.height + 'px';
+          if (e.data.closed) document.documentElement.style.setProperty('--header-closed-height', e.data.height + 'px');
+        }
+      });
+    })();
+  </script>
+  <!-- 從父頁對 iframe 內導航強制套用下拉選單毛玻璃（覆寫官網 CSS） -->
+  <script>
+    (function(){
+      var iframe = document.getElementById('tcawg-header-iframe');
+      if (!iframe) return;
+      function injectFrosted() {
+        try {
+          var doc = iframe.contentDocument || iframe.contentWindow.document;
+          if (!doc || !doc.getElementById('header')) return;
+          var existing = doc.getElementById('parent-injected-frosted');
+          if (existing) return;
+          var style = doc.createElement('style');
+          style.id = 'parent-injected-frosted';
+          style.textContent = [
+            '#header .target .nav .dropdown::before, #header .target .nav .dropdown::after, #header .target .nav .dropdown .container::before, #header .target .nav .dropdown .container::after { display: none !important; background: none !important; }',
+            '#header .target .nav ul.level1 li .dropdown { background: transparent !important; background-color: transparent !important; }',
+            '#header .target .nav ul.level1 li .dropdown .container.width-1430 { background: rgba(255,255,255,0.55) !important; background-color: rgba(255,255,255,0.55) !important; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); box-shadow: 0 4px 24px rgba(0,0,0,0.1); }'
+          ].join(' ');
+          doc.head.appendChild(style);
+          var applyInline = function() {
+            var header = doc.getElementById('header');
+            if (!header) return;
+            var drops = header.querySelectorAll('.nav .dropdown');
+            for (var i = 0; i < drops.length; i++) {
+              drops[i].style.setProperty('background', 'transparent', 'important');
+              drops[i].style.setProperty('background-color', 'transparent', 'important');
+              var c = drops[i].querySelector('.container.width-1430');
+              if (c) {
+                c.style.setProperty('background', 'rgba(255,255,255,0.55)', 'important');
+                c.style.setProperty('background-color', 'rgba(255,255,255,0.55)', 'important');
+                c.style.setProperty('backdrop-filter', 'blur(12px)', 'important');
+                c.style.setProperty('-webkit-backdrop-filter', 'blur(12px)', 'important');
+              }
+            }
+          };
+          applyInline();
+          setTimeout(applyInline, 300);
+          setTimeout(applyInline, 800);
+          setInterval(applyInline, 600);
+        } catch (e) {}
+      }
+      iframe.addEventListener('load', function() { setTimeout(injectFrosted, 150); });
+      if (iframe.contentDocument && iframe.contentDocument.readyState === 'complete') setTimeout(injectFrosted, 150);
+    })();
   </script>
 </body>
 </html>
