@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>影片播放｜航向世界旅遊頻道</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: "Microsoft JhengHei", "PingFang TC", sans-serif; background: #111; color: #eee; min-height: 100vh; display: flex; flex-direction: column; }
+    .player-header {
+      padding: 12px 16px;
+      background: #1a1a1a;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .player-header h1 { margin: 0; font-size: 1.1rem; font-weight: 600; }
+    .player-header a {
+      color: #6ab7ff;
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+    .player-header a:hover { text-decoration: underline; }
+    .player-wrap {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      padding: 16px;
+    }
+    .player-box {
+      position: relative;
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding-bottom: 56.25%;
+      background: #000;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .player-box iframe {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+    }
+    .player-placeholder {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #1a1a1a;
+      color: #888;
+      text-align: center;
+      padding: 24px;
+    }
+    .player-placeholder.hidden { display: none; }
+    .paste-area {
+      margin-top: 20px;
+      max-width: 560px;
+      width: 100%;
+    }
+    .paste-area label { display: block; margin-bottom: 8px; font-size: 0.9rem; color: #aaa; }
+    .paste-row { display: flex; gap: 8px; }
+    .paste-row input {
+      flex: 1;
+      padding: 10px 12px;
+      border: 1px solid #444;
+      border-radius: 6px;
+      background: #222;
+      color: #eee;
+      font-size: 0.95rem;
+    }
+    .paste-row input::placeholder { color: #666; }
+    .paste-row button {
+      padding: 10px 20px;
+      background: #2b71d2;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .paste-row button:hover { background: #1a5bb8; }
+    .link-out {
+      margin-top: 24px;
+      font-size: 0.9rem;
+    }
+    .link-out a { color: #6ab7ff; }
+  </style>
+</head>
+<body>
+  <header class="player-header">
+    <h1>影片播放</h1>
+    <a href="index.html">← 返回頻道首頁</a>
+  </header>
+  <div class="player-wrap">
+    <div class="player-box">
+      <div class="player-placeholder" id="placeholder">
+        <p>在此播放，不需往下捲</p>
+        <div class="paste-area">
+          <label for="url-input">貼上 YouTube 網址或影片 ID</label>
+          <div class="paste-row">
+            <input type="text" id="url-input" placeholder="例如 https://youtu.be/xxxx 或 xxxx">
+            <button type="button" id="play-btn">播放</button>
+          </div>
+        </div>
+        <p class="link-out">
+          <a href="https://www.tcawg.com/travel/video.html" target="_blank" rel="noopener">前往影片專區選片</a>，複製影片連結後貼到上方播放
+        </p>
+      </div>
+      <iframe id="yt-frame" class="hidden" title="YouTube 播放器" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      var placeholder = document.getElementById('placeholder');
+      var ytFrame = document.getElementById('yt-frame');
+      var urlInput = document.getElementById('url-input');
+      var playBtn = document.getElementById('play-btn');
+
+      function getVideoId(input) {
+        var s = (input || '').trim();
+        if (!s) return '';
+        var m = s.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|embed\/)([a-zA-Z0-9_-]{11})/);
+        if (m) return m[1];
+        if (/^[a-zA-Z0-9_-]{11}$/.test(s)) return s;
+        return '';
+      }
+
+      function play(id) {
+        if (!id) return;
+        ytFrame.src = 'https://www.youtube.com/embed/' + id + '?autoplay=1';
+        ytFrame.classList.remove('hidden');
+        placeholder.classList.add('hidden');
+      }
+
+      var params = new URLSearchParams(location.search);
+      var v = params.get('v');
+      if (v) {
+        play(v);
+      }
+
+      playBtn.addEventListener('click', function() {
+        var id = getVideoId(urlInput.value);
+        if (id) {
+          play(id);
+          if (history.replaceState) history.replaceState(null, '', '?v=' + id);
+        } else {
+          alert('請輸入有效的 YouTube 網址或 11 碼影片 ID');
+        }
+      });
+
+      urlInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') playBtn.click();
+      });
+    })();
+  </script>
+</body>
+</html>

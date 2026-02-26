@@ -435,7 +435,7 @@
       50% { opacity: 1; text-shadow: 0 0 8px rgba(255,255,255,0.4); }
     }
     html { scroll-behavior: smooth; }
-    /* 影片專區：單一底色 #f2f0eb 左右上下一致 */
+    /* 影片專區：完整高度，下方影片與頁尾都顯示，不會一大塊空白 */
     .official-video-section {
       width: 100%;
       margin: 0;
@@ -453,6 +453,31 @@
       min-height: 3600px;
       border: 0;
       margin-top: -400px;
+    }
+    .official-video-newtab {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0 0 12px 0;
+      padding: 10px 18px;
+      background: var(--primary-color, #2b71d2);
+      color: #fff;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: opacity 0.2s, transform 0.2s;
+      box-shadow: 0 2px 8px rgba(43, 113, 210, 0.3);
+    }
+    .official-video-newtab:hover {
+      color: #fff;
+      opacity: 0.9;
+      transform: translateY(-1px);
+    }
+    .official-video-newtab svg {
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
     }
     body { padding-top: var(--header-closed-height, 220px); }
     html.embed-mode body { padding-top: 0; }
@@ -585,8 +610,12 @@
     <div class="video-grid" id="featured-videos"></div>
   </section>
 
-  <!-- 影片專區：嵌入旅遊官網影片專區；裁切頂部導航與標題，影片分類列緊接上方、無整塊空白 -->
+  <!-- 影片專區：嵌入＋可另開獨立頁面播放 -->
   <section class="official-video-section" aria-label="影片專區">
+    <a href="player.html" target="_blank" rel="noopener noreferrer" class="official-video-newtab" title="獨立播放頁，播放器在頁面最上方、不用往下捲">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      獨立播放頁（播放器在頁面最上方，不用往下捲）
+    </a>
     <div class="official-video-wrap">
       <iframe title="航向世界旅遊 影片專區" src="https://www.tcawg.com/travel/video.html" class="official-video-iframe" loading="lazy"></iframe>
     </div>
