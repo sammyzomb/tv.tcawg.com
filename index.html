@@ -392,8 +392,8 @@
     html.embed-mode #menu-overlay { display: none !important; }
 
     /* 官網導航：脫離文件流，下拉展開時不擠壓 hero；無邊框無陰影，避免邊界線 */
-    #tcawg-official-header { position: absolute; top: 0; left: 0; right: 0; z-index: 1000; margin: 0; padding: 0; line-height: 0; background: transparent; backdrop-filter: none; -webkit-backdrop-filter: none; border: none; outline: none; box-shadow: none; }
-    #tcawg-header-iframe { vertical-align: top; background: transparent; display: block; border: none !important; outline: none; box-shadow: none; }
+    #tcawg-official-header { position: absolute; top: 0; left: 0; right: 0; z-index: 1000; margin: 0; padding: 0; line-height: 0; background: transparent; backdrop-filter: none; -webkit-backdrop-filter: none; border: none; outline: none; box-shadow: none; transition: none !important; }
+    #tcawg-header-iframe { vertical-align: top; background: transparent; display: block; border: none !important; outline: none; box-shadow: none; transition: none !important; }
     /* hero 上移 1px 遮住導覽列底緣次像素縫隙，消除邊界線 */
     .hero { margin-top: -1px; }
     body { padding-top: var(--header-closed-height, 220px); }
