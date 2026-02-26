@@ -341,28 +341,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const PAGE_SIZE = 8;
       let rendered = 0;
 
-      // 建立「所有節目 / 查看更多」連結（導到所有節目頁）
-      // 檢查是否已經存在，避免重複創建
-      let moreWrap = document.getElementById('featured-actions');
-      if (!moreWrap) {
-        // 先移除任何可能存在的重複按鈕
-        const existingButtons = document.querySelectorAll('#featured-actions, .video-more-btn');
-        existingButtons.forEach(btn => btn.remove());
-        
-        moreWrap = document.createElement('div');
-        moreWrap.id = 'featured-actions';
-        moreWrap.style = 'text-align:center;margin-top:16px;';
-
-        const moreLink = document.createElement('a');
-        moreLink.id = 'featured-more';
-        moreLink.href = 'videos.html'; // 重點：直接連到所有節目頁
-        moreLink.className = 'video-more-btn';
-        moreLink.textContent = '所有節目'; // 如果你要顯示「查看更多」，把文字改回去即可
-        moreLink.style = 'padding:10px 16px;border-radius:10px;border:0;background:#0a5bfd;color:#fff;font-weight:700;cursor:pointer;box-shadow:0 4px 10px rgba(0,0,0,.08);display:inline-block;text-decoration:none;';
-        moreWrap.appendChild(moreLink);
-        container.after(moreWrap);
-      }
-
+      // 不再顯示「所有節目」按鈕（已依需求移除）
       function renderNextPage() {
         const slice = allItems.slice(rendered, rendered + PAGE_SIZE);
         if (!slice.length) return;
@@ -393,16 +372,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         container.appendChild(frag);
         rendered += slice.length;
-
-        // 顯示 / 隱藏「所有節目」連結：只要有資料就顯示
-        moreWrap.style.display = allItems.length ? '' : 'none';
       }
 
       // 首次渲染
       container.innerHTML = '';
       if (allItems.length === 0) {
         container.innerHTML = `<p style="color:#999;">目前無法載入精選節目。</p>`;
-        moreWrap.style.display = 'none';
       } else {
         renderNextPage(); // 第 1 頁
       }

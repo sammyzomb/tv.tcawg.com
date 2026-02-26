@@ -127,19 +127,6 @@
       const PAGE_SIZE = 8;
       let rendered = 0;
 
-      const moreWrap = document.createElement('div');
-      moreWrap.id = 'featured-actions';
-      moreWrap.style = 'text-align:center;margin-top:16px;';
-      const moreLink = document.createElement('a');
-      moreLink.id = 'featured-more';
-      moreLink.href = 'videos.html';
-      moreLink.className = 'video-more-btn';
-      moreLink.textContent = '所有節目';
-      moreLink.style = 'padding:10px 16px;border-radius:10px;border:0;background:#0a5bfd;color:#fff;font-weight:700;cursor:pointer;box-shadow:0 4px 10px rgba(0,0,0,.08);display:inline-block;text-decoration:none;';
-      moreWrap.appendChild(moreLink);
-      container.after(moreWrap);
-
-
       container.innerHTML = '';
       
       // 確保始終顯示 8 個卡片位置
@@ -167,7 +154,6 @@
           frag.appendChild(card);
         }
         container.appendChild(frag);
-        moreWrap.style.display = 'none';
       } else {
         // 有節目時，確保顯示 8 個卡片（不足時用空白卡片補齊）
         const frag = document.createDocumentFragment();
@@ -220,7 +206,6 @@
         
         container.appendChild(frag);
         rendered = slice.length;
-        moreWrap.style.display = allItems.length > TARGET_CARDS ? '' : 'none';
       }
     } catch (err) {
       console.error('Contentful 連線失敗（featured）：', err);
