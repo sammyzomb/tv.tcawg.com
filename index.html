@@ -396,6 +396,45 @@
     #tcawg-header-iframe { vertical-align: top; background: transparent; display: block; border: none !important; outline: none; box-shadow: none; transition: none !important; }
     /* hero 上移 1px 遮住導覽列底緣次像素縫隙，消除邊界線 */
     .hero { margin-top: -1px; }
+    /* hero 左下角：正在播出按鈕，錨點至今日節目表現正播出；動畫吸引點擊 */
+    .hero-now-playing-cta {
+      position: absolute; left: 24px; bottom: 24px; z-index: 10;
+      display: inline-flex; align-items: center; gap: 12px;
+      padding: 14px 22px; border-radius: 999px;
+      background: rgba(0,0,0,0.55); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      color: #fff; text-decoration: none; font-weight: 600; font-size: 1rem;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.08);
+      transition: background 0.25s ease, transform 0.2s ease, box-shadow 0.25s ease;
+      animation: hero-cta-float 2.5s ease-in-out infinite;
+    }
+    .hero-now-playing-cta:hover {
+      background: rgba(200,40,40,0.9); color: #fff;
+      transform: translateY(-3px) scale(1.02);
+      box-shadow: 0 8px 32px rgba(200,40,40,0.5), 0 0 24px rgba(200,40,40,0.25);
+      animation: none;
+    }
+    .hero-now-playing-cta .hero-cta-text { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; line-height: 1.2; }
+    .hero-now-playing-cta .hero-cta-label { font-size: 0.8rem; font-weight: 500; opacity: 0.95; letter-spacing: 0.5px; }
+    .hero-now-playing-cta .hero-cta-watch { font-size: 0.75rem; color: rgba(255,255,255,0.85); font-weight: 500; display: flex; align-items: center; gap: 4px; animation: hero-cta-watch 1.8s ease-in-out infinite; }
+    .hero-now-playing-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: #e53935; box-shadow: 0 0 0 2px rgba(255,255,255,0.4), 0 0 12px rgba(229,57,53,0.6);
+      animation: hero-live-pulse 1.5s ease-in-out infinite;
+      flex-shrink: 0;
+    }
+    @keyframes hero-cta-float {
+      0%, 100% { transform: translateY(0); box-shadow: 0 4px 24px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.08); }
+      50% { transform: translateY(-4px); box-shadow: 0 8px 28px rgba(0,0,0,0.35), 0 0 16px rgba(229,57,53,0.15); }
+    }
+    @keyframes hero-live-pulse {
+      0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 0 2px rgba(255,255,255,0.4), 0 0 12px rgba(229,57,53,0.6); }
+      50% { opacity: 0.9; transform: scale(1.15); box-shadow: 0 0 0 3px rgba(255,255,255,0.5), 0 0 20px rgba(229,57,53,0.8); }
+    }
+    @keyframes hero-cta-watch {
+      0%, 100% { opacity: 0.85; }
+      50% { opacity: 1; text-shadow: 0 0 8px rgba(255,255,255,0.4); }
+    }
+    html { scroll-behavior: smooth; }
     body { padding-top: var(--header-closed-height, 220px); }
     html.embed-mode body { padding-top: 0; }
 
@@ -448,6 +487,13 @@
       <p>Live 世界旅遊新視野</p>
     </div>
     <div class="hero-caption" id="heroCaption"></div>
+    <a href="#now-playing" class="hero-now-playing-cta" aria-label="點擊觀看現正播出">
+      <span class="hero-now-playing-dot"></span>
+      <span class="hero-cta-text">
+        <span class="hero-cta-label">正在播出</span>
+        <span class="hero-cta-watch">點擊觀看 ↓</span>
+      </span>
+    </a>
   </div>
   
   <section class="schedule-section">
@@ -463,8 +509,8 @@
     
     <!-- TLC 風格版型：左右分欄佈局 -->
     <div class="tlc-schedule-container">
-        <!-- 左側：現正播出節目區域 -->
-        <div class="now-playing-area">
+        <!-- 左側：現正播出節目區域（錨點 #now-playing） -->
+        <div class="now-playing-area" id="now-playing">
             <div class="now-playing-header">
                 <h3>🔴 現正播出</h3>
                 <span class="live-indicator">LIVE</span>
