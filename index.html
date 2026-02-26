@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
+  <script>
+    (function(){ if (/[?&]embed=1/.test(location.search)) document.documentElement.classList.add('embed-mode'); })();
+  </script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <!-- Permissions-Policy: 本地開發時可暫時註解，正式環境建議保留 -->
@@ -382,6 +385,11 @@
       font-size: 1rem;
       margin: 0;
     }
+
+    /* 嵌入模式：供外部官方網站 iframe 使用，隱藏本頁導航列（class 加在 html 上，head 內即生效） */
+    html.embed-mode .navbar,
+    html.embed-mode #side-menu,
+    html.embed-mode #menu-overlay { display: none !important; }
   </style>
   
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
@@ -390,8 +398,7 @@
   <script src="featured.js"></script>
 </head>
 <body>
-
-  <!-- 導覽列 -->
+  <!-- 導覽列（embed=1 時隱藏，由官方網站保留其導航列） -->
   <div class="navbar">
     <a class="logo" href="index.html"><img src="logo.png" alt="航向世界旅遊頻道 LOGO" /></a>
     

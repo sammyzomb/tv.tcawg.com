@@ -1,0 +1,32 @@
+<!--
+  使用方式：在官方旅遊網站 (tcawg.com) 的影片專區頁面中，
+  將原本從 <div id="video" class="g-wrap grid"> 到該區塊結束的整段內容
+  替換成下面「替換區塊」裡的 HTML。
+  
+  請先將下方 IFRAME_SRC 改為您實際的頻道網址（例如 https://tv.tcawg.com/index.html?embed=1）
+  並確認頻道站已支援 ?embed=1（本專案 index.html 已支援）。
+-->
+
+<!-- ========== 替換區塊 開始 ========== -->
+<div id="video" class="g-wrap grid">
+  <div class="container width-1430">
+    <div class="breadcrumb black">
+      <ul class="list reset">
+        <li> <a href="./" title="HOME">HOME</a></li>
+        <li><a href="video.html" title="影片專區" data-tooltip="hide">影片專區</a></li>
+      </ul>
+    </div>
+    <div class="white-wrap">
+      <h2 class="h2">影片專區</h2>
+      <!-- 航向世界旅遊頻道嵌入：使用 ?embed=1 隱藏頻道自身導航列，只保留官方站導航 -->
+      <iframe
+        id="tcawg-tv-embed"
+        src="https://tv.tcawg.com/index.html?embed=1"
+        style="width:100%; height:80vh; min-height:600px; border:none; display:block;"
+        title="航向世界旅遊頻道"
+        allowfullscreen
+      ></iframe>
+    </div>
+  </div>
+</div>
+<!-- ========== 替換區塊 結束 ========== -->
