@@ -972,50 +972,6 @@
       });
     })();
   </script>
-  <!-- 從父頁對 iframe 內導航強制套用下拉選單毛玻璃（覆寫官網 CSS） -->
-  <script>
-    (function(){
-      var iframe = document.getElementById('tcawg-header-iframe');
-      if (!iframe) return;
-      function injectFrosted() {
-        try {
-          var doc = iframe.contentDocument || iframe.contentWindow.document;
-          if (!doc || !doc.getElementById('header')) return;
-          var existing = doc.getElementById('parent-injected-frosted');
-          if (existing) return;
-          var style = doc.createElement('style');
-          style.id = 'parent-injected-frosted';
-          style.textContent = [
-            '#header .target .nav .dropdown::before, #header .target .nav .dropdown::after, #header .target .nav .dropdown .container::before, #header .target .nav .dropdown .container::after { display: none !important; background: none !important; }',
-            '#header .target .nav ul.level1 li .dropdown { background: transparent !important; background-color: transparent !important; }',
-            '#header .target .nav ul.level1 li .dropdown .container.width-1430 { background: rgba(255,255,255,0.55) !important; background-color: rgba(255,255,255,0.55) !important; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); box-shadow: 0 4px 24px rgba(0,0,0,0.1); }'
-          ].join(' ');
-          doc.head.appendChild(style);
-          var applyInline = function() {
-            var header = doc.getElementById('header');
-            if (!header) return;
-            var drops = header.querySelectorAll('.nav .dropdown');
-            for (var i = 0; i < drops.length; i++) {
-              drops[i].style.setProperty('background', 'transparent', 'important');
-              drops[i].style.setProperty('background-color', 'transparent', 'important');
-              var c = drops[i].querySelector('.container.width-1430');
-              if (c) {
-                c.style.setProperty('background', 'rgba(255,255,255,0.55)', 'important');
-                c.style.setProperty('background-color', 'rgba(255,255,255,0.55)', 'important');
-                c.style.setProperty('backdrop-filter', 'blur(12px)', 'important');
-                c.style.setProperty('-webkit-backdrop-filter', 'blur(12px)', 'important');
-              }
-            }
-          };
-          applyInline();
-          setTimeout(applyInline, 300);
-          setTimeout(applyInline, 800);
-          setInterval(applyInline, 600);
-        } catch (e) {}
-      }
-      iframe.addEventListener('load', function() { setTimeout(injectFrosted, 150); });
-      if (iframe.contentDocument && iframe.contentDocument.readyState === 'complete') setTimeout(injectFrosted, 150);
-    })();
-  </script>
+  <!-- 下拉毛玻璃由 header.html（iframe 內）單獨控制，父頁不再注入樣式，避免雙層毛玻璃 -->
 </body>
 </html>

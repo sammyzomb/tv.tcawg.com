@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <base href="https://www.tcawg.com/travel/">
 <base target="_top">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
 <link href="themes/zh-tw/assets/css/site.core.min.css?t=1750068401" rel="stylesheet">
 <link href="themes/zh-tw/assets/css/plugin-slick.min.css?t=1486697134" rel="stylesheet">
 <style>
@@ -12,30 +15,68 @@
 html, body { background: transparent !important; }
 /* 導覽列底緣無邊框無陰影，避免與 hero 交界出現線條 */
 #header, #header .target { border-bottom: none !important; box-shadow: none !important; }
-/* 僅下拉選單區塊：半透明毛玻璃，其餘導航／頂欄不變 */
-/* 下拉選單外層：左右滿版 + 毛玻璃 */
+/* 只讓 .dropdown 有毛玻璃，導航項目與 nav 容器不要半透明，避免兩層疊加 */
+#header .target .nav ul.level1 li,
+#header .target .nav ul.level1 li > a,
+#header .target .nav > .container.width-1430 { background: transparent !important; background-color: transparent !important; }
+/* 下拉選單外層：左右滿版 + 毛玻璃（略不透一點字更清楚） */
 body header#header .target .nav ul.level1 li .dropdown {
   width: 100vw !important;
   max-width: none !important;
   left: 50% !important;
   transform: translateX(-50%) !important;
   box-sizing: border-box !important;
-  background: rgba(255, 255, 255, 0.55) !important;
-  background-color: rgba(255, 255, 255, 0.55) !important;
+  background: rgba(255, 255, 255, 0.72) !important;
+  background-color: rgba(255, 255, 255, 0.72) !important;
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   box-shadow: 0 4px 24px rgba(0,0,0,0.08);
 }
-body header#header .target .nav ul.level1 li .dropdown .container.width-1430 {
+/* 其餘 .dropdown 內子元素透明；內層 container 單獨設滿版＋同款毛玻璃（見下） */
+body header#header .target .nav .dropdown * {
   background: transparent !important;
   background-color: transparent !important;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
   box-shadow: none !important;
 }
-body header#header .target .nav .dropdown .item .title,
+/* 內層（有文字）強制 100vw 滿版、完全透明，只留外層一層毛玻璃 */
+body header#header .target .nav ul.level1 li .dropdown > .container.width-1430 {
+  width: 100vw !important;
+  max-width: none !important;
+  min-width: 100vw !important;
+  box-sizing: border-box !important;
+  margin-left: calc(-50vw + 50%) !important;
+  padding-left: max(0px, calc((100vw - 1430px) / 2)) !important;
+  padding-right: max(0px, calc((100vw - 1430px) / 2)) !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: none !important;
+}
+/* 強制 .item 等欄位無背景，避免文字欄位形成第二層 */
+#header .target .nav .dropdown .container .item,
+#header .target .nav .dropdown .container .item *,
+#header .target .nav .dropdown .container .list,
+#header .target .nav .dropdown .container .list * {
+  background: transparent !important;
+  background-color: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+/* 毛玻璃下字體：思源黑體，深色字 + 淺色描邊；不設 font-size 保留原本較大標題 */
+body header#header .target .nav .dropdown {
+  font-family: "Noto Sans TC", "Source Han Sans TC", "思源黑體", sans-serif !important;
+}
+body header#header .target .nav .dropdown .item .title {
+  font-weight: 700 !important;
+  color: #1a1a1a !important;
+  text-shadow: 0 0 1px rgba(255,255,255,1), 0 0 2px rgba(255,255,255,0.9), 0 1px 2px rgba(0,0,0,0.15);
+}
 body header#header .target .nav .dropdown a {
-  text-shadow: 0 0 1px rgba(255,255,255,0.9);
+  color: #1a1a1a !important;
+  text-shadow: 0 0 1px rgba(255,255,255,1), 0 0 2px rgba(255,255,255,0.9), 0 1px 2px rgba(0,0,0,0.15);
 }
 /* 搜尋面板：關閉官網動畫，一點就立刻展開，體感更快 */
 #header .search-wrap,
@@ -54,20 +95,41 @@ body header#header .target .nav .dropdown a {
   function applyFrosted() {
     var header = document.getElementById('header');
     if (!header) return;
-    /* 毛玻璃套在 .dropdown 滿版；內層 .container 透明 */
+    var nav = header.querySelector('.nav');
+    if (nav && nav.firstElementChild && nav.firstElementChild.classList.contains('container')) {
+      var navContainer = nav.firstElementChild;
+      if (navContainer) {
+        navContainer.style.setProperty('background', 'transparent', 'important');
+        navContainer.style.setProperty('background-color', 'transparent', 'important');
+      }
+    }
     var dropdowns = header.querySelectorAll('.nav .dropdown');
     for (var i = 0; i < dropdowns.length; i++) {
       var drop = dropdowns[i];
-      drop.style.setProperty('background', 'rgba(255,255,255,0.55)', 'important');
-      drop.style.setProperty('background-color', 'rgba(255,255,255,0.55)', 'important');
+      drop.style.setProperty('background', 'rgba(255,255,255,0.72)', 'important');
+      drop.style.setProperty('background-color', 'rgba(255,255,255,0.72)', 'important');
       drop.style.setProperty('backdrop-filter', 'blur(12px)', 'important');
       drop.style.setProperty('-webkit-backdrop-filter', 'blur(12px)', 'important');
-      var container = drop.querySelector('.container.width-1430');
-      if (container) {
-        container.style.setProperty('background', 'transparent', 'important');
-        container.style.setProperty('background-color', 'transparent', 'important');
-        container.style.removeProperty('backdrop-filter');
-        container.style.removeProperty('-webkit-backdrop-filter');
+      var inner = drop.querySelector('.container.width-1430');
+      if (inner) {
+        inner.style.setProperty('width', '100vw', 'important');
+        inner.style.setProperty('max-width', 'none', 'important');
+        inner.style.setProperty('min-width', '100vw', 'important');
+        inner.style.setProperty('margin-left', 'calc(-50vw + 50%)', 'important');
+        inner.style.setProperty('padding-left', 'max(0px, calc((100vw - 1430px) / 2))', 'important');
+        inner.style.setProperty('padding-right', 'max(0px, calc((100vw - 1430px) / 2))', 'important');
+        inner.style.setProperty('background', 'transparent', 'important');
+        inner.style.setProperty('background-color', 'transparent', 'important');
+        inner.style.removeProperty('backdrop-filter');
+        inner.style.removeProperty('-webkit-backdrop-filter');
+      }
+      var all = drop.querySelectorAll('*');
+      for (var j = 0; j < all.length; j++) {
+        var el = all[j];
+        el.style.setProperty('background', 'transparent', 'important');
+        el.style.setProperty('background-color', 'transparent', 'important');
+        el.style.removeProperty('backdrop-filter');
+        el.style.removeProperty('-webkit-backdrop-filter');
       }
     }
   }
@@ -76,14 +138,13 @@ body header#header .target .nav .dropdown a {
     setTimeout(applyFrosted, 50);
     setTimeout(applyFrosted, 200);
     setTimeout(applyFrosted, 500);
-    setTimeout(applyFrosted, 1500);
   }
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function(){ run(); });
   } else {
     run();
   }
-  setInterval(applyFrosted, 50);
+  window.__tcawgApplyFrosted = applyFrosted;
 })();
 (function(){
   function setHeight(h, isClosed) {
@@ -139,6 +200,9 @@ body header#header .target .nav .dropdown a {
       openDelayTimer = setTimeout(function() {
         openDelayTimer = null;
         setHeight(measureOpenHeight(), false);
+        if (window.__tcawgApplyFrosted) {
+          for (var t = 0; t <= 400; t += 100) setTimeout(window.__tcawgApplyFrosted, t);
+        }
         openIntervalId = setInterval(function() { setHeight(measureOpenHeight(), false); }, 150);
       }, 80);
     });
@@ -187,25 +251,53 @@ body header#header .target .nav .dropdown a {
 })();
 </script>
 <style id="header-dropdown-frosted">
-  /* 下拉選單毛玻璃（置於 body 末，確保覆寫官網 CSS） */
+  /* 下拉選單毛玻璃（置於 body 末）；僅 .dropdown 一層，隱藏所有偽元素 */
   #header .target .nav .dropdown::before,
   #header .target .nav .dropdown::after,
-  #header .target .nav .dropdown .container::before,
-  #header .target .nav .dropdown .container::after { display: none !important; background: none !important; }
+  #header .target .nav .dropdown *::before,
+  #header .target .nav .dropdown *::after { display: none !important; background: none !important; }
+  #header .target .nav ul.level1 li,
+  #header .target .nav ul.level1 li > a,
+  #header .target .nav > .container.width-1430 { background: transparent !important; background-color: transparent !important; }
   #header .target .nav ul.level1 li .dropdown {
     width: 100vw !important; max-width: none !important;
     left: 50% !important; transform: translateX(-50%) !important;
     box-sizing: border-box !important;
-    background: rgba(255,255,255,0.55) !important; background-color: rgba(255,255,255,0.55) !important;
+    background: rgba(255,255,255,0.72) !important; background-color: rgba(255,255,255,0.72) !important;
     backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
     box-shadow: 0 4px 24px rgba(0,0,0,0.1);
   }
-  #header .target .nav ul.level1 li .dropdown .container.width-1430 {
+  #header .target .nav .dropdown * {
     background: transparent !important; background-color: transparent !important;
-    backdrop-filter: none; -webkit-backdrop-filter: none; box-shadow: none !important;
+    backdrop-filter: none !important; -webkit-backdrop-filter: none !important; box-shadow: none !important;
   }
-  #header .target .nav .dropdown .item .title,
-  #header .target .nav .dropdown a { text-shadow: 0 0 1px rgba(255,255,255,0.9); }
+  #header .target .nav ul.level1 li .dropdown > .container.width-1430 {
+    width: 100vw !important; max-width: none !important; min-width: 100vw !important;
+    box-sizing: border-box !important; margin-left: calc(-50vw + 50%) !important;
+    padding-left: max(0px, calc((100vw - 1430px) / 2)) !important;
+    padding-right: max(0px, calc((100vw - 1430px) / 2)) !important;
+    background: transparent !important; background-color: transparent !important;
+    backdrop-filter: none !important; -webkit-backdrop-filter: none !important; box-shadow: none !important;
+  }
+  #header .target .nav .dropdown .container .item,
+  #header .target .nav .dropdown .container .item *,
+  #header .target .nav .dropdown .container .list,
+  #header .target .nav .dropdown .container .list * {
+    background: transparent !important; background-color: transparent !important;
+    backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+  }
+  #header .target .nav .dropdown {
+    font-family: "Noto Sans TC", "Source Han Sans TC", "思源黑體", sans-serif !important;
+  }
+  #header .target .nav .dropdown .item .title {
+    font-weight: 700 !important;
+    color: #1a1a1a !important;
+    text-shadow: 0 0 1px rgba(255,255,255,1), 0 0 2px rgba(255,255,255,0.9), 0 1px 2px rgba(0,0,0,0.15);
+  }
+  #header .target .nav .dropdown a {
+    color: #1a1a1a !important;
+    text-shadow: 0 0 1px rgba(255,255,255,1), 0 0 2px rgba(255,255,255,0.9), 0 1px 2px rgba(0,0,0,0.15);
+  }
 </style>
 </body>
 </html>
