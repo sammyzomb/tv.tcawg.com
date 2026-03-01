@@ -23,6 +23,17 @@
       font-size: 0.9rem;
     }
     .player-header a:hover { text-decoration: underline; }
+    .player-header .fs-btn {
+      padding: 8px 16px;
+      background: #2b71d2;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .player-header .fs-btn:hover { background: #1a5bb8; }
     .player-wrap {
       flex: 1;
       display: flex;
@@ -95,12 +106,15 @@
       font-size: 0.9rem;
     }
     .link-out a { color: #6ab7ff; }
+    .yt-fallback { margin-top: 12px; font-size: 0.9rem; color: #888; }
+    .yt-fallback.hidden { display: none; }
+    .yt-fallback a { color: #6ab7ff; }
   </style>
 </head>
 <body>
   <header class="player-header">
     <h1>影片播放</h1>
-    <a href="index.html">← 返回頻道首頁</a>
+    <button type="button" class="fs-btn" id="fullscreen-btn" style="display:none;">全螢幕播放</button>
   </header>
   <div class="player-wrap">
     <div class="player-box">
@@ -119,6 +133,7 @@
       </div>
       <iframe id="yt-frame" class="hidden" title="YouTube 播放器" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
     </div>
+    <p class="yt-fallback hidden" id="yt-fallback">若無法播放，請 <a href="#" id="yt-watch-link" target="_blank" rel="noopener">在 YouTube 觀看</a></p>
   </div>
 
   <script>
@@ -137,17 +152,45 @@
         return '';
       }
 
+      var fallbackEl = document.getElementById('yt-fallback');
+      var watchLink = document.getElementById('yt-watch-link');
       function play(id) {
         if (!id) return;
-        ytFrame.src = 'https://www.youtube.com/embed/' + id + '?autoplay=1';
+        ytFrame.src = 'https://www.youtube.com/embed/' + id + '?autoplay=1&rel=0';
         ytFrame.classList.remove('hidden');
         placeholder.classList.add('hidden');
+        if (fallbackEl) fallbackEl.classList.remove('hidden');
+        if (watchLink) watchLink.href = 'https://www.youtube.com/watch?v=' + id;
       }
 
       var params = new URLSearchParams(location.search);
       var v = params.get('v');
       if (v) {
         play(v);
+      }
+
+      var fullscreenBtn = document.getElementById('fullscreen-btn');
+      var playerWrap = document.querySelector('.player-wrap');
+      function toggleFullscreen() {
+        if (!document.fullscreenElement) {
+          (playerWrap || document.documentElement).requestFullscreen().catch(function() {});
+        } else {
+          document.exitFullscreen();
+        }
+      }
+      function updateFullscreenLabel() {
+        if (fullscreenBtn) fullscreenBtn.textContent = document.fullscreenElement ? '結束全螢幕' : '全螢幕播放';
+      }
+      if (fullscreenBtn) {
+        fullscreenBtn.style.display = 'inline-block';
+        fullscreenBtn.addEventListener('click', toggleFullscreen);
+      }
+      document.addEventListener('fullscreenchange', updateFullscreenLabel);
+
+      if (v && fullscreenBtn) {
+        setTimeout(function() {
+          (playerWrap || document.documentElement).requestFullscreen().catch(function() {});
+        }, 800);
       }
 
       playBtn.addEventListener('click', function() {

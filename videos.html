@@ -393,6 +393,13 @@ section[id^="cont-"] { scroll-margin-top: 150px; }  /* 桌面 */
     }
 
     (async function run(){
+      // 點「立即觀看」改開獨立播放頁（新分頁），不需捲動即可看到影片
+      window.openFullscreenPlayer = function(id) {
+        if (!id || !/^[a-zA-Z0-9_-]{11}$/.test(id)) return;
+        var base = location.href.replace(/[#?].*$/, '').replace(/\/[^/]*$/, '/');
+        window.open(base + 'player.html?v=' + encodeURIComponent(id), '_blank', 'noopener');
+      };
+
       const container = $('#all-videos');
       if (!container) return;
       container.innerHTML = '<div class="placeholder">載入中…</div>';

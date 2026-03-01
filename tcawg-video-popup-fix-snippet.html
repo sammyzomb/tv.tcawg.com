@@ -1,0 +1,57 @@
+<!-- ============================================================ -->
+<!-- 修正：點擊播放後不需捲動即可看到播放視窗 -->
+<!-- 請將本片段「整段」貼到 TCAWG 影片專區頁面（video.html）的 </body> 前 -->
+<!-- 若無法修改 tcawg.com，可將「整頁 video.html 內容 + 本片段」另存為新檔，改為 iframe 載入該新檔 -->
+<!-- ============================================================ -->
+<style id="video-popup-fix-css">
+/* 彈窗固定於視窗、內容靠上，避免需捲動才看到 */
+.mfp-wrap {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  z-index: 1042 !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+}
+.mfp-container {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: center !important;
+  padding-top: 2% !important;
+  box-sizing: border-box !important;
+  z-index: 1043 !important;
+}
+.mfp-content {
+  margin-top: 0 !important;
+  vertical-align: top !important;
+}
+.mfp-iframe-holder {
+  padding-top: 0 !important;
+}
+.mfp-iframe-scaler iframe {
+  max-height: 90vh !important;
+}
+</style>
+<script id="video-popup-fix-js">
+(function(){
+  function scrollToShowPopup() {
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  }
+  if (typeof jQuery !== 'undefined') {
+    jQuery(document).on('mfpOpen', scrollToShowPopup);
+  }
+  var observer = new MutationObserver(function() {
+    if (document.querySelector('.mfp-wrap.mfp-ready')) scrollToShowPopup();
+  });
+  if (document.body) observer.observe(document.body, { childList: true, subtree: true });
+})();
+</script>
