@@ -178,38 +178,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const savedTheme = localStorage.getItem('theme');
   if (savedTheme) {
     body.classList.add(savedTheme);
-  } else {
-    // 根據時間自動切換主題
-    const h = new Date().getHours();
-    if (h >= 18 || h < 6) {
-      // 晚上 6 點到早上 6 點：深色主題
-      body.classList.add('dark-theme');
-      localStorage.setItem('theme', 'dark-theme');
-    } else {
-      // 早上 6 點到晚上 6 點：淺色主題
-      body.classList.remove('dark-theme');
-      localStorage.setItem('theme', '');
-    }
   }
   updateThemeIcon(body.classList.contains('dark-theme') ? 'dark-theme' : '');
-  
-  // 每分鐘檢查一次時間，如果沒有手動設定主題則自動更新
-  setInterval(() => {
-    const manualTheme = localStorage.getItem('theme');
-    if (!manualTheme) {
-      const h = new Date().getHours();
-      const shouldBeDark = h >= 18 || h < 6;
-      const isCurrentlyDark = body.classList.contains('dark-theme');
-      
-      if (shouldBeDark && !isCurrentlyDark) {
-        body.classList.add('dark-theme');
-        updateThemeIcon('dark-theme');
-      } else if (!shouldBeDark && isCurrentlyDark) {
-        body.classList.remove('dark-theme');
-        updateThemeIcon('');
-      }
-    }
-  }, 60000); // 每分鐘檢查一次
   
   themeSwitcher?.addEventListener('click', e => {
     e.preventDefault();

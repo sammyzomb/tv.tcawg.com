@@ -8794,8 +8794,8 @@
                 simulated: result.simulated || false
               });
               
-              // 同步到今日節目表顯示系統
-              updateCurrentScheduleForToday(program);
+              // 不再寫入 localStorage currentSchedule，避免覆蓋成只有一筆、導致首頁「即將播出」只剩一個
+              // updateCurrentScheduleForToday(program);
               
               // 更新或創建日曆事件
               if (!events[program.airDate]) {
@@ -8849,7 +8849,7 @@
           const uploadedDates = [...new Set(results.filter(r => r.result.success).map(r => r.program.airDate))];
           console.log('🔄 準備重新載入以下日期的數據:', uploadedDates);
           
-          // 延遲一下讓 Contentful 完成索引更新
+          // 延遲讓 Contentful 完成索引後再重新載入，月曆/週曆/日曆都會顯示
           setTimeout(async () => {
             try {
               if (typeof reloadFromContentful === 'function') {
@@ -8857,16 +8857,13 @@
                 await reloadFromContentful();
                 console.log('✅ 重新載入完成');
               } else {
-                console.warn('⚠️ reloadFromContentful 函數不可用，跳過重新載入');
-                // 至少重新渲染一次
                 renderCurrentView();
               }
             } catch (error) {
               console.error('❌ 重新載入失敗:', error);
-              // 即使重新載入失敗，也重新渲染一次
               renderCurrentView();
             }
-          }, 2000);
+          }, 4000);
 
           // 顯示批量上架結果
           const totalPrograms = programsToUpload.length;
@@ -8896,17 +8893,47 @@
               updateBatchProgressComplete(progressDialog, 1, 0, 0);
               showStatus('✅ 成功上架節目到 Contentful！', 'success');
               
-              // 更新本地狀態
-              const event = getEvent(programData.airDate, programData.airTime);
+              // 更新或新增到本地 events，讓月曆/週曆/日曆視圖立即顯示
+              if (!events[programData.airDate]) events[programData.airDate] = [];
+              let event = getEvent(programData.airDate, programData.airTime);
               if (event) {
                 event.published = true;
                 event.publishedAt = new Date().toISOString();
                 event.contentfulId = result.entryId;
-                saveEvents();
-                renderCurrentView();
+              } else {
+                event = {
+                  id: result.entryId,
+                  title: programData.title,
+                  time: programData.airTime,
+                  duration: programData.duration || 30,
+                  category: programData.category || '',
+                  description: programData.description || '',
+                  videoType: programData.videoType || 'YouTube',
+                  youtubeId: programData.youtubeId || '',
+                  thumbnail: programData.thumbnail || '',
+                  status: programData.status || '重播',
+                  topics: programData.topics || [],
+                  published: true,
+                  publishedAt: new Date().toISOString(),
+                  contentfulId: result.entryId
+                };
+                events[programData.airDate].push(event);
+                events[programData.airDate].sort((a, b) => a.time.localeCompare(b.time));
               }
+              saveEvents();
+              renderCurrentView();
               
-              // 3秒後關閉進度對話框和編輯視窗
+              // 延遲後從 Contentful 重新載入，確保三種視圖都同步
+              setTimeout(async () => {
+                try {
+                  if (typeof reloadFromContentful === 'function') {
+                    await reloadFromContentful();
+                  } else {
+                    renderCurrentView();
+                  }
+                } catch (e) { console.error('reloadFromContentful:', e); renderCurrentView(); }
+              }, 3500);
+              
               setTimeout(() => {
                 if (progressDialog.parentNode) {
                   document.body.removeChild(progressDialog);
@@ -9036,8 +9063,8 @@
             
           localStorage.setItem('published_programs', JSON.stringify(publishedPrograms));
 
-          // 同步到今日節目表顯示系統
-          updateCurrentScheduleForToday(programData);
+          // 不再寫入 localStorage currentSchedule，避免首頁節目表被覆蓋成只有一筆
+          // updateCurrentScheduleForToday(programData);
 
           // 更新或創建日曆事件
           if (!events[programData.airDate]) {
@@ -9085,25 +9112,20 @@
           // 立即重新渲染視圖
           renderCurrentView();
           
-          // 從 Contentful 重新載入該日期的數據，確保顯示最新內容
+          // 從 Contentful 重新載入，確保月曆/週曆/日曆視圖都顯示
           console.log('🔄 準備重新載入日期數據:', programData.airDate);
           setTimeout(async () => {
             try {
               if (typeof reloadFromContentful === 'function') {
-                console.log('🔄 開始從 Contentful 重新載入數據...');
                 await reloadFromContentful();
-                console.log('✅ 重新載入完成');
               } else {
-                console.warn('⚠️ reloadFromContentful 函數不可用，跳過重新載入');
-                // 至少重新渲染一次
                 renderCurrentView();
               }
             } catch (error) {
               console.error('❌ 重新載入失敗:', error);
-              // 即使重新載入失敗，也重新渲染一次
               renderCurrentView();
             }
-          }, 2000);
+          }, 3500);
 
           showStatus(`✅ 成功上架節目「${title}」到 Contentful！`, 'success');
           console.log('🚪 準備關閉視窗...');

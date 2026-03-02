@@ -396,43 +396,38 @@
     #tcawg-header-iframe { vertical-align: top; background: transparent; display: block; border: none !important; outline: none; box-shadow: none; transition: none !important; }
     /* hero 上移 1px 遮住導覽列底緣次像素縫隙，消除邊界線 */
     .hero { margin-top: -1px; }
-    /* hero 左下角：正在播出按鈕，錨點至今日節目表現正播出；動畫吸引點擊 */
+    /* Live 那一行：與「現正播出 點擊觀看」並排 */
+    .hero-live-row {
+      display: flex; align-items: center; justify-content: center; flex-wrap: wrap;
+      gap: 16px; margin-top: 10px;
+    }
+    .hero-live-row p { margin: 0; }
+    /* 現正播出按鈕：放在 Live 世界旅遊新視野旁邊；動畫吸引點擊 */
     .hero-now-playing-cta {
-      position: absolute; left: 24px; bottom: 24px; z-index: 10;
       display: inline-flex; align-items: center; gap: 12px;
-      padding: 14px 22px; border-radius: 999px;
+      padding: 10px 18px; border-radius: 999px;
       background: rgba(0,0,0,0.55); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
       color: #fff; text-decoration: none; font-weight: 600; font-size: 1rem;
       box-shadow: 0 4px 24px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.08);
       transition: background 0.25s ease, transform 0.2s ease, box-shadow 0.25s ease;
-      animation: hero-cta-float 2.5s ease-in-out infinite;
     }
     .hero-now-playing-cta:hover {
       background: rgba(200,40,40,0.9); color: #fff;
-      transform: translateY(-3px) scale(1.02);
+      transform: translateY(-2px) scale(1.02);
       box-shadow: 0 8px 32px rgba(200,40,40,0.5), 0 0 24px rgba(200,40,40,0.25);
-      animation: none;
     }
-    .hero-now-playing-cta .hero-cta-text { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; line-height: 1.2; }
-    .hero-now-playing-cta .hero-cta-label { font-size: 0.8rem; font-weight: 500; opacity: 0.95; letter-spacing: 0.5px; }
-    .hero-now-playing-cta .hero-cta-watch { font-size: 0.75rem; color: rgba(255,255,255,0.85); font-weight: 500; display: flex; align-items: center; gap: 4px; animation: hero-cta-watch 1.8s ease-in-out infinite; }
+    .hero-now-playing-cta .hero-cta-text { display: flex; flex-direction: row; align-items: center; gap: 6px; line-height: 1.2; white-space: nowrap; }
+    .hero-now-playing-cta .hero-cta-label { font-size: 0.85rem; font-weight: 500; opacity: 0.95; }
+    .hero-now-playing-cta .hero-cta-watch { font-size: 0.8rem; color: rgba(255,255,255,0.9); font-weight: 500; }
     .hero-now-playing-dot {
       width: 10px; height: 10px; border-radius: 50%;
       background: #e53935; box-shadow: 0 0 0 2px rgba(255,255,255,0.4), 0 0 12px rgba(229,57,53,0.6);
       animation: hero-live-pulse 1.5s ease-in-out infinite;
       flex-shrink: 0;
     }
-    @keyframes hero-cta-float {
-      0%, 100% { transform: translateY(0); box-shadow: 0 4px 24px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.08); }
-      50% { transform: translateY(-4px); box-shadow: 0 8px 28px rgba(0,0,0,0.35), 0 0 16px rgba(229,57,53,0.15); }
-    }
     @keyframes hero-live-pulse {
       0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 0 2px rgba(255,255,255,0.4), 0 0 12px rgba(229,57,53,0.6); }
-      50% { opacity: 0.9; transform: scale(1.15); box-shadow: 0 0 0 3px rgba(255,255,255,0.5), 0 0 20px rgba(229,57,53,0.8); }
-    }
-    @keyframes hero-cta-watch {
-      0%, 100% { opacity: 0.85; }
-      50% { opacity: 1; text-shadow: 0 0 8px rgba(255,255,255,0.4); }
+      50% { opacity: 0.85; transform: scale(1.12); box-shadow: 0 0 0 3px rgba(255,255,255,0.5), 0 0 18px rgba(229,57,53,0.8); }
     }
     html { scroll-behavior: smooth; }
     /* 影片專區：完整高度，下方影片與頁尾都顯示，不會一大塊空白 */
@@ -515,6 +510,7 @@
     ></iframe>
   </header>
 
+  <!-- ========== 第一部：本站影片上架（三塊）========== -->
   <!-- 載入指示器 -->
   <div id="loading-indicator" class="loading-indicator">
     <div class="loading-spinner"></div>
@@ -528,16 +524,18 @@
     </div>
     <div class="hero-main-title">
       <h1 style="margin:0 0 10px 0;">探索世界  從這裡開始</h1>
-      <p>Live 世界旅遊新視野</p>
+      <div class="hero-live-row">
+        <p>Live 世界旅遊新視野</p>
+        <a href="#now-playing" class="hero-now-playing-cta" aria-label="點擊觀看現正播出">
+          <span class="hero-now-playing-dot"></span>
+          <span class="hero-cta-text">
+            <span class="hero-cta-label">正在播出</span>
+            <span class="hero-cta-watch">點擊觀看 ↓</span>
+          </span>
+        </a>
+      </div>
     </div>
     <div class="hero-caption" id="heroCaption"></div>
-    <a href="#now-playing" class="hero-now-playing-cta" aria-label="點擊觀看現正播出">
-      <span class="hero-now-playing-dot"></span>
-      <span class="hero-cta-text">
-        <span class="hero-cta-label">正在播出</span>
-        <span class="hero-cta-watch">點擊觀看 ↓</span>
-      </span>
-    </a>
   </div>
   
   <section class="schedule-section">
@@ -610,6 +608,7 @@
     <div class="video-grid" id="featured-videos"></div>
   </section>
 
+  <!-- ========== 第二部：下方嵌入（影片專區）========== -->
   <!-- 影片專區：嵌入＋可另開獨立頁面播放 -->
   <section class="official-video-section" aria-label="影片專區">
     <a href="player.html" target="_blank" rel="noopener noreferrer" class="official-video-newtab" title="獨立播放頁，播放器在頁面最上方、不用往下捲">
@@ -637,6 +636,10 @@
           var ifr = document.getElementById('tcawg-header-iframe');
           if (ifr) ifr.style.height = e.data.height + 'px';
           if (e.data.closed) document.documentElement.style.setProperty('--header-closed-height', e.data.height + 'px');
+        }
+        if (e.data && e.data.type === 'tcawg-video-clicked') {
+          var videoIframe = document.querySelector('.official-video-iframe');
+          if (videoIframe) videoIframe.scrollIntoView({ block: 'start', behavior: 'smooth' });
         }
       });
 

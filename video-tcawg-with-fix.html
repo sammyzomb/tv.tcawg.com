@@ -149,10 +149,19 @@ eval(function(p,a,c,k,e,d){e=function(c){return(c<a?'':e(parseInt(c/a)))+((c=c%a
 </style>
 <script id="video-popup-fix-js">
 (function(){
+  /* 通知父頁將影片區捲入視野（當本頁在 iframe 內時） */
+  function notifyParentScrollVideoIntoView() {
+    try {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ type: 'tcawg-video-clicked' }, '*');
+      }
+    } catch (err) {}
+  }
   function scrollToShowPopup() {
     window.scrollTo(0, 0);
     document.documentElement.scrollTop = 0;
     document.body.scrollTop = 0;
+    notifyParentScrollVideoIntoView();
   }
   if (typeof jQuery !== 'undefined') {
     jQuery(document).on('mfpOpen', scrollToShowPopup);
@@ -182,6 +191,11 @@ eval(function(p,a,c,k,e,d){e=function(c){return(c<a?'':e(parseInt(c/a)))+((c=c%a
     if (!videoId) return;
     e.preventDefault();
     e.stopPropagation();
+    /* 先捲到頂並通知父頁捲動影片區入視野，避免點分類後再點影片時要手動往下捲才看到 */
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    notifyParentScrollVideoIntoView();
     var base = location.pathname.replace(/\/[^/]*$/, '/') || '/';
     var playerUrl = location.origin + base + 'player.html?v=' + videoId;
     window.open(playerUrl, '_blank', 'noopener,noreferrer,width=960,height=640,scrollbars=yes');
