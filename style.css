@@ -233,12 +233,13 @@ body.menu-open {
   justify-content: space-between !important; 
   align-items: center !important; 
   margin-bottom: 0 !important; /* 移除底部間距 */
-  padding: 20px 25px 15px !important; /* 與現正播出區塊完全相同的內邊距 */
+  padding: 2px 25px 2px !important; /* 明顯縮小上下 */
   max-width: none !important;
   min-height: auto !important;
   height: auto !important;
   width: 100% !important;
   box-sizing: border-box !important;
+  font-family: 'Noto Sans TC', 'Source Han Sans', 'PingFang TC', 'Microsoft JhengHei', sans-serif !important;
 }
 
 .title-left {
@@ -248,7 +249,7 @@ body.menu-open {
 }
 
 .section-title-container h2 {
-  font-family: var(--hero-title-font) !important;
+  font-family: 'Noto Sans TC', 'Source Han Sans', 'PingFang TC', 'Microsoft JhengHei', sans-serif !important;
   font-size: 1.4rem !important; /* 與現正播出標題相同的字體大小 */
   color: var(--text-color) !important; 
   margin: 0 !important;
@@ -317,7 +318,7 @@ body.dark-theme .view-all-btn:hover {
   font-size: 1.4rem !important; /* 與今日節目表相同的字體大小 */
   color: var(--text-color) !important;
   font-weight: 700 !important; /* 與今日節目表相同的字體粗細 */
-  font-family: var(--hero-title-font) !important; /* 與今日節目表相同的字體 */
+  font-family: 'Noto Sans TC', 'Source Han Sans', 'PingFang TC', 'Microsoft JhengHei', sans-serif !important; /* 思源黑體 */
   display: flex !important;
   align-items: center !important;
   gap: 0 !important; /* 移除間距 */
@@ -691,7 +692,7 @@ body.dark-theme .continent-item .label .en{ color: var(--text-color-light); }
 
 /* --- TLC 風格節目時間表樣式 - 滿版寬度 --- */
 .schedule-section {
-  padding: 20px 0 !important; /* 從 40px 0 減少到 20px 0 */
+  padding: 4px 0 !important; /* 明顯縮小上下 */
   background: var(--section-bg);
   position: relative;
   width: 100%;
@@ -736,7 +737,7 @@ body.dark-theme .continent-item .label .en{ color: var(--text-color-light); }
 }
 
 .now-playing-header {
-  padding: 12px 25px 8px; /* 縮小上下內邊距 */
+  padding: 4px 25px 4px; /* 明顯縮小上下 */
   border-bottom: 1px solid var(--card-border);
   display: flex;
   justify-content: space-between;
@@ -750,6 +751,7 @@ body.dark-theme .continent-item .label .en{ color: var(--text-color-light); }
 }
 
 .now-playing-header h3 {
+  font-family: 'Noto Sans TC', 'Source Han Sans', 'PingFang TC', 'Microsoft JhengHei', sans-serif !important;
   font-size: 1.4rem;
   font-weight: 700;
   margin: 0;
@@ -973,7 +975,7 @@ body.dark-theme .continent-item .label .en{ color: var(--text-color-light); }
 }
 
 .upcoming-programs-header {
-  padding: 12px 25px 8px; /* 縮小上下內邊距 */
+  padding: 4px 25px 4px; /* 與現正播出同高度 */
   border-bottom: 1px solid var(--card-border);
   display: flex;
   justify-content: space-between;
@@ -987,6 +989,7 @@ body.dark-theme .continent-item .label .en{ color: var(--text-color-light); }
 }
 
 .upcoming-programs-header h3 {
+  font-family: 'Noto Sans TC', 'Source Han Sans', 'PingFang TC', 'Microsoft JhengHei', sans-serif !important;
   font-size: 1.4rem;
   font-weight: 700;
   margin: 0;
@@ -1014,6 +1017,12 @@ body.dark-theme .continent-item .label .en{ color: var(--text-color-light); }
   scrollbar-width: thin;
   scrollbar-color: rgba(52, 152, 219, 0.3) transparent;
   max-height: calc(100% - 90px);
+  transition: opacity 0.2s ease;
+  will-change: opacity;
+}
+
+.upcoming-programs-list.is-switching {
+  opacity: 0;
 }
 
 /* 自定義捲動條樣式 */
@@ -1172,9 +1181,9 @@ body.dark-theme .continent-item .label .en{ color: var(--text-color-light); }
 .topic-tag {
   background: #3498db;
   color: white;
-  padding: 8px 16px;
-  border-radius: 20px;
-  font-size: 1.5rem; /* 增大字體大小 */
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
   font-weight: 600;
   border: none;
   display: inline-block;

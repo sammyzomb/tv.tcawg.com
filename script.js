@@ -41,6 +41,165 @@ function getProgramStatus(program) {
   }
 }
 
+// 標準化縮圖網址，避免 YouTube 高解析灰圖
+function normalizeThumbnailUrl(url, youtubeId) {
+  const fallback = 'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop';
+  let finalUrl = url || '';
+  if (!finalUrl && youtubeId) {
+    finalUrl = `https://i.ytimg.com/vi/${youtubeId}/hqdefault.jpg`;
+  }
+  if (!finalUrl) return fallback;
+  if (finalUrl.includes('maxresdefault.jpg')) {
+    return finalUrl.replace('maxresdefault.jpg', 'hqdefault.jpg');
+  }
+  return finalUrl;
+}
+
+function mapScheduleItemsToPrograms(items, dateKey) {
+  const rawPrograms = (items || []).filter(item => {
+    const fields = item.fields || {};
+    const title = fields.title || '';
+    const airDate = fields.airDate || '';
+    const isTargetDate = airDate === dateKey;
+    if (!isTargetDate) return false;
+
+    const isRecommendedProgram = title.includes('加拿大的寒冰生活') || 
+                                 title.includes('加拿大捕魚') || 
+                                 title.includes('加拿大的極光晚餐');
+    return !isRecommendedProgram;
+  }).map(item => {
+    const notes = item.fields.notes || '';
+    const timeMatch = notes.match(/\[時間:(\d{2}:\d{2})\]/);
+    let timeString;
+    
+    if (timeMatch) {
+      timeString = timeMatch[1];
+    } else {
+      const block = item.fields.block || '12-18';
+      switch (block) {
+        case '00-06': timeString = '02:00'; break;
+        case '06-12': timeString = '11:30'; break;
+        case '12-18': timeString = '14:00'; break;
+        case '18-24': timeString = '22:00'; break;
+        default: timeString = '14:00';
+      }
+    }
+    
+    const video = item.fields.video?.fields || {};
+    let youtubeId = '';
+    if (video.youtubeId) {
+      youtubeId = video.youtubeId.trim();
+    } else if (video.youTubeId) {
+      youtubeId = video.youTubeId.trim();
+    }
+    
+    const isValidYouTubeId = /^[a-zA-Z0-9_-]{11}$/.test(youtubeId);
+    let thumbnail = '';
+    if (item.fields.thumbnailUrl) {
+      thumbnail = item.fields.thumbnailUrl;
+    } else if (video.thumbnail?.fields?.file?.url) {
+      thumbnail = video.thumbnail.fields.file.url.startsWith('http') ? 
+        video.thumbnail.fields.file.url : 
+        `https:${video.thumbnail.fields.file.url}`;
+    } else if (video.thumbnail && typeof video.thumbnail === 'string') {
+      thumbnail = video.thumbnail;
+    } else if (video.coverImage?.fields?.file?.url) {
+      thumbnail = `https:${video.coverImage.fields.file.url}`;
+    } else if (isValidYouTubeId) {
+      thumbnail = `https://i.ytimg.com/vi/${youtubeId}/hqdefault.jpg`;
+    } else {
+      thumbnail = 'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop';
+    }
+    
+    let description = '';
+    if (notes) {
+      description = notes
+        .replace(/\[時間:\d{2}:\d{2}\]/g, '')
+        .replace(/\[YouTube:[^\]]+\]/g, '')
+        .trim();
+    }
+    if (!description) {
+      description = video.description || item.fields.description || '';
+    }
+
+    const category = extractCategoryFromNotes(notes) || item.fields.category || video.category || '';
+    const topics = extractTopicsFromNotes(notes) || item.fields.topics || [];
+    
+    return {
+      time: timeString,
+      title: item.fields.title || '未命名節目',
+      duration: '30',
+      category: category || '',
+      description: description,
+      thumbnail: thumbnail,
+      youtubeId: youtubeId,
+      status: (item.fields.isPremiere === true || item.fields.status === '首播') ? '首播' : '重播',
+      tags: topics
+    };
+  }).sort((a, b) => a.time.localeCompare(b.time));
+
+  const uniquePrograms = [];
+  const seenTimes = new Set();
+  for (const program of rawPrograms) {
+    if (!seenTimes.has(program.time)) {
+      seenTimes.add(program.time);
+      uniquePrograms.push(program);
+    }
+  }
+
+  return uniquePrograms;
+}
+
+// 以 30 分鐘時段補齊 24 個欄位（可從目前或下一時段開始）
+function buildUpcomingSlots(programs, startOffsetSlots = 0, nextDayPrograms = []) {
+  const taiwanTime = getTaiwanTime();
+  const currentHour = taiwanTime.getHours();
+  const currentMinute = taiwanTime.getMinutes();
+  const currentTimeSlot = currentMinute < 30 ? 0 : 1;
+  const currentHalfHourIndex = currentHour * 2 + currentTimeSlot;
+  const baseSlotIndex = currentHalfHourIndex + startOffsetSlots;
+
+  const mapByTime = new Map();
+  (programs || []).forEach(p => {
+    if (p && p.time) mapByTime.set(p.time, p);
+  });
+  const mapByTimeNextDay = new Map();
+  (nextDayPrograms || []).forEach(p => {
+    if (p && p.time) mapByTimeNextDay.set(p.time, p);
+  });
+
+  const slots = [];
+  for (let i = 0; i < 24; i++) {
+    const slotIndex = baseSlotIndex + i;
+    const dayOffset = Math.floor(slotIndex / 48);
+    const halfHourIndex = slotIndex % 48;
+    const hour = Math.floor(halfHourIndex / 2);
+    const minute = (halfHourIndex % 2) * 30;
+    const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+
+    const existing = dayOffset === 0 ? mapByTime.get(timeString) : mapByTimeNextDay.get(timeString);
+    if (existing) {
+      slots.push({
+        ...existing,
+        thumbnail: normalizeThumbnailUrl(existing.thumbnail, existing.youtubeId)
+      });
+    } else {
+      slots.push({
+        time: timeString,
+        title: '目前暫無節目',
+        duration: '30',
+        category: '',
+        description: '此時段暫無節目安排',
+        thumbnail: normalizeThumbnailUrl('', ''),
+        youtubeId: '',
+        status: '空檔',
+        tags: []
+      });
+    }
+  }
+  return slots;
+}
+
 // 初始化 Contentful client
 const contentfulClient = contentful.createClient({
   space: 'os5wf90ljenp',
@@ -563,6 +722,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const taiwanTime = getTaiwanTime();
       const currentMonth = taiwanTime.toISOString().slice(0, 7); // YYYY-MM 格式
       const today = taiwanTime.toISOString().split('T')[0]; // YYYY-MM-DD 格式
+      const tomorrowDate = new Date(taiwanTime);
+      tomorrowDate.setDate(taiwanTime.getDate() + 1);
+      const tomorrow = tomorrowDate.toISOString().split('T')[0];
       const currentHour = taiwanTime.getHours();
       
       console.log('正在載入節目表，月份:', currentMonth, '日期:', today, '當前時間:', currentHour + ':' + taiwanTime.getMinutes());
@@ -670,7 +832,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             // 3. 使用 YouTube 縮圖（只有當 YouTube ID 有效時）
             else if (isValidYouTubeId) {
-              thumbnail = `https://i.ytimg.com/vi/${youtubeId}/maxresdefault.jpg`;
+              thumbnail = `https://i.ytimg.com/vi/${youtubeId}/hqdefault.jpg`;
             }
             // 4. 預設縮圖
             else {
@@ -810,6 +972,23 @@ document.addEventListener('DOMContentLoaded', () => {
           
           console.log('去重前節目數量:', todayPrograms.length);
           console.log('去重後節目數量:', uniquePrograms.length);
+
+          let tomorrowPrograms = [];
+          try {
+            const tomorrowResponse = await contentfulClient.getEntries({
+              content_type: 'scheduleItem',
+              'fields.airDate': tomorrow,
+              order: 'fields.airDate,fields.slotIndex',
+              include: 2,
+              limit: 100
+            });
+            if (tomorrowResponse.items && tomorrowResponse.items.length > 0) {
+              tomorrowPrograms = mapScheduleItemsToPrograms(tomorrowResponse.items, tomorrow);
+              console.log('成功載入隔天節目，共', tomorrowPrograms.length, '個節目');
+            }
+          } catch (tomorrowError) {
+            console.log('隔天節目載入失敗:', tomorrowError.message);
+          }
           
           // 設定全域 scheduleData 變數
           window.scheduleData = {
@@ -819,6 +998,13 @@ document.addEventListener('DOMContentLoaded', () => {
               month: `${taiwanTime.getMonth() + 1}月`,
               day: `${taiwanTime.getDate()}日`,
               schedule: uniquePrograms
+            },
+            tomorrow: {
+              date: tomorrow,
+              dayOfWeek: getDayOfWeek(tomorrowDate),
+              month: `${tomorrowDate.getMonth() + 1}月`,
+              day: `${tomorrowDate.getDate()}日`,
+              schedule: tomorrowPrograms
             }
           };
           
@@ -835,6 +1021,13 @@ document.addEventListener('DOMContentLoaded', () => {
               month: `${taiwanTime.getMonth() + 1}月`,
               day: `${taiwanTime.getDate()}日`,
               schedule: getDefaultSchedule(today)
+            },
+            tomorrow: {
+              date: tomorrow,
+              dayOfWeek: getDayOfWeek(tomorrowDate),
+              month: `${tomorrowDate.getMonth() + 1}月`,
+              day: `${tomorrowDate.getDate()}日`,
+              schedule: []
             }
           };
           scheduleData = window.scheduleData;
@@ -1057,17 +1250,21 @@ document.addEventListener('DOMContentLoaded', () => {
       currentDateTimeEl.textContent = `${currentMonth}月${currentDay}日 ${currentDayOfWeek} 現在時間 ${timeString}`;
     }
 
-    // 更新即將播出節目數量
+    // 更新即將播出節目數量（包含空檔時段）
     const upcomingCountEl = document.getElementById('upcoming-count');
     if (upcomingCountEl && today.schedule) {
-      const upcomingPrograms = today.schedule.filter(program => {
+      const filledPrograms = buildUpcomingSlots(
+        today.schedule,
+        0,
+        scheduleData?.tomorrow?.schedule || []
+      );
+      const upcomingPrograms = filledPrograms.filter(program => {
         try {
           return getProgramStatus(program) === 'upcoming';
         } catch (error) {
           return program.status === 'upcoming';
         }
       });
-      // 顯示所有即將播出節目數量
       upcomingCountEl.textContent = `共 ${upcomingPrograms.length} 個節目`;
     }
 
@@ -1077,7 +1274,8 @@ document.addEventListener('DOMContentLoaded', () => {
       // TLC風格版型渲染
       console.log('🎯 檢測到TLC風格版型，開始渲染');
       console.log('📋 今日節目數據:', today.schedule);
-      renderTLCStyleSchedule(today.schedule);
+      const filledPrograms = buildUpcomingSlots(today.schedule || []);
+      renderTLCStyleSchedule(filledPrograms);
       return;
     }
 
@@ -2235,7 +2433,8 @@ function updateNowPlayingArea(program) {
   const nowPlayingPlayButton = document.getElementById('now-playing-play-button');
 
   if (nowPlayingImage) {
-    nowPlayingImage.src = program.thumbnail || 'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=800&h=450&fit=crop';
+    const thumb = normalizeThumbnailUrl(program.thumbnail, program.youtubeId);
+    nowPlayingImage.src = thumb || 'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=800&h=450&fit=crop';
     nowPlayingImage.alt = escapeHtml(program.title);
   }
   if (nowPlayingTitle) {
@@ -2331,30 +2530,80 @@ function renderUpcomingProgramsList(programs) {
     return;
   }
 
-  upcomingProgramsList.innerHTML = '';
-  console.log('🧹 已清空即將播出節目列表容器');
+  // 固定 24 個時段，分頁顯示（每頁 4 個）
+  const filledPrograms = buildUpcomingSlots(
+    programs || [],
+    1,
+    window.scheduleData?.tomorrow?.schedule || []
+  );
+  const upcomingOnly = filledPrograms.filter(program => {
+    try {
+      return getProgramStatus(program) === 'upcoming';
+    } catch (error) {
+      return program.status === 'upcoming';
+    }
+  });
+  window._upcomingSlots = upcomingOnly;
+  window._upcomingPageSize = 4;
+  if (typeof window._upcomingPage !== 'number') window._upcomingPage = 0;
 
-  // 如果沒有即將播出節目，顯示預設節目
-  if (!programs || programs.length === 0) {
-    console.log('📝 沒有即將播出節目數據，生成預設節目列表');
-    const defaultPrograms = generateDefaultUpcomingPrograms();
-    console.log('✅ 已生成預設即將播出節目，數量:', defaultPrograms.length);
-    
-    defaultPrograms.forEach((program, index) => {
-      console.log(`📋 渲染第 ${index + 1} 個即將播出節目:`, program.title, program.time);
-      renderUpcomingProgramItem(program, upcomingProgramsList);
-    });
-    console.log('🎉 所有預設即將播出節目列表已渲染完成');
-    return;
+  // 確保右上角有左右箭頭
+  const header = document.querySelector('.upcoming-programs-header');
+  if (header && !document.getElementById('upcoming-nav')) {
+    const nav = document.createElement('div');
+    nav.id = 'upcoming-nav';
+    nav.style.cssText = 'display:flex;gap:8px;align-items:center;';
+    nav.innerHTML = `
+      <button id="upcoming-prev" type="button" style="border:none;background:#e9ecef;color:#333;border-radius:6px;padding:4px 8px;cursor:pointer;">▲</button>
+      <button id="upcoming-next" type="button" style="border:none;background:#e9ecef;color:#333;border-radius:6px;padding:4px 8px;cursor:pointer;">▼</button>
+    `;
+    header.appendChild(nav);
   }
 
-  console.log('📋 渲染現有即將播出節目列表');
-  // 渲染所有即將播出節目（保持24個時間槽）
-  programs.forEach((program, index) => {
-    console.log(`📋 渲染第 ${index + 1} 個即將播出節目:`, program.title, program.time);
-    renderUpcomingProgramItem(program, upcomingProgramsList);
-  });
-  console.log('🎉 所有即將播出節目列表已渲染完成');
+  function renderUpcomingPage() {
+    upcomingProgramsList.classList.add('is-switching');
+    const total = window._upcomingSlots.length;
+    const pageSize = window._upcomingPageSize;
+    const totalPages = Math.ceil(total / pageSize);
+    if (window._upcomingPage >= totalPages) window._upcomingPage = totalPages - 1;
+    if (window._upcomingPage < 0) window._upcomingPage = 0;
+
+    const start = window._upcomingPage * pageSize;
+    const pageItems = window._upcomingSlots.slice(start, start + pageSize);
+
+    upcomingProgramsList.innerHTML = '';
+    pageItems.forEach((program, index) => {
+      console.log(`📋 渲染即將播出節目(頁面) ${index + 1}:`, program.title, program.time);
+      renderUpcomingProgramItem(program, upcomingProgramsList);
+    });
+
+    const upcomingCountEl = document.getElementById('upcoming-count');
+    if (upcomingCountEl) {
+      upcomingCountEl.textContent = `顯示 ${pageItems.length} / ${total} 個節目`;
+    }
+
+    if (prevBtn && nextBtn) {
+      prevBtn.disabled = window._upcomingPage <= 0;
+      nextBtn.disabled = window._upcomingPage >= totalPages - 1;
+      prevBtn.style.opacity = prevBtn.disabled ? '0.5' : '1';
+      nextBtn.style.opacity = nextBtn.disabled ? '0.5' : '1';
+      prevBtn.style.cursor = prevBtn.disabled ? 'not-allowed' : 'pointer';
+      nextBtn.style.cursor = nextBtn.disabled ? 'not-allowed' : 'pointer';
+    }
+
+    requestAnimationFrame(() => {
+      upcomingProgramsList.classList.remove('is-switching');
+    });
+  }
+
+  const prevBtn = document.getElementById('upcoming-prev');
+  const nextBtn = document.getElementById('upcoming-next');
+  if (prevBtn && nextBtn) {
+    prevBtn.onclick = () => { window._upcomingPage -= 1; renderUpcomingPage(); };
+    nextBtn.onclick = () => { window._upcomingPage += 1; renderUpcomingPage(); };
+  }
+
+  renderUpcomingPage();
 }
 
 function renderUpcomingProgramItem(program, upcomingProgramsList) {
@@ -2382,9 +2631,10 @@ function renderUpcomingProgramItem(program, upcomingProgramsList) {
     console.log('⚠️ getProgramStatus 函數未定義');
   }
   
+  const upcomingThumb = normalizeThumbnailUrl(program.thumbnail, program.youtubeId);
   listItem.innerHTML = `
     <div class="upcoming-program-thumbnail">
-      <img src="${program.thumbnail || 'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop'}" 
+      <img src="${upcomingThumb || 'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop'}" 
            style="width: 100%; height: 100%; object-fit: cover; object-position: center; display: block;"
            alt="${escapeHtml(program.title || '未命名節目')}"
            onerror="this.src='https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop';">

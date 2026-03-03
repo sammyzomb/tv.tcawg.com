@@ -4,8 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>統一節目管理系統 - 縮圖功能已更新</title>
-  <!-- 版本標記：2024-12-19 更新縮圖功能 -->
-  <!-- 時間戳記：2024-12-19 21:45:00 -->
+  <!-- 版本：縮圖 YouTube ID 同步 2025-02，getComputedStyle 偵測彈窗 + 開窗立即同步 -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
@@ -182,7 +181,7 @@
     .btn-danger { background: #dc3545; }
     .btn-danger:hover { background: #c82333; }
 
-    .status-bar { position: fixed; bottom: 20px; right: 20px; background: #333; color: white; padding: 15px 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 1001; display: none; }
+    .status-bar { position: fixed; bottom: 20px; right: 20px; background: #333; color: white; padding: 15px 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 10050; display: none; }
 
     /* 週視圖和日視圖樣式 */
     .week-row, .day-row { transition: background-color 0.2s ease; }
@@ -581,6 +580,11 @@
         <h3>選擇播出時間</h3>
         <button class="modal-close" onclick="closeTimeSlotModal()">&times;</button>
       </div>
+      <div style="padding: 0 20px 10px; border-bottom: 1px solid #eee;">
+        <button type="button" id="btnSkipTimeSlot" style="background: #28a745; color: white; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 13px;">
+          ⏭ 跳過，直接新增節目（預設 12:00，可稍後在表單改時間）
+        </button>
+      </div>
       <div class="time-slot-grid" id="timeSlotGrid" style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 10px; padding: 20px;">
         <!-- 時間槽將在這裡動態生成 -->
       </div>
@@ -629,7 +633,7 @@
 
         <div class="form-group" id="youtubeIdGroup" style="display: none;">
           <label>YouTube ID：</label>
-          <input type="text" id="youtubeId" placeholder="例如：dQw4w9WgXcQ" onblur="fetchYouTubeInfo()" oninput="updateThumbnailPreview(this.value.trim())">
+          <input type="text" id="youtubeId" placeholder="例如：dQw4w9WgXcQ 或貼上 YouTube 網址" onblur="fetchYouTubeInfo()" oninput="onYoutubeIdInput(this)" onpaste="setTimeout(function(){ var el=document.getElementById('youtubeId'); if(el) onYoutubeIdInput(el); }, 0)">
         </div>
 
         <div class="form-group" id="mp4FileGroup" style="display: none;">
@@ -639,7 +643,10 @@
 
         <div class="form-group">
           <label>節目標題：</label>
-          <input type="text" id="title" placeholder="例如：早安世界 - 日本東京晨間漫步" required>
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <input type="text" id="title" placeholder="例如：早安世界 - 日本東京晨間漫步" required style="flex: 1;">
+            <button type="button" class="btn" style="background: #17a2b8; padding: 6px 10px; font-size: 0.85rem;" onclick="fetchYouTubeTitleAndDescription()">🎯 自動擷取標題</button>
+          </div>
         </div>
 
         <div class="form-group">
@@ -710,20 +717,33 @@
 
         <div class="form-group" style="background: #f8f9fa; padding: 15px; border-radius: 8px; border: 2px solid #007bff;">
           <label style="color: #007bff; font-weight: bold;">🎬 節目縮圖：</label>
-          <div style="display: flex; gap: 15px; align-items: center; margin-top: 10px;">
+          <div style="display: flex; gap: 15px; align-items: flex-start; margin-top: 10px;">
             <img id="thumbnailPreview" src="https://images.unsplash.com/photo-1485846234645-a62644f84728?w=200&h=112&fit=crop" 
                  style="width: 200px; height: 112px; object-fit: cover; border: 2px solid #007bff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-            <div style="display: flex; flex-direction: column; gap: 10px;">
+            <div style="display: flex; flex-direction: column; gap: 10px; min-width: 0;">
+              <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+                <span style="font-size: 12px; color: #007bff;">目前 YouTube ID：</span>
+                <span id="thumbnailCurrentYtId" style="font-weight: 600; color: #333; font-size: 13px;">—</span>
+              </div>
+              <label style="font-size: 11px; color: #666;">在此輸入或貼上 YouTube ID／網址：</label>
+              <input type="text" id="thumbnailYtIdInput" placeholder="例如：3H-EIWAcjpA 或貼上整段網址" 
+                     style="padding: 8px; border: 1px solid #007bff; border-radius: 4px; font-size: 13px; width: 100%; max-width: 280px;"
+                     oninput="onThumbnailYtIdInput(this)" onpaste="setTimeout(function(){ var el=document.getElementById('thumbnailYtIdInput'); if(el) onThumbnailYtIdInput(el); }, 0)">
               <input type="file" id="thumbnailFile" accept="image/*" onchange="previewThumbnail()" 
                      style="padding: 8px; border: 1px solid #ddd; border-radius: 4px; background: white;">
-              <button type="button" onclick="resetThumbnail()" 
-                      style="background: #6c757d; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold;">
-                🔄 重置為 YouTube 縮圖
+              <button type="button" id="btnReloadYtThumbnail"
+                      style="background: #007bff; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                🔃 重新載入 YouTube 縮圖
               </button>
+              <button type="button" id="btnCopyYtThumbnailUrl"
+                      style="background: #17a2b8; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                📋 複製縮圖網址（可貼到瀏覽器新分頁開啟）
+              </button>
+              <div id="thumbnailStatusMsg" style="font-size: 11px; color: #666; margin-top: 2px; max-width: 280px; line-height: 1.4;"></div>
             </div>
           </div>
           <div style="margin-top: 10px; font-size: 12px; color: #666;">
-            💡 提示：輸入 YouTube ID 後會自動顯示縮圖，也可以上傳自訂縮圖
+            💡 輸入 YouTube ID 後會自動顯示縮圖；若無法顯示可點「重新載入」或「複製縮圖網址」貼到新分頁查看
           </div>
         </div>
 
@@ -754,7 +774,7 @@
 
         <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px;">
           <button type="submit" class="btn">💾 儲存節目</button>
-          <button type="button" class="btn" style="background: #17a2b8;" onclick="copyAndPublish()">📋 複製上架</button>
+          <button type="button" class="btn" style="background: #17a2b8;" onclick="copyAndPublish()">📋 批次上架</button>
           <button type="button" class="btn" style="background: #ffc107; color: #000;" onclick="checkSystemStatus()">🔍 檢查系統狀態</button>
           <button type="button" class="btn" style="background: #6f42c1; color: white;" onclick="toggleFeaturedFromEdit(true)" id="setFeaturedBtn">⭐ 設為精選</button>
         </div>
@@ -1037,7 +1057,6 @@
       updateCurrentDateDisplay();
       loadTopics();
       startTimeUpdates(); // 啟動實時時間更新
-      
       // 每 30 秒自動從 Contentful 刷新數據，確保多人協作時數據同步
       setInterval(() => {
         console.log('🔄 自動刷新 Contentful 數據...');
@@ -1622,6 +1641,7 @@
 
     function openEventModal(date, time = '') {
       // 移除過去日期和時間的編輯限制，允許編輯所有日期和時間
+      window.currentEditingVideoId = null; // 確保為排程編輯模式，非影片庫編輯
 
       document.getElementById('editDate').value = date;
       document.getElementById('editTime').value = time;
@@ -1635,7 +1655,8 @@
 
       const existingEvent = getEvent(date, time);
       if (existingEvent) {
-        console.log('🔍 載入現有節目資料:', existingEvent);
+        window.editingScheduleEvent = { date, time, event: existingEvent };
+        console.log('🔍 載入現有節目資料（編輯模式，儲存時將更新而非新增）:', existingEvent);
         console.log('🔍 節目主題資料詳情:', {
           topics: existingEvent.topics,
           topicsType: typeof existingEvent.topics,
@@ -1653,23 +1674,23 @@
         document.getElementById('status').value = existingEvent.status;
         document.getElementById('videoType').value = existingEvent.videoType || '';
         document.getElementById('youtubeId').value = existingEvent.youtubeId || '';
+        var thumbYtInput = document.getElementById('thumbnailYtIdInput');
+        if (thumbYtInput) thumbYtInput.value = existingEvent.youtubeId || '';
         
-        // 載入縮圖資料
+        // 載入縮圖：有自訂縮圖（非 YouTube 網址）用自訂，否則依 YouTube ID 自動顯示（含 hqdefault 備援）
         const thumbnailPreview = document.getElementById('thumbnailPreview');
-        if (existingEvent.thumbnail) {
+        const thumbUrl = (existingEvent.thumbnail || '').toString();
+        const isYoutubeThumb = thumbUrl.includes('ytimg.com') || thumbUrl.includes('img.youtube.com');
+        if (thumbUrl && !isYoutubeThumb) {
           thumbnailPreview.src = existingEvent.thumbnail;
-          if (existingEvent.youtubeId) {
-            thumbnailPreview.setAttribute('data-youtube-url', `https://img.youtube.com/vi/${existingEvent.youtubeId}/maxresdefault.jpg`);
-          }
+          setThumbnailStatus('使用自訂縮圖', false);
+          if (existingEvent.youtubeId) thumbnailPreview.setAttribute('data-youtube-url', 'https://i.ytimg.com/vi/' + existingEvent.youtubeId + '/maxresdefault.jpg');
+          var ytIdSpan = document.getElementById('thumbnailCurrentYtId');
+          if (ytIdSpan) ytIdSpan.textContent = existingEvent.youtubeId || '—';
         } else if (existingEvent.youtubeId) {
-          // 如果有 YouTube ID 但沒有縮圖，生成縮圖
-          const youtubeThumbnail = `https://img.youtube.com/vi/${existingEvent.youtubeId}/maxresdefault.jpg`;
-          thumbnailPreview.src = youtubeThumbnail;
-          thumbnailPreview.setAttribute('data-youtube-url', youtubeThumbnail);
+          updateThumbnailPreview(existingEvent.youtubeId);
         } else {
-          // 沒有縮圖資料，使用預設
-          thumbnailPreview.src = 'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=200&h=112&fit=crop';
-          thumbnailPreview.removeAttribute('data-youtube-url');
+          updateThumbnailPreview('');
         }
         
         // 載入主題探索分類
@@ -1756,6 +1777,7 @@
         
         toggleVideoFields();
       } else {
+        window.editingScheduleEvent = null;
         document.getElementById('modalTitle').textContent = '新增節目';
         
         // 移除修改按鈕相關邏輯
@@ -1771,13 +1793,11 @@
         document.getElementById('status').value = '重播';
         document.getElementById('videoType').value = '';
         document.getElementById('youtubeId').value = '';
+        var thumbYtInput = document.getElementById('thumbnailYtIdInput');
+        if (thumbYtInput) thumbYtInput.value = '';
         
-        // 清除縮圖預覽
-        const thumbnailPreview = document.getElementById('thumbnailPreview');
-        thumbnailPreview.src = 'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=200&h=112&fit=crop';
-        thumbnailPreview.removeAttribute('data-youtube-url');
-        
-        // 清除檔案選擇
+        // 清除縮圖預覽與目前 YouTube ID 顯示
+        updateThumbnailPreview('');
         const thumbnailFile = document.getElementById('thumbnailFile');
         if (thumbnailFile) {
           thumbnailFile.value = '';
@@ -1793,13 +1813,62 @@
       }
 
       document.getElementById('eventModal').style.display = 'block';
+      var thumbInp = document.getElementById('thumbnailYtIdInput');
+      if (thumbInp && !thumbInp._ytIdBound) {
+        thumbInp._ytIdBound = true;
+        thumbInp.addEventListener('input', function() { onThumbnailYtIdInput(thumbInp); });
+        thumbInp.addEventListener('change', function() { onThumbnailYtIdInput(thumbInp); });
+        thumbInp.addEventListener('paste', function() { setTimeout(function() { onThumbnailYtIdInput(thumbInp); }, 0); });
+      }
+      (function syncThumbnailOnModalOpen() {
+        if (thumbInp && thumbInp.value.trim()) onThumbnailYtIdInput(thumbInp);
+      })();
+      // 立即與延遲各做一次同步，確保「目前 YouTube ID」與縮圖一定會更新
+      function runOneThumbSync() {
+        var inp = document.getElementById('thumbnailYtIdInput');
+        var sp = document.getElementById('thumbnailCurrentYtId');
+        if (!inp || !sp) return;
+        var raw = (inp.value || '').trim();
+        var id = typeof extractYouTubeId === 'function' ? extractYouTubeId(raw) : '';
+        if (id) {
+          sp.textContent = id;
+          var mainYt = document.getElementById('youtubeId');
+          if (mainYt) mainYt.value = id;
+          if (typeof updateThumbnailPreview === 'function') updateThumbnailPreview(id);
+        } else {
+          sp.textContent = '—';
+          if (typeof updateThumbnailPreview === 'function') updateThumbnailPreview('');
+        }
+      }
+      setTimeout(runOneThumbSync, 0);
+      setTimeout(runOneThumbSync, 300);
+      // 表單開著時持續同步：每 0.4 秒讀取輸入框，直接更新「目前 YouTube ID」與縮圖（不依賴事件）
+      if (window._thumbSyncTimer) clearInterval(window._thumbSyncTimer);
+      window._thumbSyncTimer = setInterval(function() {
+        var modal = document.getElementById('eventModal');
+        if (!modal || modal.style.display !== 'block') { clearInterval(window._thumbSyncTimer); window._thumbSyncTimer = null; return; }
+        var inp = document.getElementById('thumbnailYtIdInput');
+        var sp = document.getElementById('thumbnailCurrentYtId');
+        if (!inp || !sp) return;
+        var raw = (inp.value || '').trim();
+        var id = extractYouTubeId(raw);
+        if (id && sp.textContent !== id) {
+          sp.textContent = id;
+          var mainYt = document.getElementById('youtubeId');
+          if (mainYt) mainYt.value = id;
+          updateThumbnailPreview(id);
+        } else if (!id && sp.textContent !== '—') {
+          sp.textContent = '—';
+          updateThumbnailPreview('');
+        }
+      }, 400);
     }
 
     function closeModal() {
-      // 清除影片編輯狀態
+      if (window._thumbSyncTimer) { clearInterval(window._thumbSyncTimer); window._thumbSyncTimer = null; }
       window.currentEditingVideoId = null;
       window.currentEditingVideoData = null;
-      
+      window.editingScheduleEvent = null;
       document.getElementById('eventModal').style.display = 'none';
     }
 
@@ -2077,6 +2146,9 @@
     }
 
     function openTimeSlotSelector(date) {
+      var modal = document.getElementById('timeSlotModal');
+      if (modal) modal.setAttribute('data-pending-date', date || '');
+
       const today = new Date();
       const currentHour = today.getHours();
       const currentMinute = today.getMinutes();
@@ -2142,6 +2214,15 @@
 
       youtubeIdGroup.style.display = videoType === 'YouTube' ? 'block' : 'none';
       mp4FileGroup.style.display = videoType === 'MP4' ? 'block' : 'none';
+      // 切換到 YouTube 時，若已有 ID 則自動更新縮圖預覽，並同步縮圖區輸入框
+      if (videoType === 'YouTube') {
+        const inp = document.getElementById('youtubeId');
+        if (inp && inp.value) {
+          updateThumbnailPreview(inp.value);
+          var thumbInp = document.getElementById('thumbnailYtIdInput');
+          if (thumbInp) thumbInp.value = inp.value;
+        }
+      }
     }
 
     // 國家/地區到洲的對應表
@@ -2311,8 +2392,10 @@
         /(?:版權|Copyright|All rights reserved)[\s\S]*?(?=\n\n|\n$|$)/gi,
         // 移除常見的免責聲明
         /(?:免責聲明|Disclaimer)[\s\S]*?(?=\n\n|\n$|$)/gi,
-        // 移除 URL 連結
-        /https?:\/\/[^\s]+/g,
+        // 移除 URL 連結（含 www.）
+        /(?:https?:\/\/|www\.)[^\s]+/g,
+        // 移除航向世界旅遊品牌行
+        /✈️?\s*航向世界旅遊.*?(?=\n\n|\n$|$)/gi,
         // 移除航向世界旅遊台等品牌資訊
         /航向世界旅遊台[\s\S]*?(?=\n\n|\n$|$)/gi
       ];
@@ -2337,6 +2420,47 @@
     }
 
 
+    function extractJsonObject(text, marker) {
+      const markerRegex = new RegExp(`${marker}\\s*[:=]\\s*`, 'g');
+      let match = null;
+
+      while ((match = markerRegex.exec(text)) !== null) {
+        const start = text.indexOf('{', match.index + match[0].length);
+        if (start === -1) continue;
+
+        let i = start;
+        let depth = 0;
+        let inString = false;
+        let escaped = false;
+        while (i < text.length) {
+          const ch = text[i];
+          if (inString) {
+            if (escaped) {
+              escaped = false;
+            } else if (ch === '\\') {
+              escaped = true;
+            } else if (ch === '"') {
+              inString = false;
+            }
+          } else {
+            if (ch === '"') {
+              inString = true;
+            } else if (ch === '{') {
+              depth++;
+            } else if (ch === '}') {
+              depth--;
+              if (depth === 0) {
+                return text.slice(start, i + 1);
+              }
+            }
+          }
+          i++;
+        }
+      }
+
+      return null;
+    }
+
     // 從 HTML 中提取 YouTube 描述
     function extractDescriptionFromHTML(html) {
       try {
@@ -2348,7 +2472,25 @@
         const parser = new DOMParser();
         const doc = parser.parseFromString(html, 'text/html');
         
-        // 方法1：嘗試從 meta 標籤提取
+        const defaultYouTubeDescPattern = /在\s*YouTube\s*上盡情享受自己喜愛的影片和音樂/;
+        const badConfigPattern = /(ytcfg\.set|INNERTUBE_|serializedExperimentFlags|VISITOR_DATA|WEB_PLAYER_CONTEXT_CONFIGS)/i;
+
+        // 方法1：優先從 ytInitialPlayerResponse 中提取
+        const playerJsonText = extractJsonObject(html, 'ytInitialPlayerResponse');
+        if (playerJsonText) {
+          try {
+            const playerData = JSON.parse(playerJsonText);
+            const shortDesc = playerData?.videoDetails?.shortDescription;
+            if (shortDesc && shortDesc.length > 30 && !defaultYouTubeDescPattern.test(shortDesc)) {
+              console.log('從 ytInitialPlayerResponse 找到描述:', shortDesc.substring(0, 100) + '...');
+              return shortDesc.trim();
+            }
+          } catch (e) {
+            console.log('解析 ytInitialPlayerResponse 失敗:', e);
+          }
+        }
+
+        // 方法2：嘗試從 meta 標籤提取
         const metaSelectors = [
           'meta[name="description"]',
           'meta[property="og:description"]',
@@ -2359,7 +2501,7 @@
           const element = doc.querySelector(selector);
           if (element) {
             const content = element.getAttribute('content');
-            if (content && content.length > 50) {
+            if (content && content.length > 50 && !defaultYouTubeDescPattern.test(content) && !badConfigPattern.test(content)) {
               console.log('從 meta 標籤找到描述:', content.substring(0, 100) + '...');
               return content.trim();
             }
@@ -2371,7 +2513,7 @@
         for (const script of jsonLdScripts) {
           try {
             const jsonData = JSON.parse(script.textContent);
-            if (jsonData.description && jsonData.description.length > 50) {
+            if (jsonData.description && jsonData.description.length > 50 && !badConfigPattern.test(jsonData.description)) {
               console.log('從 JSON-LD 找到描述:', jsonData.description.substring(0, 100) + '...');
               return jsonData.description.trim();
             }
@@ -2394,7 +2536,7 @@
           const element = doc.querySelector(selector);
           if (element) {
             const content = element.textContent || element.innerText;
-            if (content && content.length > 50) {
+            if (content && content.length > 50 && !badConfigPattern.test(content)) {
               console.log('從 YouTube 元素找到描述:', content.substring(0, 100) + '...');
               return content.trim();
             }
@@ -2402,7 +2544,12 @@
         }
         
         // 方法4：從頁面文本中智能提取
-        const bodyText = doc.body ? doc.body.textContent : '';
+        let bodyText = '';
+        if (doc.body) {
+          const bodyClone = doc.body.cloneNode(true);
+          bodyClone.querySelectorAll('script, style, noscript').forEach(el => el.remove());
+          bodyText = bodyClone.textContent || '';
+        }
         if (bodyText) {
           console.log('開始從頁面文本中提取...');
           
@@ -2450,6 +2597,9 @@
               }
               
               if (foundContent && description.length > 50) {
+                if (badConfigPattern.test(description)) {
+                  break;
+                }
                 console.log('成功提取描述:', description.substring(0, 100) + '...');
                 return description.trim();
               }
@@ -2504,7 +2654,7 @@
           if (scriptContent && scriptContent.includes('description')) {
             // 尋找 JSON 格式的描述數據
             const descriptionMatch = scriptContent.match(/"description":\s*"([^"]+)"/);
-            if (descriptionMatch && descriptionMatch[1].length > 50) {
+            if (descriptionMatch && descriptionMatch[1].length > 50 && !defaultYouTubeDescPattern.test(descriptionMatch[1]) && !badConfigPattern.test(descriptionMatch[1])) {
               console.log('從腳本中找到描述:', descriptionMatch[1].substring(0, 100) + '...');
               return descriptionMatch[1].trim();
             }
@@ -2516,15 +2666,14 @@
           const scriptContent = script.textContent;
           if (scriptContent && scriptContent.includes('ytInitialData')) {
             try {
-              // 尋找 ytInitialData 變數
-              const ytDataMatch = scriptContent.match(/var ytInitialData = ({.+?});/);
-              if (ytDataMatch) {
-                const ytData = JSON.parse(ytDataMatch[1]);
+              const ytDataText = extractJsonObject(scriptContent, 'ytInitialData');
+              if (ytDataText) {
+                const ytData = JSON.parse(ytDataText);
                 console.log('找到 ytInitialData，開始解析...');
                 
                 // 遞歸搜索描述
                 const description = findDescriptionInYtData(ytData);
-                if (description && description.length > 50) {
+                if (description && description.length > 50 && !defaultYouTubeDescPattern.test(description)) {
                   console.log('從 ytInitialData 中找到描述:', description.substring(0, 100) + '...');
                   return description.trim();
                 }
@@ -2776,19 +2925,11 @@
             const response = await fetch(proxies[i]);
             const data = await response.text();
             
-            // 嘗試從 HTML 中提取描述
-            const descriptionMatch = data.match(/<meta name="description" content="([^"]+)"/);
-            if (descriptionMatch) {
-              description = descriptionMatch[1];
+            // 嘗試從 HTML 中提取「觀看次數下方」的描述
+            const extracted = extractDescriptionFromHTML(data);
+            if (extracted && extracted.length > 20) {
+              description = extracted;
               console.log('✅ 成功擷取描述:', description);
-              break;
-            }
-            
-            // 嘗試其他可能的描述位置
-            const altDescriptionMatch = data.match(/"description":"([^"]+)"/);
-            if (altDescriptionMatch) {
-              description = altDescriptionMatch[1];
-              console.log('✅ 成功擷取描述 (備用方法):', description);
               break;
             }
             
@@ -2808,8 +2949,19 @@
             .replace(/&nbsp;/g, ' ')
             .trim();
           
+          // 避免抓到 YouTube 預設介紹文案或設定檔內容
+          const defaultYouTubeDescPattern = /在\s*YouTube\s*上盡情享受自己喜愛的影片和音樂/;
+          const badConfigPattern = /(ytcfg\.set|INNERTUBE_|serializedExperimentFlags|VISITOR_DATA|WEB_PLAYER_CONTEXT_CONFIGS)/i;
+          if (defaultYouTubeDescPattern.test(processedDescription) || badConfigPattern.test(processedDescription)) {
+            showStatus('⚠️ 取得的是 YouTube 預設文案或設定資訊，未填入描述，請改用「📋 貼上剪貼簿內容」', 'warning');
+            return;
+          }
+
           // 自動提取觀看次數信息
           const viewCountInfo = extractViewCountInfo(processedDescription);
+
+          // 清理品牌行與網址
+          processedDescription = cleanYouTubeDescription(processedDescription);
           if (viewCountInfo) {
             const tagInfo = viewCountInfo.tag ? ` #${viewCountInfo.tag}` : '';
             showStatus(`✅ 自動擷取成功！觀看次數: ${viewCountInfo.viewCount} (${viewCountInfo.date})${tagInfo}`, 'success');
@@ -3159,33 +3311,278 @@
       }
     }
 
-    // 更新縮圖預覽
-    function updateThumbnailPreview(youtubeId) {
+    async function fetchYouTubeTitle() {
+      const raw = document.getElementById('youtubeId')?.value?.trim() || '';
+      const youtubeId = extractYouTubeId(raw);
+      if (!youtubeId) {
+        showStatus('請先輸入 YouTube ID', 'warning');
+        return;
+      }
+
+      try {
+        showStatus('正在擷取 YouTube 標題...', 'info');
+        const response = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${youtubeId}&format=json`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data?.title) {
+            document.getElementById('title').value = data.title;
+            showStatus('✅ 已自動填入節目標題', 'success');
+          } else {
+            showStatus('⚠️ 未取得標題，請確認 YouTube ID 是否正確', 'warning');
+          }
+        } else {
+          showStatus('⚠️ 無法取得 YouTube 標題，請檢查 ID 是否正確', 'warning');
+        }
+      } catch (error) {
+        showStatus('擷取 YouTube 標題時發生錯誤', 'error');
+        console.error('YouTube 標題擷取錯誤:', error);
+      }
+    }
+
+    async function fetchYouTubeTitleAndDescription() {
+      const raw = document.getElementById('youtubeId')?.value?.trim() || '';
+      const youtubeId = extractYouTubeId(raw);
+      if (!youtubeId) {
+        showStatus('請先輸入 YouTube ID', 'warning');
+        return;
+      }
+
+      await fetchYouTubeTitle();
+
+      if (typeof autoExtractDescription === 'function') {
+        setTimeout(() => {
+          autoExtractDescription();
+        }, 200);
+      }
+    }
+
+    // 從字串中取出 YouTube 影片 ID（支援純 ID 或整段網址）
+    function extractYouTubeId(input) {
+      if (!input || typeof input !== 'string') return '';
+      const s = input.trim();
+      const patterns = [
+        /(?:youtube\.com\/(?:watch\?.*v=|embed\/|v\/|shorts\/|live\/))([a-zA-Z0-9_-]{11})/,
+        /(?:youtu\.be\/)([a-zA-Z0-9_-]{11})/
+      ];
+      for (var i = 0; i < patterns.length; i++) {
+        var m = s.match(patterns[i]);
+        if (m && m[1]) return m[1];
+      }
+      const direct = s.match(/^([a-zA-Z0-9_-]{11})$/);
+      if (direct) return direct[1];
+      const loose = s.match(/([a-zA-Z0-9_-]{11})/);
+      return loose ? loose[1] : '';
+    }
+
+    // YouTube ID 欄位輸入時：自動顯示縮圖；若貼上網址則正規化為 11 字元 ID；並同步縮圖區的輸入框
+    function onYoutubeIdInput(inputEl) {
+      const raw = (inputEl && inputEl.value) ? inputEl.value.trim() : '';
+      const videoId = extractYouTubeId(raw);
+      if (videoId && raw !== videoId && inputEl) inputEl.value = videoId;
+      updateThumbnailPreview(videoId || raw);
+      var thumbInput = document.getElementById('thumbnailYtIdInput');
+      if (thumbInput) thumbInput.value = videoId || raw;
+    }
+
+    // 縮圖區右側的 YouTube ID 輸入框：同步到主欄位、更新「目前 YouTube ID」與縮圖
+    function onThumbnailYtIdInput(inputEl) {
+      var el = inputEl && inputEl.nodeName ? inputEl : document.getElementById('thumbnailYtIdInput');
+      if (!el) return;
+      var raw = (el.value || '').trim();
+      var videoId = extractYouTubeId(raw);
+      if (videoId && raw !== videoId) el.value = videoId;
+      var mainYt = document.getElementById('youtubeId');
+      if (mainYt) mainYt.value = videoId || raw;
+      updateThumbnailPreview(videoId || raw);
+    }
+    window.onThumbnailYtIdInput = onThumbnailYtIdInput;
+
+    // 顯示縮圖載入狀態（成功／失敗原因），方便後台了解為何抓不到縮圖
+    function setThumbnailStatus(msg, isError) {
+      var el = document.getElementById('thumbnailStatusMsg');
+      if (!el) return;
+      el.textContent = msg || '';
+      el.style.color = isError ? '#c62828' : '#666';
+    }
+
+    // 更新縮圖預覽（輸入 YouTube ID 或貼上網址都會自動顯示縮圖）
+    function updateThumbnailPreview(input) {
       const thumbnailPreview = document.getElementById('thumbnailPreview');
-      if (youtubeId) {
-        // 使用更可靠的 YouTube 縮圖 URL
-        const thumbnailUrl = `https://i.ytimg.com/vi/${youtubeId}/maxresdefault.jpg`;
-        thumbnailPreview.src = thumbnailUrl;
-        thumbnailPreview.setAttribute('data-youtube-url', thumbnailUrl);
-        
-        // 如果 maxresdefault 失敗，回退到 hqdefault
-        thumbnailPreview.onerror = function() {
-          this.src = `https://i.ytimg.com/vi/${youtubeId}/hqdefault.jpg`;
-          this.onerror = null; // 防止無限循環
+      if (!thumbnailPreview) return;
+      const videoId = extractYouTubeId(input || '');
+      thumbnailPreview.onerror = null;
+      thumbnailPreview.onload = null;
+      setThumbnailStatus('');
+      if (videoId) {
+        var q = '?t=' + (Date.now ? Date.now() : 0);
+        var maxUrl = 'https://i.ytimg.com/vi/' + videoId + '/maxresdefault.jpg' + q;
+        var hqUrl = 'https://i.ytimg.com/vi/' + videoId + '/hqdefault.jpg';
+        thumbnailPreview.setAttribute('data-youtube-url', 'https://i.ytimg.com/vi/' + videoId + '/maxresdefault.jpg');
+        thumbnailPreview.setAttribute('data-youtube-hq-url', hqUrl);
+        setThumbnailStatus('載入中…', false);
+        thumbnailPreview.onload = function() {
+          // 若 maxres 回傳的是低解析占位圖，改用 hqdefault
+          var w = thumbnailPreview.naturalWidth || 0;
+          var h = thumbnailPreview.naturalHeight || 0;
+          if (w > 0 && h > 0 && (w < 500 || h < 300)) {
+            setThumbnailStatus('高解析縮圖不可用，改用一般縮圖…', false);
+            thumbnailPreview.onload = function() {
+              setThumbnailStatus('已載入 YouTube 縮圖', false);
+              thumbnailPreview.onload = null;
+            };
+            thumbnailPreview.src = hqUrl + q;
+            return;
+          }
+          setThumbnailStatus('已載入 YouTube 縮圖', false);
+          thumbnailPreview.onload = null;
         };
+        thumbnailPreview.onerror = function() {
+          thumbnailPreview.onerror = null;
+          setThumbnailStatus('高解析縮圖不存在，改用一般縮圖…', false);
+          thumbnailPreview.src = hqUrl + q;
+          thumbnailPreview.onerror = function() {
+            thumbnailPreview.onerror = null;
+            setThumbnailStatus('無法載入 YouTube 縮圖。可能原因：影片為私人或已刪除、未提供標準縮圖，或網路問題。可點「複製 YouTube 縮圖網址」在新分頁開啟試試。', true);
+          };
+        };
+        thumbnailPreview.src = maxUrl;
       } else {
         thumbnailPreview.src = 'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=200&h=112&fit=crop';
         thumbnailPreview.removeAttribute('data-youtube-url');
-        thumbnailPreview.onerror = null;
+        thumbnailPreview.removeAttribute('data-youtube-hq-url');
+      }
+      var ytIdEl = document.getElementById('thumbnailCurrentYtId');
+      if (ytIdEl) ytIdEl.textContent = videoId || '—';
+    }
+
+    // 重新載入 YouTube 縮圖：依目前輸入的 ID 抓圖，並清除自訂上傳（等同「重置為 YT 縮圖」）
+    function reloadYtThumbnail() {
+      var thumbInput = document.getElementById('thumbnailYtIdInput');
+      var mainInput = document.getElementById('youtubeId');
+      var thumbnailFile = document.getElementById('thumbnailFile');
+      var raw = (thumbInput && thumbInput.value) ? thumbInput.value.trim() : ((mainInput && mainInput.value) ? mainInput.value.trim() : '');
+      var videoId = extractYouTubeId(raw);
+      if (!videoId) {
+        showStatus('請先在上方輸入框輸入 YouTube ID 或貼上網址', 'warning');
+        return;
+      }
+      if (mainInput) mainInput.value = videoId;
+      if (thumbInput) thumbInput.value = videoId;
+      if (thumbnailFile) thumbnailFile.value = '';
+      updateThumbnailPreview(videoId);
+      showStatus('已依 ID 重新載入 YouTube 縮圖', 'info');
+    }
+    window.reloadYtThumbnail = reloadYtThumbnail;
+
+    // 複製目前 YouTube 縮圖網址到剪貼簿（可貼到瀏覽器新分頁開啟或下載圖片）
+    function copyYtThumbnailUrl() {
+      var span = document.getElementById('thumbnailCurrentYtId');
+      var inp = document.getElementById('thumbnailYtIdInput');
+      var id = (span && span.textContent && span.textContent !== '—') ? span.textContent.trim() : '';
+      if (!id && inp && inp.value) id = extractYouTubeId(inp.value.trim());
+      if (!id) {
+        showStatus('請先在上方輸入框輸入 YouTube ID', 'warning');
+        return;
+      }
+      var url = 'https://i.ytimg.com/vi/' + id + '/maxresdefault.jpg';
+      var hq = 'https://i.ytimg.com/vi/' + id + '/hqdefault.jpg';
+      var text = url + '\n（若無法開啟可試：' + hq + '）';
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function() {
+          showStatus('已複製縮圖網址，可貼到新分頁開啟或下載', 'success');
+        }).catch(function() {
+          fallbackCopy(text);
+        });
+      } else {
+        fallbackCopy(text);
       }
     }
+    function fallbackCopy(text) {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed'; ta.style.left = '-9999px';
+      document.body.appendChild(ta);
+      ta.select();
+      try {
+        document.execCommand('copy');
+        showStatus('已複製縮圖網址', 'success');
+      } catch (e) {
+        showStatus('請手動複製：' + text.split('\n')[0], 'info');
+      }
+      document.body.removeChild(ta);
+    }
+    window.copyYtThumbnailUrl = copyYtThumbnailUrl;
+
+    // 頁面載入後就啟動：只要節目表單彈窗是開的，就每 0.5 秒同步輸入框 → 「目前 YouTube ID」與縮圖（不依賴開關表單的時機）
+    function isEventModalVisible() {
+      var modal = document.getElementById('eventModal');
+      if (!modal) return false;
+      var d = window.getComputedStyle ? window.getComputedStyle(modal).display : (modal.style && modal.style.display);
+      return d === 'block' || d === 'flex';
+    }
+    function startThumbnailSyncPoll() {
+      if (window._thumbSyncPoll) return;
+      console.log('[節目縮圖] 已啟動：每 0.5 秒同步輸入框 → 目前 YouTube ID 與縮圖');
+      window._thumbSyncPoll = setInterval(function() {
+        try {
+          if (!isEventModalVisible()) return;
+          var inp = document.getElementById('thumbnailYtIdInput');
+          var sp = document.getElementById('thumbnailCurrentYtId');
+          if (!inp || !sp) return;
+          var raw = (inp.value || '').trim();
+          var id = typeof extractYouTubeId === 'function' ? extractYouTubeId(raw) : '';
+          var needUpdate = false;
+          if (id) {
+            if (sp.textContent.trim() !== id) { sp.textContent = id; needUpdate = true; }
+            var mainYt = document.getElementById('youtubeId');
+            if (mainYt && mainYt.value !== id) { mainYt.value = id; needUpdate = true; }
+            if (needUpdate && typeof updateThumbnailPreview === 'function') updateThumbnailPreview(id);
+          } else {
+            if (sp.textContent.trim() !== '—' && sp.textContent.trim() !== '') {
+              sp.textContent = '—';
+              if (typeof updateThumbnailPreview === 'function') updateThumbnailPreview('');
+            }
+          }
+        } catch (err) { console.warn('thumbSyncPoll', err); }
+      }, 500);
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', startThumbnailSyncPoll);
+    else startThumbnailSyncPoll();
+
+    // 縮圖區按鈕：用事件委派綁在 document 上，確保點擊一定觸發
+    document.addEventListener('click', function thumbButtonDelegation(e) {
+      var id = e.target && e.target.id;
+      if (id === 'btnReloadYtThumbnail') { e.preventDefault(); if (typeof reloadYtThumbnail === 'function') reloadYtThumbnail(); }
+      else if (id === 'btnCopyYtThumbnailUrl') { e.preventDefault(); if (typeof copyYtThumbnailUrl === 'function') copyYtThumbnailUrl(); }
+    }, true);
+
+    // 「選擇播出時間」彈窗內的「跳過」按鈕：直接開節目表單，預設 12:00
+    document.addEventListener('click', function timeSlotSkipDelegation(e) {
+      if (e.target && e.target.id === 'btnSkipTimeSlot') {
+        e.preventDefault();
+        var modal = document.getElementById('timeSlotModal');
+        var date = modal && modal.getAttribute('data-pending-date');
+        if (date && typeof openEventModal === 'function' && typeof closeTimeSlotModal === 'function') {
+          openEventModal(date, '12:00');
+          closeTimeSlotModal();
+        }
+      }
+    }, true);
+
+    // 縮圖區 YouTube ID 輸入：用 JS 監聽，不依賴 inline oninput，確保有輸入就更新「目前 YouTube ID」與縮圖
+    document.addEventListener('input', function thumbInputDelegation(e) {
+      if (e.target && e.target.id === 'thumbnailYtIdInput' && typeof onThumbnailYtIdInput === 'function') onThumbnailYtIdInput(e.target);
+    }, true);
+    document.addEventListener('change', function thumbChangeDelegation(e) {
+      if (e.target && e.target.id === 'thumbnailYtIdInput' && typeof onThumbnailYtIdInput === 'function') onThumbnailYtIdInput(e.target);
+    }, true);
 
     // 預覽上傳的縮圖
     function previewThumbnail() {
       const fileInput = document.getElementById('thumbnailFile');
       const thumbnailPreview = document.getElementById('thumbnailPreview');
-      
       if (fileInput.files && fileInput.files[0]) {
+        setThumbnailStatus('已選擇自訂縮圖', false);
         const reader = new FileReader();
         reader.onload = function(e) {
           thumbnailPreview.src = e.target.result;
@@ -3194,19 +3591,40 @@
       }
     }
 
-    // 重置為 YouTube 縮圖
+    // 重置為 YouTube 縮圖（依縮圖區輸入框、主欄位或目前縮圖網址還原）
     function resetThumbnail() {
-      const youtubeId = document.getElementById('youtubeId').value.trim();
-      const thumbnailFile = document.getElementById('thumbnailFile');
-      
-      // 清除檔案選擇
-      thumbnailFile.value = '';
-      
-      // 更新縮圖預覽
-      updateThumbnailPreview(youtubeId);
-      
-      showStatus('已重置為 YouTube 縮圖', 'info');
+      try {
+        const youtubeInput = document.getElementById('youtubeId');
+        const thumbIdInput = document.getElementById('thumbnailYtIdInput');
+        const thumbnailPreview = document.getElementById('thumbnailPreview');
+        const thumbnailFile = document.getElementById('thumbnailFile');
+        if (!thumbnailPreview) {
+          showStatus('無法取得縮圖區，請關閉視窗後再試', 'warning');
+          return;
+        }
+        let youtubeId = (thumbIdInput && thumbIdInput.value) ? thumbIdInput.value.trim() : '';
+        if (!youtubeId && youtubeInput) youtubeId = (youtubeInput.value || '').trim();
+        youtubeId = extractYouTubeId(youtubeId);
+        if (!youtubeId && thumbnailPreview.src) {
+          const m = thumbnailPreview.src.match(/\/vi\/([a-zA-Z0-9_-]{11})/);
+          if (m) youtubeId = m[1];
+        }
+        if (youtubeId && youtubeInput) youtubeInput.value = youtubeId;
+        if (youtubeId && thumbIdInput) thumbIdInput.value = youtubeId;
+        if (thumbnailFile) thumbnailFile.value = '';
+        if (youtubeId) {
+          updateThumbnailPreview(youtubeId);
+          showStatus('已重置為 YouTube 縮圖', 'success');
+        } else {
+          updateThumbnailPreview('');
+          showStatus('請先輸入或貼上 YouTube ID，再按「重置為 YouTube 縮圖」', 'warning');
+        }
+      } catch (e) {
+        console.error('resetThumbnail 錯誤', e);
+        showStatus('重置縮圖時發生錯誤：' + (e.message || '請稍後再試'), 'error');
+      }
     }
+    window.resetThumbnail = resetThumbnail;
 
     function handleFileUpload() {
       const fileInput = document.getElementById('mp4File');
@@ -3289,19 +3707,24 @@
       console.log('📝 表單提交事件觸發');
       console.log('🔍 檢查編輯模式:', {
         currentEditingVideoId: window.currentEditingVideoId,
-        hasVideoId: !!window.currentEditingVideoId
+        editingScheduleEvent: window.editingScheduleEvent
       });
 
       // 檢查是否為影片編輯模式
       if (window.currentEditingVideoId) {
         console.log('✅ 進入影片編輯模式，調用 updateVideoInContentful');
-        // 在編輯影片模式下，直接調用 updateVideoInContentful
         updateVideoInContentful();
         return;
       }
       
-      console.log('📅 進入節目排程模式，直接上架到 Contentful');
-      // 所有儲存操作都直接同步到 Contentful
+      // 檢查是否為排程節目編輯模式（同一時段更新既有節目，不新增一筆）
+      if (window.editingScheduleEvent && window.editingScheduleEvent.event) {
+        console.log('📅 進入排程編輯模式，更新既有節目');
+        updateExistingScheduleProgram();
+        return;
+      }
+      
+      console.log('📅 進入節目排程模式，新增節目到 Contentful');
       createNewProgram();
     });
 
@@ -3979,16 +4402,7 @@
           hasMore = response.items.length === limit;
           skip += limit;
           
-          // 如果已經載入到 10/31 之後的節目，可以停止載入
-          const hasOct31OrLater = response.items.some(item => {
-            const airDate = item.fields.airDate;
-            return airDate && airDate >= '2025-10-31';
-          });
-          
-          if (hasOct31OrLater) {
-            console.log('✅ 已載入到 10/31 及之後的節目，停止分頁載入');
-            break;
-          }
+          // 不再限制日期上限，確保載入完整節目
         }
 
         console.log(`📊 總共從 Contentful 載入 ${allItems.length} 個節目`);
@@ -4118,10 +4532,16 @@
         // 清空現有事件
         events = {};
 
-        // 轉換 Contentful 資料為本地格式
+        // 轉換 Contentful 資料為本地格式（日期鍵統一為 YYYY-MM-DD，與月/週/日視圖一致）
+        function toDateKey(val) {
+          if (!val) return new Date().toISOString().split('T')[0];
+          const s = String(val).trim();
+          if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+          return s.slice(0, 10);
+        }
         allItems.forEach(item => {
           const fields = item.fields;
-          const airDate = fields.airDate || new Date().toISOString().split('T')[0];
+          const airDate = toDateKey(fields.airDate);
           
           // 從備註中提取具體時間，格式為 [時間:XX:XX]
           const notes = String(fields.notes || '');
@@ -4186,6 +4606,9 @@
             .replace(/\[YouTube:[^\]]+\]/, '')
             .replace(/\[分類:[^\]]+\]/, '')
             .replace(/\[主題:[^\]]+\]/g, '')
+            .replace(/\[時長:[^\]]+\]/, '')
+            .replace(/\[狀態:[^\]]+\]/, '')
+            .replace(/\[縮圖:[^\]]+\]/, '')
             .trim();
           
           // 檢查是否已存在相同的節目（避免重複載入）
@@ -4247,6 +4670,61 @@
             }
           }
         });
+
+        // 強制再查一次「今天」的節目，避免分頁漏掉剛上架的
+        const todayDate = new Date();
+        const todayString = todayDate.getFullYear() + '-' +
+          String(todayDate.getMonth() + 1).padStart(2, '0') + '-' +
+          String(todayDate.getDate()).padStart(2, '0');
+        try {
+          const todayRes = await client.getEntries({
+            content_type: 'scheduleItem',
+            'fields.airDate': todayString,
+            include: 2,
+            limit: 100
+          });
+          const todayKey = toDateKey(todayString);
+          if (!events[todayKey]) events[todayKey] = [];
+          const existingIds = new Set(events[todayKey].map(e => e.contentfulId));
+          todayRes.items.forEach(item => {
+            if (existingIds.has(item.sys.id)) return;
+            const fields = item.fields;
+            const notes = String(fields.notes || '');
+            const timeMatch = notes.match(/\[時間:(\d{2}:\d{2})\]/);
+            const airTime = timeMatch ? timeMatch[1] : convertBlockToTime(fields.block || '12-18');
+            const youtubeMatch = notes.match(/\[YouTube:([^\]]+)\]/);
+            const youtubeId = youtubeMatch ? youtubeMatch[1] : '';
+            const durationMatch = notes.match(/\[時長:(\d+)分鐘\]/);
+            const statusMatch = notes.match(/\[狀態:(.*?)\]/);
+            const thumbnailMatch = notes.match(/\[縮圖:([^\]]+)\]/);
+            const cleanDescription = notes
+              .replace(/\[時間:\d{2}:\d{2}\]/, '').replace(/\[YouTube:[^\]]+\]/, '')
+              .replace(/\[分類:[^\]]+\]/, '').replace(/\[主題:[^\]]+\]/g, '').trim();
+            events[todayKey].push({
+              id: item.sys.id,
+              title: fields.title || '未命名節目',
+              time: airTime,
+              duration: durationMatch ? parseInt(durationMatch[1]) : 30,
+              category: extractCategoryFromNotes(notes),
+              description: cleanDescription,
+              videoType: youtubeId ? 'YouTube' : 'YouTube',
+              youtubeId: youtubeId,
+              thumbnail: thumbnailMatch ? thumbnailMatch[1] : (youtubeId ? 'https://img.youtube.com/vi/' + youtubeId + '/maxresdefault.jpg' : ''),
+              status: statusMatch ? statusMatch[1] : '重播',
+              topics: extractTopicsFromNotes(notes),
+              published: true,
+              publishedAt: item.sys.createdAt,
+              contentfulId: item.sys.id
+            });
+            existingIds.add(item.sys.id);
+          });
+          if (todayRes.items.length > 0) {
+            events[todayKey].sort((a, b) => a.time.localeCompare(b.time));
+            console.log('📅 今日補載入:', todayString, events[todayKey].length, '個節目');
+          }
+        } catch (todayErr) {
+          console.warn('補載入今日節目時發生錯誤:', todayErr);
+        }
 
         // 按時間排序（不移除重複節目，允許相同時間有多個節目）
         Object.keys(events).forEach(date => {
@@ -5601,17 +6079,18 @@
     function showStatus(message, type) {
       const statusBar = document.getElementById('statusBar');
       const statusMessage = document.getElementById('statusMessage');
-
+      if (!statusBar || !statusMessage) {
+        try { alert(message); } catch (e) { console.log('showStatus:', message); }
+        return;
+      }
       statusMessage.textContent = message;
       statusBar.style.display = 'block';
-
       statusBar.style.backgroundColor = type === 'success' ? '#4caf50' :
                                       type === 'error' ? '#f44336' :
                                       type === 'warning' ? '#ff9800' : '#333';
-
       setTimeout(() => {
         statusBar.style.display = 'none';
-      }, 3000);
+      }, 4000);
     }
 
     // 更新今日節目表顯示
@@ -8446,8 +8925,8 @@
       }
     }
 
-    // 從描述中提取 YouTube ID
-    function extractYouTubeId(description) {
+    // 從描述中提取 YouTube ID（避免覆蓋主要的 extractYouTubeId）
+    function extractYouTubeIdFromDescription(description) {
       if (!description) return '';
       
       // 嘗試多種 YouTube ID 格式
@@ -8473,9 +8952,9 @@
       return '';
     }
 
-    // 複製上架功能
+    // 批次上架功能
     async function copyAndPublish() {
-      console.log('📋 ========== 開始複製上架功能 ==========');
+      console.log('📋 ========== 開始批次上架功能 ==========');
       console.log('📋 函數已被調用，開始處理...');
       
       try {
@@ -8499,7 +8978,7 @@
           return;
         }
 
-        showStatus('正在準備複製上架...', 'info');
+        showStatus('正在準備批次上架...', 'info');
         console.log('✅ 基本資訊檢查通過');
         
         // 獲取縮圖資料
@@ -8533,7 +9012,7 @@
           console.warn('⚠️ 找不到 youtubeId 元素');
         }
         
-        const extractedYouTubeId = youtubeIdField || extractYouTubeId(description);
+        const extractedYouTubeId = youtubeIdField || extractYouTubeIdFromDescription(description);
         
         console.log('🔍 提取 YouTube ID 調試:', {
           youtubeIdField: youtubeIdField,
@@ -8586,7 +9065,7 @@
             
             if (!batchOptions) {
               console.log('📋 用戶取消了批量複製');
-              showStatus('已取消複製上架', 'info');
+              showStatus('已取消批次上架', 'info');
               return;
             }
             
@@ -8859,6 +9338,9 @@
               } else {
                 renderCurrentView();
               }
+              if (typeof verifyContentfulDates === 'function') {
+                await verifyContentfulDates(uploadedDates);
+              }
             } catch (error) {
               console.error('❌ 重新載入失敗:', error);
               renderCurrentView();
@@ -8868,8 +9350,8 @@
           // 顯示批量上架結果
           const totalPrograms = programsToUpload.length;
           const statusMessage = successCount === totalPrograms ? 
-            `✅ 成功複製上架 ${successCount} 個節目到 Contentful！` :
-            `⚠️ 複製上架完成：成功 ${successCount} 個，失敗 ${failCount} 個`;
+            `✅ 成功批次上架 ${successCount} 個節目到 Contentful！` :
+            `⚠️ 批次上架完成：成功 ${successCount} 個，失敗 ${failCount} 個`;
           
           showStatus(statusMessage, successCount === totalPrograms ? 'success' : 'warning');
 
@@ -8962,10 +9444,81 @@
         }
 
       } catch (error) {
-        console.error('❌ 複製上架失敗:', error);
+        console.error('❌ 批次上架失敗:', error);
         console.error('錯誤詳情:', error.stack);
-        alert('❌ 複製上架失敗：' + error.message + '\n\n請檢查瀏覽器控制台（按 F12）查看詳細錯誤');
-        showStatus('❌ 複製上架失敗：' + error.message, 'error');
+        alert('❌ 批次上架失敗：' + error.message + '\n\n請檢查瀏覽器控制台（按 F12）查看詳細錯誤');
+        showStatus('❌ 批次上架失敗：' + error.message, 'error');
+      }
+    }
+
+    // 更新既有排程節目（同一時段不新增一筆，只更新原節目）
+    async function updateExistingScheduleProgram() {
+      const editing = window.editingScheduleEvent;
+      if (!editing || !editing.event) {
+        showStatus('無法辨識編輯中的節目，請關閉後重新點選該時段', 'warning');
+        return;
+      }
+      const contentfulId = editing.event.contentfulId;
+      if (!contentfulId) {
+        showStatus('此節目沒有上架紀錄，無法更新。請刪除後重新上架。', 'warning');
+        return;
+      }
+
+      const date = document.getElementById('editDate').value;
+      const time = document.getElementById('airTime').value;
+      const title = document.getElementById('title').value;
+      const duration = document.getElementById('duration').value;
+      const category = document.getElementById('category').value;
+      const description = document.getElementById('description').value;
+      const status = document.getElementById('status').value;
+      if (!title || !date || !time) {
+        showStatus('請填寫節目名稱、日期與時間', 'warning');
+        return;
+      }
+
+      const thumbnailPreview = document.getElementById('thumbnailPreview');
+      const currentThumbnail = thumbnailPreview ? thumbnailPreview.src : '';
+      const isDefaultThumbnail = !currentThumbnail || currentThumbnail.includes('placeholder') || currentThumbnail.includes('via.placeholder');
+      const selectedTopics = [];
+      document.querySelectorAll('input[name="topics"]:checked').forEach(checkbox => selectedTopics.push(checkbox.value));
+
+      const programData = {
+        title: title,
+        airDate: date,
+        airTime: time,
+        duration: parseInt(duration, 10) || 30,
+        category: category,
+        description: description,
+        status: status,
+        videoType: document.getElementById('videoType').value,
+        youtubeId: document.getElementById('videoType').value === 'YouTube' ? (document.getElementById('youtubeId').value || '').trim() : null,
+        thumbnail: isDefaultThumbnail ? null : currentThumbnail,
+        topics: selectedTopics
+      };
+
+      showStatus('正在更新節目到 Contentful...', 'info');
+      try {
+        const result = await updateProgramInContentful(contentfulId, programData);
+        if (result && result.success) {
+          showStatus('✅ 節目已更新，未新增重複節目', 'success');
+          window.editingScheduleEvent = null;
+          closeModal();
+          renderCurrentView();
+          setTimeout(async () => {
+            try {
+              if (typeof reloadFromContentful === 'function') await reloadFromContentful();
+              else renderCurrentView();
+            } catch (e) {
+              console.error('重新載入失敗', e);
+              renderCurrentView();
+            }
+          }, 2500);
+        } else {
+          showStatus('❌ 更新失敗：' + (result && result.error ? result.error : '未知錯誤'), 'error');
+        }
+      } catch (error) {
+        console.error('更新節目失敗', error);
+        showStatus('❌ 更新失敗：' + (error.message || '未知錯誤'), 'error');
       }
     }
 
@@ -9432,6 +9985,43 @@
       } catch (error) {
         console.error('重新載入失敗:', error);
         showStatus('❌ 重新載入失敗：' + error.message, 'error');
+      }
+    }
+
+    async function verifyContentfulDates(dates) {
+      try {
+        if (!dates || dates.length === 0) return;
+        if (typeof contentful === 'undefined') {
+          console.warn('⚠️ Contentful SDK 未載入，無法驗證日期');
+          return;
+        }
+        
+        const client = contentful.createClient({
+          space: 'os5wf90ljenp',
+          accessToken: 'lODH-WLwHwVZv7O4rFdBWjSnrzaQWGD4koeOZ1Dypj0'
+        });
+        
+        const missingDates = [];
+        for (const date of dates) {
+          const response = await client.getEntries({
+            content_type: 'scheduleItem',
+            'fields.airDate': date,
+            limit: 1
+          });
+          if (!response.items || response.items.length === 0) {
+            missingDates.push(date);
+          }
+        }
+        
+        if (missingDates.length > 0) {
+          const preview = missingDates.slice(0, 6).join(', ');
+          const suffix = missingDates.length > 6 ? '…' : '';
+          showStatus(`⚠️ 批次上架後仍找不到日期：${preview}${suffix}`, 'warning');
+        } else {
+          showStatus('✅ 批次上架確認：Contentful 已有對應日期節目', 'success');
+        }
+      } catch (error) {
+        console.error('批次上架驗證失敗:', error);
       }
     }
 
@@ -10090,8 +10680,11 @@
         
         console.log('🔍 最終主題文字:', topicsText);
         
-        // 構建備註內容，包含分類和主題標記
-        let notes = programData.description || '';
+        // 構建備註內容（與上架時格式一致：時間、YouTube、分類、主題等）
+        let notes = (programData.description || '') + ` [時間:${programData.airTime || ''}]`;
+        if (programData.youtubeId) {
+          notes += ` [YouTube:${programData.youtubeId}]`;
+        }
         
         // 添加分類標記
         if (programData.category) {
