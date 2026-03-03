@@ -1346,7 +1346,7 @@ document.addEventListener('DOMContentLoaded', () => {
             ${program.isPremiere ? '<div class="premiere-badge">首播</div>' : ''}
             ${program.isSpecial ? '<div class="special-badge">特別節目</div>' : ''}
             
-            ${program.youtubeId ? '<div class="play-button">▶️</div>' : ''}
+        ${program.youtubeId ? '<div class="play-button" title="播放">▶️</div>' : ''}
           </div>
           <div class="schedule-content">
             <div class="program-title">${escapeHtml(program.title)}</div>
@@ -1359,7 +1359,7 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
         
         // 添加點擊事件 - 只有現正播出的節目可以播放
-        scheduleItem.addEventListener('click', () => {
+      scheduleItem.addEventListener('click', () => {
           console.log('點擊節目:', program.title, '狀態:', status);
           
           // 只有現正播出的節目才能播放
@@ -1372,6 +1372,19 @@ document.addEventListener('DOMContentLoaded', () => {
             showNonPlayableMessage(program.title, status);
           }
         });
+
+      // 紅色播放按鈕：保留功能，點擊直接播放現正播出
+      const playButton = scheduleItem.querySelector('.play-button');
+      if (playButton) {
+        playButton.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (isCurrent && program.youtubeId) {
+            openFullscreenPlayer(program.youtubeId);
+          } else {
+            showNonPlayableMessage(program.title, status);
+          }
+        });
+      }
         
         scheduleListEl.appendChild(scheduleItem);
       });
@@ -1913,6 +1926,121 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // === 全螢幕播放器功能 ===
 let fullscreenPlayerObject = null;
+let nowPlayingInlineTimer = null;
+let nowPlayingInlineVideoId = null;
+let nowPlayingInlinePlayerObject = null;
+
+function cleanupNowPlayingInlinePlayer() {
+  const container = document.querySelector('.now-playing-thumbnail');
+  const inlinePlayer = document.getElementById('now-playing-inline-player');
+  const inlineFallback = document.getElementById('now-playing-inline-fallback');
+  const nowPlayingImage = document.getElementById('now-playing-image');
+  if (inlinePlayer && container) {
+    container.removeChild(inlinePlayer);
+  }
+  if (inlineFallback && container) {
+    container.removeChild(inlineFallback);
+  }
+  if (nowPlayingImage) {
+    nowPlayingImage.style.display = '';
+  }
+  if (nowPlayingInlinePlayerObject) {
+    try {
+      nowPlayingInlinePlayerObject.destroy();
+    } catch (e) {}
+    nowPlayingInlinePlayerObject = null;
+  }
+  if (nowPlayingInlineTimer) {
+    clearTimeout(nowPlayingInlineTimer);
+    nowPlayingInlineTimer = null;
+  }
+  nowPlayingInlineVideoId = null;
+}
+
+function showNowPlayingInlineFallback(message, videoId) {
+  const container = document.querySelector('.now-playing-thumbnail');
+  if (!container) return;
+  const existing = document.getElementById('now-playing-inline-fallback');
+  if (existing) {
+    existing.innerHTML = '';
+    container.removeChild(existing);
+  }
+  const fallback = document.createElement('div');
+  fallback.id = 'now-playing-inline-fallback';
+  fallback.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.6);color:#fff;z-index:2;text-align:center;padding:16px;';
+  const safeMessage = message || '此影片無法在網站內播放';
+  const safeId = videoId || '';
+  fallback.innerHTML = `
+    <div>
+      <div style="font-size:1rem;font-weight:600;margin-bottom:8px;">${safeMessage}</div>
+      ${safeId ? `<a href="https://www.youtube.com/watch?v=${safeId}" target="_blank" rel="noopener" style="display:inline-block;background:#e53935;color:#fff;padding:8px 12px;border-radius:6px;text-decoration:none;">改到 YouTube 播放</a>` : ''}
+    </div>
+  `;
+  container.appendChild(fallback);
+}
+
+function renderNowPlayingInlinePlayer(videoId) {
+  const container = document.querySelector('.now-playing-thumbnail');
+  const nowPlayingImage = document.getElementById('now-playing-image');
+  if (!container) return;
+
+  // 清理舊的播放器
+  const existing = document.getElementById('now-playing-inline-player');
+  if (existing) {
+    container.removeChild(existing);
+  }
+
+  if (nowPlayingImage) {
+    nowPlayingImage.style.display = 'none';
+  }
+  const playerHost = document.createElement('div');
+  playerHost.id = 'now-playing-inline-player';
+  playerHost.style.width = '100%';
+  playerHost.style.height = '100%';
+  playerHost.style.borderRadius = '12px';
+  container.insertBefore(playerHost, container.firstChild);
+  nowPlayingInlineVideoId = videoId;
+
+  loadYouTubeAPI().then(() => {
+    const hasHttpOrigin = window.location && (window.location.protocol === 'http:' || window.location.protocol === 'https:');
+    const originParam = hasHttpOrigin ? window.location.origin : '';
+    nowPlayingInlinePlayerObject = new YT.Player('now-playing-inline-player', {
+      width: '100%',
+      height: '100%',
+      videoId: videoId,
+      playerVars: {
+        autoplay: 1,
+        controls: 1,
+        rel: 0,
+        modestbranding: 1,
+        playsinline: 1,
+        enablejsapi: 1,
+        loop: 1,
+        playlist: videoId,
+        origin: originParam
+      },
+      events: {
+        onReady: function(event) {
+          try {
+            event.target.mute();
+            event.target.playVideo();
+          } catch (e) {}
+        },
+        onError: function(event) {
+          const code = event?.data;
+          if (code === 101 || code === 150) {
+            showNowPlayingInlineFallback('此影片禁止外部嵌入播放', videoId);
+          } else {
+            showNowPlayingInlineFallback('影片播放失敗', videoId);
+          }
+        }
+      }
+    });
+  }).catch((error) => {
+    console.error('YouTube API 載入失敗:', error);
+    showNowPlayingInlineFallback('無法載入播放器', videoId);
+  });
+}
 
 function openFullscreenPlayer(videoId) {
   console.log('openFullscreenPlayer 被調用，videoId:', videoId);
@@ -2020,7 +2148,7 @@ function createYouTubePlayer(videoId) {
       events: {
         onReady: function(event) {
           console.log('YouTube 播放器準備就緒');
-          
+
           // 開始播放
           console.log('開始播放影片...');
           event.target.playVideo();
@@ -2387,6 +2515,7 @@ function renderTLCStyleSchedule(programs) {
       return p.status === 'upcoming';
     }
   });
+
   
   console.log('🔍 現正播出節目:', nowPlayingProgram ? nowPlayingProgram.title : '無');
   console.log('📋 即將播出節目數量:', upcomingPrograms.length);
@@ -2506,13 +2635,61 @@ function updateNowPlayingArea(program) {
 
   // 播放按鈕事件
   if (nowPlayingPlayButton) {
-    nowPlayingPlayButton.onclick = () => {
+    nowPlayingPlayButton.onclick = (e) => {
+      if (e && typeof e.stopPropagation === 'function') {
+        e.stopPropagation();
+      }
       if (program.youtubeId) {
         openFullscreenPlayer(program.youtubeId);
       } else {
         showNonPlayableMessage(program.title, 'now-playing');
       }
     };
+  }
+
+  // 現正播出卡片點擊：直接播放該節目
+  const nowPlayingCard = document.getElementById('now-playing-card');
+  if (nowPlayingCard) {
+    nowPlayingCard.onclick = () => {
+      if (program.youtubeId) {
+        openFullscreenPlayer(program.youtubeId);
+      } else {
+        showNonPlayableMessage(program.title, 'now-playing');
+      }
+    };
+  }
+
+  // 現正播出卡片自動播放：直接在卡片內輪播該影片，直到時間槽結束
+  cleanupNowPlayingInlinePlayer();
+  if (program.youtubeId && /^[a-zA-Z0-9_-]{11}$/.test(program.youtubeId)) {
+    renderNowPlayingInlinePlayer(program.youtubeId);
+
+    // 計算距離時間槽結束的時間（分鐘）
+    const taiwanTime = getTaiwanTime();
+    const currentMinutes = taiwanTime.getHours() * 60 + taiwanTime.getMinutes();
+    let endMinutes = currentMinutes + 30;
+    if (program.time && /^\d{2}:\d{2}$/.test(program.time)) {
+      const parts = program.time.split(':').map(Number);
+      const startMinutes = parts[0] * 60 + parts[1];
+      const durationMinutes = parseInt(program.duration || '30', 10) || 30;
+      endMinutes = startMinutes + durationMinutes;
+    }
+    let diffMinutes = endMinutes - currentMinutes;
+    if (diffMinutes < 0) diffMinutes += 24 * 60;
+    const diffMs = Math.min(diffMinutes * 60 * 1000, 24 * 60 * 60 * 1000);
+
+    nowPlayingInlineTimer = setTimeout(() => {
+      // 時間槽結束後自動切到下一檔節目
+      try {
+        if (typeof updateScheduleDisplay === 'function') {
+          updateScheduleDisplay();
+        } else {
+          cleanupNowPlayingInlinePlayer();
+        }
+      } catch (e) {
+        cleanupNowPlayingInlinePlayer();
+      }
+    }, diffMs);
   }
   
   // 標籤顯示完成

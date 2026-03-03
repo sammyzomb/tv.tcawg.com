@@ -4377,8 +4377,8 @@
 
         // 創建 Contentful 客戶端 (使用 Delivery Token 讀取資料)
         const client = contentful.createClient({
-          space: 'os5wf90ljenp',
-          accessToken: 'lODH-WLwHwVZv7O4rFdBWjSnrzaQWGD4koeOZ1Dypj0'
+          space: window.CONTENTFUL_CONFIG?.SPACE_ID || 'os5wf90ljenp',
+          accessToken: window.CONTENTFUL_CONFIG?.DELIVERY_TOKEN || 'lODH-WLwHwVZv7O4rFdBWjSnrzaQWGD4koeOZ1Dypj0'
         });
 
         // 獲取所有節目（使用分頁載入以確保載入到 10/31）
@@ -4911,8 +4911,8 @@
         
         // 創建 Contentful 客戶端
         const client = contentful.createClient({
-          space: 'os5wf90ljenp',
-          accessToken: 'lODH-WLwHwVZv7O4rFdBWjSnrzaQWGD4koeOZ1Dypj0'
+          space: window.CONTENTFUL_CONFIG?.SPACE_ID || 'os5wf90ljenp',
+          accessToken: window.CONTENTFUL_CONFIG?.DELIVERY_TOKEN || 'lODH-WLwHwVZv7O4rFdBWjSnrzaQWGD4koeOZ1Dypj0'
         });
 
         // 獲取所有影片
@@ -8229,9 +8229,33 @@
       }
     }
 
-    // 顯示覆蓋確認對話框
-    function showOverwriteConfirmation(existingTitle, time, date, isBatchCopy = false, originalDate = null) {
-      return new Promise((resolve) => {
+    // 從備註中提取描述（移除標記）
+    function extractDescriptionFromNotes(notes) {
+      if (!notes) return '';
+      return String(notes)
+        .replace(/\[時間:\d{2}:\d{2}\]/g, '')
+        .replace(/\[YouTube:[^\]]+\]/g, '')
+        .replace(/\[分類:[^\]]+\]/g, '')
+        .replace(/\[主題:[^\]]+\]/g, '')
+        .replace(/\[時長:[^\]]+\]/g, '')
+        .replace(/\[狀態:[^\]]+\]/g, '')
+        .replace(/\[縮圖:[^\]]+\]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+    }
+
+    function extractYouTubeIdFromNotes(notes) {
+      if (!notes) return '';
+      const match = String(notes).match(/\[YouTube:([^\]]+)\]/);
+      return match ? match[1] : '';
+    }
+
+    // 顯示覆蓋確認對話框（串列化顯示，避免多個同時跳出）
+    function showOverwriteConfirmation(existingTitle, time, date, isBatchCopy = false, originalDate = null, extraInfo = {}) {
+      const queue = window.__overwriteQueue || Promise.resolve();
+      window.__overwriteQueue = queue.then(() => new Promise((resolve) => {
+        const safeDescription = (extraInfo.description || '').trim() || '（無）';
+        const safeYouTubeId = (extraInfo.youtubeId || '').trim() || '（無）';
         const dialog = document.createElement('div');
         dialog.style.cssText = `
           position: fixed;
@@ -8264,7 +8288,9 @@
               <strong>發現時間衝突：</strong><br>
               <strong>日期：</strong>${date}<br>
               <strong>時間：</strong>${time}<br>
-              <strong>現有節目：</strong>${existingTitle}
+              <strong>現有節目：</strong>${existingTitle}<br>
+              <strong>影片說明：</strong>${safeDescription}<br>
+              <strong>YouTube ID：</strong>${safeYouTubeId}
             </div>
             
             <div style="background: #d1ecf1; border: 1px solid #bee5eb; padding: 15px; border-radius: 8px; margin-bottom: 25px;">
@@ -8305,15 +8331,20 @@
         
         document.body.appendChild(dialog);
         
+        const cancelBtn = dialog.querySelector('#cancelOverwrite');
+        const confirmBtn = dialog.querySelector('#confirmOverwrite');
+        
         // 取消按鈕
-        document.getElementById('cancelOverwrite').onclick = () => {
+        cancelBtn.onclick = () => {
           document.body.removeChild(dialog);
+          document.removeEventListener('keydown', handleEsc);
           resolve(false);
         };
         
         // 確認按鈕
-        document.getElementById('confirmOverwrite').onclick = () => {
+        confirmBtn.onclick = () => {
           document.body.removeChild(dialog);
+          document.removeEventListener('keydown', handleEsc);
           resolve(true);
         };
         
@@ -8321,6 +8352,7 @@
         dialog.onclick = (e) => {
           if (e.target === dialog) {
             document.body.removeChild(dialog);
+            document.removeEventListener('keydown', handleEsc);
             resolve(false);
           }
         };
@@ -8334,7 +8366,11 @@
           }
         };
         document.addEventListener('keydown', handleEsc);
+      })).catch((error) => {
+        console.error('覆蓋確認對話框錯誤:', error);
+        return false;
       });
+      return window.__overwriteQueue;
     }
 
     // 批量複製節目到整個月
@@ -8904,16 +8940,16 @@
     }
 
     // 更新批量上架完成狀態
-    function updateBatchProgressComplete(dialog, successCount, failCount) {
+    function updateBatchProgressComplete(dialog, successCount, failCount, skippedCount = 0) {
       const progressText = dialog.querySelector('#batchProgressText');
       const progressBar = dialog.querySelector('#batchProgressBar');
       
       if (progressText) {
-        if (failCount === 0) {
+        if (failCount === 0 && skippedCount === 0) {
           progressText.innerHTML = `✅ 完成！成功上架 ${successCount} 個節目`;
           progressText.style.color = '#28a745';
         } else {
-          progressText.innerHTML = `⚠️ 完成！成功 ${successCount} 個，失敗 ${failCount} 個`;
+          progressText.innerHTML = `⚠️ 完成！成功 ${successCount} 個，失敗 ${failCount} 個，跳過 ${skippedCount} 個`;
           progressText.style.color = '#ffc107';
         }
       }
@@ -9204,6 +9240,7 @@
           const results = [];
           let successCount = 0;
           let failCount = 0;
+          let skippedCount = 0;
           
           // 並發處理（每次處理 5 個節目，避免過載）
           const concurrency = 5;
@@ -9230,7 +9267,11 @@
                 results.push({ program, result });
                 
                 if (result.success) {
-                  successCount++;
+                  if (result.skipped) {
+                    skippedCount++;
+                  } else {
+                    successCount++;
+                  }
                   console.log(`✅ 上架成功 ${globalIndex}/${programsToUpload.length}: ${program.title}`);
                 } else {
                   failCount++;
@@ -9252,7 +9293,7 @@
           }
           
           // 完成後更新進度條
-          updateBatchProgressComplete(progressDialog, successCount, failCount);
+          updateBatchProgressComplete(progressDialog, successCount, failCount, skippedCount);
           
           // 等待 3 秒後關閉進度條
           setTimeout(() => {
@@ -9325,7 +9366,7 @@
           renderCurrentView();
           
           // 從 Contentful 重新載入上架成功的日期數據，確保顯示最新內容
-          const uploadedDates = [...new Set(results.filter(r => r.result.success).map(r => r.program.airDate))];
+          const uploadedDates = [...new Set(results.filter(r => r.result.success && !r.result.skipped).map(r => r.program.airDate))];
           console.log('🔄 準備重新載入以下日期的數據:', uploadedDates);
           
           // 延遲讓 Contentful 完成索引後再重新載入，月曆/週曆/日曆都會顯示
@@ -9338,7 +9379,7 @@
               } else {
                 renderCurrentView();
               }
-              if (typeof verifyContentfulDates === 'function') {
+              if (typeof verifyContentfulDates === 'function' && uploadedDates.length > 0) {
                 await verifyContentfulDates(uploadedDates);
               }
             } catch (error) {
@@ -9349,11 +9390,23 @@
 
           // 顯示批量上架結果
           const totalPrograms = programsToUpload.length;
-          const statusMessage = successCount === totalPrograms ? 
-            `✅ 成功批次上架 ${successCount} 個節目到 Contentful！` :
-            `⚠️ 批次上架完成：成功 ${successCount} 個，失敗 ${failCount} 個`;
+          let statusMessage = '';
+          let statusType = 'warning';
           
-          showStatus(statusMessage, successCount === totalPrograms ? 'success' : 'warning');
+          if (successCount === 0 && skippedCount > 0 && failCount === 0) {
+            statusMessage = `⚠️ 批次上架完成：0 個新增，${skippedCount} 個被跳過（多半是時間衝突或完全重複）`;
+          } else if (successCount === totalPrograms) {
+            statusMessage = `✅ 成功批次上架 ${successCount} 個節目到 Contentful！`;
+            statusType = 'success';
+          } else {
+            statusMessage = `⚠️ 批次上架完成：成功 ${successCount} 個，失敗 ${failCount} 個，跳過 ${skippedCount} 個`;
+          }
+          
+          showStatus(statusMessage, statusType);
+          
+          if (uploadedDates.length === 0) {
+            showStatus('⚠️ 本次沒有新增任何節目，請檢查是否時間衝突或已存在相同節目', 'warning');
+          }
 
           // 關閉模態框
           closeModal();
@@ -10919,7 +10972,37 @@
         
         // 處理時間衝突（需要用戶確認，這裡簡化為跳過）
         if (timeConflictProgram) {
-          return { success: true, entryId: timeConflictProgram.sys.id, message: '發現時間衝突節目，跳過上架', skipped: true };
+          const conflictNotes = String(timeConflictProgram.fields.notes || '');
+          const conflictDescription = extractDescriptionFromNotes(conflictNotes);
+          const conflictYouTubeId = extractYouTubeIdFromNotes(conflictNotes);
+          
+          const shouldOverwrite = await showOverwriteConfirmation(
+            timeConflictProgram.fields.title || '未知節目',
+            airTime,
+            airDate,
+            programData.isBatchCopy,
+            programData.originalDate,
+            { description: conflictDescription, youtubeId: conflictYouTubeId }
+          );
+          
+          if (!shouldOverwrite) {
+            return { success: true, entryId: timeConflictProgram.sys.id, message: '用戶略過時間衝突節目', skipped: true };
+          }
+          
+          try {
+            if (typeof timeConflictProgram.isPublished === 'function' && timeConflictProgram.isPublished()) {
+              await timeConflictProgram.unpublish();
+            }
+            await timeConflictProgram.delete();
+          } catch (deleteError) {
+            return { success: false, message: `刪除現有節目失敗: ${deleteError.message}`, action: 'delete_failed' };
+          }
+          
+          // 從緩存中移除衝突節目，避免後續誤判
+          const conflictKey = `${airDate}_${airTime}`;
+          if (existingProgramsMap.has(conflictKey)) {
+            existingProgramsMap.delete(conflictKey);
+          }
         }
         
         // 創建新節目（包含 video entry 創建）
@@ -11228,13 +11311,18 @@
             targetTime: airTime
           });
           
+          const conflictNotes = String(timeConflictProgram.fields.notes || '');
+          const conflictDescription = extractDescriptionFromNotes(conflictNotes);
+          const conflictYouTubeId = extractYouTubeIdFromNotes(conflictNotes);
+          
           // 詢問用戶是否要覆蓋
           const shouldOverwrite = await showOverwriteConfirmation(
             timeConflictProgram.fields.title || '未知節目',
             airTime,
             airDate,
             programData.isBatchCopy,
-            programData.originalDate
+            programData.originalDate,
+            { description: conflictDescription, youtubeId: conflictYouTubeId }
           );
           
           if (!shouldOverwrite) {
@@ -11825,7 +11913,7 @@ ${updates.topics ? `• 主題分類：${updates.topics.join('、')}\n` : ''}
         // 逐個修改節目
         for (let i = 0; i < programIds.length; i++) {
           const programId = programIds[i];
-          updateBatchProgress(i + 1, total, `正在修改節目 ${i + 1}/${total}...`);
+          updateBatchEditProgress(i + 1, total, `正在修改節目 ${i + 1}/${total}...`);
 
           try {
             // 獲取 Entry
@@ -11871,7 +11959,7 @@ ${updates.topics ? `• 主題分類：${updates.topics.join('、')}\n` : ''}
         }
 
         // 顯示完成訊息
-        updateBatchProgressComplete(successCount, failCount, total);
+        updateBatchEditProgressComplete(successCount, failCount, total);
         
         // 3秒後關閉進度對話框
         setTimeout(() => {
@@ -11927,7 +12015,7 @@ ${updates.topics ? `• 主題分類：${updates.topics.join('、')}\n` : ''}
       return modal;
     }
 
-    function updateBatchProgress(current, total, message) {
+    function updateBatchEditProgress(current, total, message) {
       const progressFill = document.getElementById('batchProgressFill');
       const progressText = document.getElementById('batchProgressText');
       const progressCount = document.getElementById('batchProgressCount');
@@ -11946,7 +12034,7 @@ ${updates.topics ? `• 主題分類：${updates.topics.join('、')}\n` : ''}
       }
     }
 
-    function updateBatchProgressComplete(successCount, failCount, total) {
+    function updateBatchEditProgressComplete(successCount, failCount, total) {
       const progressText = document.getElementById('batchProgressText');
       const progressCount = document.getElementById('batchProgressCount');
       
