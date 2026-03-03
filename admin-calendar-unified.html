@@ -520,6 +520,7 @@
           <button class="btn" style="background: #dc3545; padding: 8px 12px; font-size: 0.85rem;" onclick="forceReloadFromContentful()" title="強制清空本地數據，完全從 Contentful 重新載入">🔄 強制重新載入</button>
           <button class="btn" style="background: #17a2b8; padding: 8px 12px; font-size: 0.85rem;" onclick="syncAllToContentful()" title="將本地節目數據同步上傳到 Contentful">🔄 同步</button>
           <button class="btn" style="background: #dc3545; padding: 8px 12px; font-size: 0.85rem;" onclick="uploadSelectedPrograms()" title="上架選中的節目到 Contentful">📺 上架</button>
+          <button class="btn" style="background: #6c757d; padding: 8px 12px; font-size: 0.85rem;" onclick="unpublishSelectedPrograms()" title="批次下架（永久刪除 Contentful 節目）">📴 批次下架</button>
           <button class="btn" style="background: #ffc107; padding: 8px 12px; font-size: 0.85rem;" onclick="showBatchEditDialog()" title="批次修改已上架節目的分類、主題等資訊">✏️ 批次修改</button>
           <button class="btn" style="background: #6f42c1; padding: 8px 12px; font-size: 0.85rem;" onclick="showAllVideos()" title="查看所有影片：顯示 Contentful 中的所有影片資料">🎬 查看所有影片</button>
         </div>
@@ -779,7 +780,8 @@
           <button type="button" class="btn" style="background: #6f42c1; color: white;" onclick="toggleFeaturedFromEdit(true)" id="setFeaturedBtn">⭐ 設為精選</button>
         </div>
         <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-          <button type="button" class="btn btn-danger" onclick="deleteEvent()">🗑️ 刪除節目</button>
+          <button type="button" class="btn btn-danger" onclick="deleteEvent(event)">🗑️ 刪除節目</button>
+          <button type="button" class="btn" style="background:#6c757d;color:#fff;" onclick="unpublishEvent(event)">📴 批次下架</button>
           <button type="button" class="btn btn-secondary" onclick="closeModal()">❌ 取消</button>
         </div>
       </form>
@@ -3728,7 +3730,9 @@
       createNewProgram();
     });
 
-    async function deleteEvent() {
+    async function deleteEvent(e) {
+      if (e && typeof e.preventDefault === 'function') e.preventDefault();
+      if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
       console.log('🗑️ deleteEvent 函數被調用');
       console.log('window.currentEditingVideoId:', window.currentEditingVideoId);
       console.log('window.deleteVideo 是否存在:', typeof window.deleteVideo);
@@ -3749,8 +3753,13 @@
       }
 
       const date = document.getElementById('editDate').value;
-      const time = document.getElementById('editTime').value;
+      const time = document.getElementById('airTime').value || document.getElementById('editTime').value;
       const title = document.getElementById('title').value;
+
+      if (!date || !time) {
+        alert('找不到節目日期或時間，請先選擇節目後再刪除。');
+        return;
+      }
 
       console.log('🗑️ 開始刪除節目:', { date, time, title });
 
@@ -3762,6 +3771,7 @@
         if (!eventToDelete) {
           console.error('❌ 找不到要刪除的節目');
           showStatus('找不到要刪除的節目', 'error');
+          alert('找不到要刪除的節目，請重新選擇節目。');
           return;
         }
 
@@ -3810,12 +3820,14 @@
         // 不調用 saveEvents()，因為我們已經移除了 localStorage 依賴
         renderCurrentView();
         closeModal();
+        alert('刪除完成');
         
         // 顯示最終狀態（在 deleteSingleEvent 或 batchDeleteEvents 中已經顯示了）
         
       } catch (error) {
         console.error('❌ 刪除節目失敗:', error);
         showStatus('刪除節目失敗: ' + error.message, 'error');
+        alert('刪除節目失敗：' + error.message);
       }
     }
 
@@ -3835,7 +3847,7 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        z-index: 10000;
+        z-index: 10050;
         font-family: Arial, sans-serif;
       `;
       
@@ -4077,6 +4089,7 @@
         setTimeout(() => {
           document.body.removeChild(progressDialog);
           showStatus(`批量刪除完成: 成功 ${successCount} 個，失敗 ${failCount} 個`, successCount > 0 ? 'success' : 'error');
+          alert(`批量刪除完成：成功 ${successCount} 個，失敗 ${failCount} 個`);
         }, 2000);
 
       } catch (error) {
@@ -8580,7 +8593,7 @@
       const periodCheckboxes = dialog.querySelectorAll('.periodCheckbox');
       console.log('📋 找到時段複選框:', periodCheckboxes.length, '個');
       
-      // 檢查時間槽是否已有節目的函數
+      // 檢查時間槽是否已有節目的函數（並顯示日期清單與覆蓋/略過）
       function checkTimeSlotConflicts() {
         const startDate = document.getElementById('batchStartDate')?.value || targetDate;
         const endDate = document.getElementById('batchEndDate')?.value;
@@ -8589,7 +8602,7 @@
           return;
         }
         
-        // 遍歷所有選中的時段
+        // 只檢查未來時間（過去時間不提示衝突）
         periodCheckboxes.forEach(checkbox => {
           if (checkbox.checked) {
             const period = checkbox.dataset.period;
@@ -8608,11 +8621,25 @@
             let conflictPrograms = []; // 儲存衝突的節目資訊
             const start = new Date(startDate);
             const end = new Date(endDate);
+            const now = new Date();
             
             for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
               const dateString = d.getFullYear() + '-' + 
                                 String(d.getMonth() + 1).padStart(2, '0') + '-' + 
                                 String(d.getDate()).padStart(2, '0');
+              
+              // 跳過過去時間（同一天也要比較時間）
+              const compareDate = new Date(dateString + 'T00:00:00');
+              if (compareDate.toDateString() === now.toDateString()) {
+                const [h, m] = selectedTime.split(':').map(Number);
+                const slotMinutes = h * 60 + m;
+                const nowMinutes = now.getHours() * 60 + now.getMinutes();
+                if (slotMinutes <= nowMinutes) {
+                  continue;
+                }
+              } else if (compareDate < new Date(now.getFullYear(), now.getMonth(), now.getDate())) {
+                continue;
+              }
               
               const existingEvent = getEvent(dateString, selectedTime);
               if (existingEvent) {
@@ -8633,14 +8660,29 @@
             // 顯示或隱藏警告
             if (hasConflict) {
               // 構建警告訊息，包含節目名稱
-              let warningMessage = '⚠️ <strong>此時間槽已有節目</strong>';
+              let warningMessage = '⚠️ <strong>此時間槽已經有節目</strong>';
               if (conflictPrograms.length > 0) {
-                // 顯示前3個衝突節目的名稱
-                const programTitles = conflictPrograms.slice(0, 3).map(p => p.title);
-                warningMessage += '<br><span style="font-size: 0.9rem; margin-top: 5px; display: block;">📺 現有節目：' + programTitles.join('、') + '</span>';
-                if (conflictPrograms.length > 3) {
-                  warningMessage += `<span style="font-size: 0.85rem; color: #999;">（還有 ${conflictPrograms.length - 3} 個節目）</span>`;
-                }
+                const preview = conflictPrograms
+                  .map(p => `${p.date} ${p.time} ${p.title}`)
+                  .join('<br>');
+                warningMessage += `<br><span style="font-size: 0.9rem; margin-top: 6px; display: block;">📺 已有節目清單（共 ${conflictPrograms.length} 筆）：<br>${preview}</span>`;
+              }
+              
+              // 加入覆蓋/略過選擇
+              const choiceName = `conflictAction_${period}`;
+              const existingChoice = warningDiv.querySelector(`input[name="${choiceName}"]`);
+              if (!existingChoice) {
+                warningMessage += `
+                  <div style="margin-top: 10px; font-size: 0.9rem;">
+                    <div style="font-weight: 600; margin-bottom: 6px;">此時間槽已有節目，是否要覆蓋？</div>
+                    <label style="margin-right: 12px;">
+                      <input type="radio" name="${choiceName}" value="skip" checked> 略過
+                    </label>
+                    <label>
+                      <input type="radio" name="${choiceName}" value="overwrite"> 覆蓋
+                    </label>
+                  </div>
+                `;
               }
               warningDiv.innerHTML = warningMessage;
               warningDiv.style.display = 'block';
@@ -8745,10 +8787,13 @@
                 const timeSelect = dialog.querySelector(`.periodTimeSelect[data-period="${period}"]`);
                 const selectedTime = timeSelect?.value;
                 if (selectedTime) {
+                  const choiceName = `conflictAction_${period}`;
+                  const selectedAction = dialog.querySelector(`input[name="${choiceName}"]:checked`)?.value || 'skip';
                   selectedPeriods.push({
                     period: period,
                     periodName: TIME_SLOTS[period].name,
-                    time: selectedTime
+                    time: selectedTime,
+                    conflictAction: selectedAction
                   });
                 }
               }
@@ -9138,6 +9183,7 @@
                 status: isEveningFirstTime ? '首播' : '重播',
                 isFirstBroadcast: isEveningFirstTime,
                 youtubeId: programData.youtubeId,
+                conflictAction: periodInfo.conflictAction || 'skip',
                 // 標記為批量複製
                 isBatchCopy: true,
                 originalDate: startDate
@@ -9177,6 +9223,19 @@
           
           // 批量上架節目（優化版本：並發處理 + 緩存）
           console.log('🚀 開始批量上架，優化模式：並發處理');
+          
+          // 先檢查 Management SDK 與 Token，避免整批失敗
+          if (typeof contentfulManagement === 'undefined') {
+            alert('❌ Management SDK 未載入\n請重新載入頁面後再試');
+            showStatus('❌ Management SDK 未載入，批次上架中止', 'error');
+            return;
+          }
+          const managementToken = window.CONTENTFUL_CONFIG?.MANAGEMENT_TOKEN || window.CONTENTFUL_MANAGEMENT_TOKEN;
+          if (!managementToken) {
+            alert('❌ Management Token 未設定\n請先設定 Token 後再試');
+            showStatus('❌ Management Token 未設定，批次上架中止', 'error');
+            return;
+          }
           
           // 預先獲取 Space 和 Environment（只獲取一次）
           let cachedSpace = null;
@@ -9241,6 +9300,7 @@
           let successCount = 0;
           let failCount = 0;
           let skippedCount = 0;
+          const failDetails = [];
           
           // 並發處理（每次處理 5 個節目，避免過載）
           const concurrency = 5;
@@ -9276,6 +9336,12 @@
                 } else {
                   failCount++;
                   console.error(`❌ 上架失敗 ${globalIndex}/${programsToUpload.length}: ${program.title}`, result.error);
+                  failDetails.push({
+                    title: program.title,
+                    date: program.airDate,
+                    time: program.airTime,
+                    error: result.error || result.message || '未知錯誤'
+                  });
                 }
                 
                 return { program, result };
@@ -9284,6 +9350,12 @@
                 const errorResult = { success: false, error: error.message };
                 results.push({ program, result: errorResult });
                 failCount++;
+                failDetails.push({
+                  title: program.title,
+                  date: program.airDate,
+                  time: program.airTime,
+                  error: error.message || '未知錯誤'
+                });
                 return { program, result: errorResult };
               }
             });
@@ -9295,18 +9367,29 @@
           // 完成後更新進度條
           updateBatchProgressComplete(progressDialog, successCount, failCount, skippedCount);
           
-          // 等待 3 秒後關閉進度條
-          setTimeout(() => {
-            if (document.body.contains(progressDialog)) {
-              document.body.removeChild(progressDialog);
-            }
-          }, 3000);
+          // 批次上架後視窗改為手動關閉（不自動關閉）
+          const progressText = progressDialog.querySelector('#batchProgressText');
+          if (progressText && failCount > 0) {
+            progressText.innerHTML += '<div style="font-size:12px;color:#856404;margin-top:6px;">⚠️ 有失敗項目，請保留此視窗查看錯誤。</div>';
+          }
+          if (!progressDialog.querySelector('#batchProgressClose')) {
+            const closeBtn = document.createElement('button');
+            closeBtn.id = 'batchProgressClose';
+            closeBtn.textContent = '關閉';
+            closeBtn.style.cssText = 'margin-top:10px;background:#6c757d;color:#fff;border:none;padding:6px 12px;border-radius:4px;cursor:pointer;';
+            closeBtn.onclick = () => {
+              if (document.body.contains(progressDialog)) {
+                document.body.removeChild(progressDialog);
+              }
+            };
+            progressText && progressText.appendChild(closeBtn);
+          }
 
           // 處理批量上架結果
           const publishedPrograms = JSON.parse(localStorage.getItem('published_programs') || '[]');
           
           for (const { program, result } of results) {
-            if (result.success) {
+            if (result.success && !result.skipped) {
               publishedPrograms.push({
                 ...program,
                 publishedAt: new Date().toISOString(),
@@ -9403,6 +9486,22 @@
           }
           
           showStatus(statusMessage, statusType);
+          
+          if (failDetails.length > 0) {
+            const preview = failDetails.slice(0, 5).map(item => `${item.date} ${item.time} ${item.title}: ${item.error}`).join('\n');
+            showStatus(`❌ 部分上架失敗（前5筆）：\n${preview}`, 'error');
+            
+            const progressList = progressDialog.querySelector('#batchProgressList');
+            if (progressList) {
+              progressList.innerHTML += `
+                <div style="margin:10px 0;padding:10px;background:#fff3cd;border:1px solid #ffeeba;border-radius:6px;">
+                  <div style="font-weight:600;color:#856404;margin-bottom:6px;">❌ 失敗摘要（前5筆）</div>
+                  <div style="font-size:12px;color:#856404;white-space:pre-line;">${preview}</div>
+                </div>
+              `;
+              progressList.scrollTop = progressList.scrollHeight;
+            }
+          }
           
           if (uploadedDates.length === 0) {
             showStatus('⚠️ 本次沒有新增任何節目，請檢查是否時間衝突或已存在相同節目', 'warning');
@@ -10229,6 +10328,200 @@
       }
     }
 
+    async function getManagementEnvironment() {
+      if (typeof contentfulManagement === 'undefined') {
+        throw new Error('Management SDK 未載入');
+      }
+      const managementToken = window.CONTENTFUL_CONFIG?.MANAGEMENT_TOKEN || window.CONTENTFUL_MANAGEMENT_TOKEN;
+      if (!managementToken) {
+        throw new Error('Management Token 未設定');
+      }
+      const managementClient = contentfulManagement.createClient({ accessToken: managementToken });
+      const spaceId = window.CONTENTFUL_CONFIG?.SPACE_ID || 'os5wf90ljenp';
+      const space = await managementClient.getSpace(spaceId);
+      return await space.getEnvironment('master');
+    }
+
+    // 根據日期與時間在 Contentful 找到對應節目
+    async function findContentfulProgramByDateTime(environment, airDate, airTime) {
+      const existingEntries = await environment.getEntries({
+        content_type: 'scheduleItem',
+        'fields.airDate': airDate,
+        limit: 100
+      });
+      return existingEntries.items.find(entry => {
+        const entryNotes = String(entry.fields.notes || '');
+        const timeMatch = entryNotes.match(/\[時間:(\d{2}:\d{2})\]/);
+        const entryAirTime = timeMatch ? timeMatch[1] : null;
+        return entryAirTime === airTime;
+      });
+    }
+
+    // 批次下架選中的節目（取消發布）
+    async function unpublishSelectedPrograms() {
+      try {
+        if (typeof contentfulManagement === 'undefined') {
+          alert('❌ Management SDK 未載入\n請重新載入頁面');
+          return;
+        }
+
+        const selectedPrograms = getSelectedPrograms();
+        if (selectedPrograms.length === 0) {
+          alert('請先選擇要下架的節目！\n\n選擇方式：\n1. 在日曆中點擊節目\n2. 或使用「調試節目」功能查看所有節目');
+          return;
+        }
+
+        const confirmMessage = `確定要永久刪除以下 ${selectedPrograms.length} 個節目嗎？\n\n${selectedPrograms.map(p => `• ${p.title} (${p.airDate} ${p.airTime})`).join('\n')}\n\n⚠️ 此操作會從 Contentful 永久刪除，無法復原。`;
+        if (!confirm(confirmMessage)) return;
+
+        const progressDiv = document.createElement('div');
+        progressDiv.id = 'unpublishProgress';
+        progressDiv.style.cssText = `
+          position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+          background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+          z-index: 10000; max-width: 500px; width: 90%;
+        `;
+        progressDiv.innerHTML = `
+          <h3>🗑️ 節目永久刪除中...</h3>
+          <div id="unpublishProgressList" style="max-height: 300px; overflow-y: auto; margin: 10px 0;"></div>
+          <button onclick="document.getElementById('unpublishProgress').remove()" style="background: #6c757d; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer;">關閉</button>
+        `;
+        document.body.appendChild(progressDiv);
+        const progressList = document.getElementById('unpublishProgressList');
+
+        const environment = await getManagementEnvironment();
+
+        let successCount = 0;
+        let failCount = 0;
+
+        for (let i = 0; i < selectedPrograms.length; i++) {
+          const program = selectedPrograms[i];
+          progressList.innerHTML += `<div>🗑️ 刪除節目 ${i + 1}/${selectedPrograms.length}: ${program.title}</div>`;
+
+          try {
+            const entry = await findContentfulProgramByDateTime(environment, program.airDate, program.airTime);
+            if (!entry) {
+              progressList.innerHTML += `<div style="color: #d9534f;">❌ 找不到節目：${program.title} (${program.airDate} ${program.airTime})</div>`;
+              failCount++;
+              continue;
+            }
+
+            if (entry.isPublished && entry.isPublished()) {
+              await entry.unpublish();
+            }
+            await entry.delete();
+            progressList.innerHTML += `<div style="color: green;">✅ 已刪除：${program.title} (${program.airDate} ${program.airTime})</div>`;
+            successCount++;
+          } catch (error) {
+            progressList.innerHTML += `<div style="color: red;">❌ 刪除失敗：${program.title} - ${error.message}</div>`;
+            failCount++;
+          }
+        }
+
+        progressList.innerHTML += `<div style="margin-top:8px;font-weight:600;">完成：成功 ${successCount} 個，失敗 ${failCount} 個</div>`;
+        showStatus(`批次刪除完成：成功 ${successCount} 個，失敗 ${failCount} 個`, failCount === 0 ? 'success' : 'warning');
+      } catch (error) {
+        alert(`節目刪除失敗: ${error.message}`);
+        console.error('節目刪除錯誤:', error);
+      }
+    }
+
+    async function unpublishFromContentful(entryId) {
+      const environment = await getManagementEnvironment();
+      const entry = await environment.getEntry(entryId);
+      if (entry.isPublished && entry.isPublished()) {
+        await entry.unpublish();
+      }
+      await entry.delete();
+      return entry;
+    }
+
+    // 批次下架（永久刪除）：針對目前編輯的節目（可單筆/同節目批次）
+    async function unpublishEvent(e) {
+      if (e && typeof e.preventDefault === 'function') e.preventDefault();
+      if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
+      try {
+        const date = document.getElementById('editDate').value;
+        const time = document.getElementById('airTime').value || document.getElementById('editTime').value;
+        const title = document.getElementById('title').value;
+
+        if (!date || !time) {
+          alert('找不到節目日期或時間，請先選擇節目後再下架。');
+          return;
+        }
+
+        const eventToUnpublish = events[date]?.find(event => event.time === time);
+        if (!eventToUnpublish) {
+          showStatus('找不到要下架的節目', 'error');
+          alert('找不到要下架的節目，請重新選擇節目。');
+          return;
+        }
+
+        const duplicateEvents = findDuplicateEvents(eventToUnpublish, date, time);
+        let targets = [{ date, time, event: eventToUnpublish }];
+
+        if (duplicateEvents.length > 0) {
+          const choice = await showDeleteChoiceDialog(eventToUnpublish, duplicateEvents, date, time, title);
+          if (choice === 'batch') {
+            targets = duplicateEvents;
+          } else if (choice !== 'single') {
+            showStatus('已取消下架', 'info');
+            return;
+          }
+        }
+
+        if (!confirm(`確定要永久刪除 ${targets.length} 個節目嗎？\n\n⚠️ 此操作無法復原。`)) {
+          showStatus('已取消下架', 'info');
+          return;
+        }
+
+        const progressDialog = document.createElement('div');
+        progressDialog.className = 'modal';
+        progressDialog.style.display = 'block';
+        progressDialog.innerHTML = `
+          <div class="modal-content" style="max-width: 600px;">
+            <h3 style="margin:0 0 10px 0;">🗑️ 批次永久刪除節目</h3>
+            <div id="unpublishList" style="max-height: 300px; overflow-y: auto;"></div>
+          </div>
+        `;
+        document.body.appendChild(progressDialog);
+        const list = progressDialog.querySelector('#unpublishList');
+
+        let successCount = 0;
+        let failCount = 0;
+        for (let i = 0; i < targets.length; i++) {
+          const item = targets[i];
+          list.innerHTML += `<div>🗑️ 刪除 ${i + 1}/${targets.length}: ${item.date} ${item.time} - ${item.event.title}</div>`;
+          try {
+            if (item.event.contentfulId) {
+              await unpublishFromContentful(item.event.contentfulId);
+            } else {
+              const env = await getManagementEnvironment();
+              const entry = await findContentfulProgramByDateTime(env, item.date, item.time);
+              if (entry) {
+                if (entry.isPublished && entry.isPublished()) {
+                  await entry.unpublish();
+                }
+                await entry.delete();
+              } else {
+                throw new Error('找不到 Contentful 節目');
+              }
+            }
+            successCount++;
+          } catch (error) {
+            failCount++;
+            list.innerHTML += `<div style="color:#d9534f;">❌ 失敗：${error.message}</div>`;
+          }
+        }
+
+        list.innerHTML += `<div style="margin-top:8px;font-weight:600;">完成：成功 ${successCount} 個，失敗 ${failCount} 個</div>`;
+        showStatus(`批次刪除完成：成功 ${successCount} 個，失敗 ${failCount} 個`, failCount === 0 ? 'success' : 'warning');
+      } catch (error) {
+        showStatus('批次刪除失敗: ' + error.message, 'error');
+        alert('批次刪除失敗：' + error.message);
+      }
+    }
+
     // 獲取選中的節目
     function getSelectedPrograms() {
       const selectedPrograms = [];
@@ -10911,10 +11204,7 @@
                 break;
               }
               
-              // 相同標題和 YouTube ID，但時間不同（視為可更新）
-              if (isSameTitle && isSameYouTubeId) {
-                sameProgram = entry;
-              }
+              // 相同標題和 YouTube ID，但時間不同不視為同一節目（避免覆寫其他時段）
               
               // 時間相同但節目不同（時間衝突）
               if (isSameTime && (!isSameTitle || !isSameYouTubeId)) {
@@ -10975,15 +11265,21 @@
           const conflictNotes = String(timeConflictProgram.fields.notes || '');
           const conflictDescription = extractDescriptionFromNotes(conflictNotes);
           const conflictYouTubeId = extractYouTubeIdFromNotes(conflictNotes);
-          
-          const shouldOverwrite = await showOverwriteConfirmation(
-            timeConflictProgram.fields.title || '未知節目',
-            airTime,
-            airDate,
-            programData.isBatchCopy,
-            programData.originalDate,
-            { description: conflictDescription, youtubeId: conflictYouTubeId }
-          );
+          let shouldOverwrite = false;
+          if (programData.conflictAction === 'overwrite') {
+            shouldOverwrite = true;
+          } else if (programData.conflictAction === 'skip') {
+            shouldOverwrite = false;
+          } else {
+            shouldOverwrite = await showOverwriteConfirmation(
+              timeConflictProgram.fields.title || '未知節目',
+              airTime,
+              airDate,
+              programData.isBatchCopy,
+              programData.originalDate,
+              { description: conflictDescription, youtubeId: conflictYouTubeId }
+            );
+          }
           
           if (!shouldOverwrite) {
             return { success: true, entryId: timeConflictProgram.sys.id, message: '用戶略過時間衝突節目', skipped: true };
@@ -11066,7 +11362,6 @@
           }
           
           const entry = await cachedEnvironment.createEntry('scheduleItem', entryData);
-          await entry.update();
           await entry.publish();
           
           return { success: true, message: '成功創建新節目', action: 'created', entryId: entry.sys.id };
@@ -11255,6 +11550,8 @@
             // 更新所有欄位（只更新 Contentful 中實際存在的欄位）
             updatedEntry.fields.title = { 'en-US': programData.title };
             updatedEntry.fields.airDate = { 'en-US': airDate };
+            updatedEntry.fields.block = { 'en-US': block };
+            updatedEntry.fields.slotIndex = { 'en-US': slotIndex };
             updatedEntry.fields.notes = { 'en-US': notes };
             
             // 注意：airTime、status、duration、youtubeId、thumbnail 等資訊都存儲在 notes 欄位中
@@ -11315,15 +11612,23 @@
           const conflictDescription = extractDescriptionFromNotes(conflictNotes);
           const conflictYouTubeId = extractYouTubeIdFromNotes(conflictNotes);
           
-          // 詢問用戶是否要覆蓋
-          const shouldOverwrite = await showOverwriteConfirmation(
-            timeConflictProgram.fields.title || '未知節目',
-            airTime,
-            airDate,
-            programData.isBatchCopy,
-            programData.originalDate,
-            { description: conflictDescription, youtubeId: conflictYouTubeId }
-          );
+          // 若為批次上架且已選擇覆蓋/略過，直接使用設定
+          let shouldOverwrite = false;
+          if (programData.conflictAction === 'overwrite') {
+            shouldOverwrite = true;
+          } else if (programData.conflictAction === 'skip') {
+            shouldOverwrite = false;
+          } else {
+            // 詢問用戶是否要覆蓋
+            shouldOverwrite = await showOverwriteConfirmation(
+              timeConflictProgram.fields.title || '未知節目',
+              airTime,
+              airDate,
+              programData.isBatchCopy,
+              programData.originalDate,
+              { description: conflictDescription, youtubeId: conflictYouTubeId }
+            );
+          }
           
           if (!shouldOverwrite) {
             return {
@@ -11890,7 +12195,7 @@ ${updates.topics ? `• 主題分類：${updates.topics.join('、')}\n` : ''}
 
     async function performBatchEdit(programIds, updates) {
       // 顯示進度對話框
-      const progressDialog = createBatchProgressDialog();
+      const progressDialog = createBatchEditProgressDialog();
       document.body.appendChild(progressDialog);
       
       let successCount = 0;
@@ -11989,7 +12294,7 @@ ${updates.topics ? `• 主題分類：${updates.topics.join('、')}\n` : ''}
     }
 
     // 批次進度相關函數
-    function createBatchProgressDialog() {
+    function createBatchEditProgressDialog() {
       const modal = document.createElement('div');
       modal.className = 'modal';
       modal.style.display = 'block';

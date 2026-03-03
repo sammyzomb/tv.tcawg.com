@@ -2661,10 +2661,13 @@ function updateNowPlayingArea(program) {
 
   // 現正播出卡片自動播放：直接在卡片內輪播該影片，直到時間槽結束
   cleanupNowPlayingInlinePlayer();
-  if (program.youtubeId && /^[a-zA-Z0-9_-]{11}$/.test(program.youtubeId)) {
+  const canAutoPlayInline = program.youtubeId &&
+    /^[a-zA-Z0-9_-]{11}$/.test(program.youtubeId) &&
+    !program.isPremiere && program.status !== '首播';
+  if (canAutoPlayInline) {
     renderNowPlayingInlinePlayer(program.youtubeId);
 
-    // 計算距離時間槽結束的時間（分鐘）
+    // 計算距離時間槽結束的時間（分鐘），使用台灣時間
     const taiwanTime = getTaiwanTime();
     const currentMinutes = taiwanTime.getHours() * 60 + taiwanTime.getMinutes();
     let endMinutes = currentMinutes + 30;
@@ -2821,7 +2824,6 @@ function renderUpcomingProgramItem(program, upcomingProgramsList) {
       <div class="upcoming-program-title">${escapeHtml(program.title || '未命名節目')}</div>
       <div class="upcoming-program-description">${escapeHtml(program.description || '節目描述暫無')}</div>
       <div class="upcoming-program-meta">
-        <span class="upcoming-program-duration">${program.duration || '30'}分鐘</span>
         ${program.category && program.category.trim() !== '' ? `<span class="upcoming-program-category">${escapeHtml(program.category)}</span>` : ''}
       </div>
       ${program.tags && program.tags.length > 0 ? `
