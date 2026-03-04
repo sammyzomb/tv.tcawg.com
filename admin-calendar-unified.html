@@ -14,6 +14,9 @@
 
     .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
 
+    .top-bar { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; flex-wrap: wrap; margin-bottom: 20px; }
+    .top-bar .header { margin-bottom: 0; flex: 0 0 auto; }
+    .top-bar .view-controls { margin-bottom: 0; flex: 1 1 400px; min-width: 0; }
     .header { background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
     .header h1 { color: #2b71d2; margin-bottom: 10px; }
 
@@ -298,11 +301,18 @@
       opacity: 1;
     }
 
-    /* 日視圖特殊樣式 */
+    /* 日視圖特殊樣式：節目安排藍色區塊上下縮短、文字一行 */
     #dayView .calendar-header {
       grid-template-columns: 80px 1fr;
       background: #2b71d2;
       color: white;
+      padding: 4px 12px;
+      min-height: auto;
+      align-items: center;
+    }
+    #dayView .calendar-header div {
+      padding: 4px 10px;
+      font-size: 0.9rem;
     }
     #dayView .calendar-body {
       display: block;
@@ -480,25 +490,26 @@
 </head>
 <body>
   <div class="container">
-    <div class="header">
-      <h1>📅 統一節目管理系統</h1>
-      <p>整合月曆、週曆、日曆三種視圖，統一管理所有節目安排</p>
-      <div class="current-time-display" id="currentTimeDisplay" style="
-        background: #2b71d2;
-        color: white;
-        padding: 8px 16px;
-        border-radius: 20px;
-        font-size: 0.9rem;
-        font-weight: 600;
-        display: inline-block;
-        margin-top: 10px;
-        box-shadow: 0 2px 8px rgba(43, 113, 210, 0.3);
-      ">
-        🕐 台灣時間：<span id="currentTimeText">載入中...</span>
+    <div class="top-bar">
+      <div class="header">
+        <h1>📅 統一節目管理系統</h1>
+        <p>整合月曆、週曆、日曆三種視圖，統一管理所有節目安排</p>
+        <div class="current-time-display" id="currentTimeDisplay" style="
+          background: #2b71d2;
+          color: white;
+          padding: 8px 16px;
+          border-radius: 20px;
+          font-size: 0.9rem;
+          font-weight: 600;
+          display: inline-block;
+          margin-top: 10px;
+          box-shadow: 0 2px 8px rgba(43, 113, 210, 0.3);
+        ">
+          🕐 台灣時間：<span id="currentTimeText">載入中...</span>
+        </div>
       </div>
-    </div>
 
-    <div class="view-controls">
+      <div class="view-controls">
       <div class="view-buttons">
         <button class="view-btn active" onclick="switchView('month')" title="月曆視圖：查看整月的節目安排，適合長期規劃">📅 月曆視圖</button>
         <button class="view-btn" onclick="switchView('week')" title="週曆視圖：查看一週的節目安排，適合週間規劃">📊 週曆視圖</button>
@@ -522,6 +533,7 @@
           <button class="btn" style="background: #dc3545; padding: 8px 12px; font-size: 0.85rem;" onclick="uploadSelectedPrograms()" title="上架選中的節目到 Contentful">📺 上架</button>
           <button class="btn" style="background: #6c757d; padding: 8px 12px; font-size: 0.85rem;" onclick="unpublishSelectedPrograms()" title="批次下架（永久刪除 Contentful 節目）">📴 批次下架</button>
           <button class="btn" style="background: #ffc107; padding: 8px 12px; font-size: 0.85rem;" onclick="showBatchEditDialog()" title="批次修改已上架節目的分類、主題等資訊">✏️ 批次修改</button>
+          <button class="btn" style="background: #20c997; padding: 8px 12px; font-size: 0.85rem;" onclick="showEmptySlotsDialog()" title="查詢日期範圍內的空檔時間槽">🕳️ 空檔查詢</button>
           <button class="btn" style="background: #6f42c1; padding: 8px 12px; font-size: 0.85rem;" onclick="showAllVideos()" title="查看所有影片：顯示 Contentful 中的所有影片資料">🎬 查看所有影片</button>
         </div>
         
@@ -530,6 +542,7 @@
           <!-- 隱藏的調試按鈕（需要時可取消註解） -->
           <!-- <button class="btn" style="background: #6c757d; padding: 8px 12px; font-size: 0.85rem;" onclick="checkContentfulContentTypes()" title="檢查 Contentful 內容類型和欄位設定">🔍 檢查</button> -->
           <button class="btn" style="background: #dc3545; padding: 8px 12px; font-size: 0.85rem;" onclick="cleanupOldContentfulData()" title="清理 Contentful 中的舊節目數據（30天前）">🗑️ 清理舊數據</button>
+          <button class="btn" style="background: #fd7e14; padding: 8px 12px; font-size: 0.85rem;" onclick="showDeleteByYouTubeIdDialog()" title="依 YouTube 影片 ID 搜尋並刪除節目（可僅刪除指定時間之前的排程，例如未上映影片）">🎬 依 YouTube ID 刪除</button>
           <button class="btn" style="background: #17a2b8; padding: 8px 12px; font-size: 0.85rem;" onclick="showContentfulStats()" title="查看 Contentful 數據統計和存儲使用情況">📊 數據統計</button>
           <button class="btn" style="background: #6f42c1; padding: 8px 12px; font-size: 0.85rem;" onclick="goToDashboard()" title="前往主控台查看系統狀態">🏠 主控台</button>
           <!-- 緊急清理功能可用 Escape 鍵觸發，不需要按鈕 -->
@@ -542,6 +555,7 @@
           <!-- <button class="btn" style="background: #28a745; padding: 8px 12px; font-size: 0.85rem;" onclick="createMissing1630Program()" title="如果 16:30 節目不存在，創建一個新的">➕ 創建 16:30</button> -->
         </div>
       </div>
+    </div>
     </div>
 
     <div class="view active" id="monthView">
@@ -660,7 +674,7 @@
         </div>
 
         <div class="form-group">
-          <label>節目分類：</label>
+          <label for="category" style="display: none;">節目分類（播放的洲別）</label>
           <div style="display: flex; gap: 10px; align-items: center;">
             <select id="category" required style="flex: 1;">
             <option value="">-- 選擇分類 --</option>
@@ -677,9 +691,7 @@
               🤖 自動分類
             </button>
           </div>
-          <small style="color: #666; margin-top: 5px; display: block;">
-            點擊「自動分類」按鈕可根據標題和描述自動判斷所屬洲別
-          </small>
+          <small style="display: none;">點擊「自動分類」按鈕可根據標題和描述自動判斷所屬洲別</small>
         </div>
 
         <div class="form-group">
@@ -774,7 +786,7 @@
         </div>
 
         <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px;">
-          <button type="submit" class="btn">💾 儲存節目</button>
+          <button type="submit" class="btn">💾 節目上架</button>
           <button type="button" class="btn" style="background: #17a2b8;" onclick="copyAndPublish()">📋 批次上架</button>
           <button type="button" class="btn" style="background: #ffc107; color: #000;" onclick="checkSystemStatus()">🔍 檢查系統狀態</button>
           <button type="button" class="btn" style="background: #6f42c1; color: white;" onclick="toggleFeaturedFromEdit(true)" id="setFeaturedBtn">⭐ 設為精選</button>
@@ -1002,16 +1014,6 @@
         id: 'travel-talk',
         title: '旅途談',
         description: '邀請旅遊達人、部落客、在地人，分享旅行心得、技巧與趣聞'
-      },
-      {
-        id: 'around-world',
-        title: '繞著地球跑',
-        description: '走訪小鎮或鄉村，介紹當地文化、手作工藝、市場與特色美食'
-      },
-      {
-        id: 'food-talk',
-        title: '食話實說',
-        description: '討論特定食材、料理或美食文化，結合討論與實地示範'
       },
       {
         id: 'play-fun',
@@ -1394,11 +1396,9 @@
 
       dayHeader.innerHTML = `
         <div>時間</div>
-        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
-          <div style="font-weight: 600; margin-bottom: 2px;">節目安排</div>
-          <div style="font-size: 0.9rem; opacity: 0.9; ${isToday ? 'color: #ffc107; font-weight: 600;' : ''}">
-            ${currentDate.getFullYear()}年${currentDate.getMonth() + 1}月${currentDate.getDate()}日 ${dayNames[dayOfWeek]}
-          </div>
+        <div style="display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 10px; flex-wrap: nowrap;">
+          <span style="font-weight: 600;">節目安排</span>
+          <span style="font-size: 0.9rem; opacity: 0.9; ${isToday ? 'color: #ffc107; font-weight: 600;' : ''}">${currentDate.getFullYear()}年${currentDate.getMonth() + 1}月${currentDate.getDate()}日 ${dayNames[dayOfWeek]}</span>
         </div>
       `;
 
@@ -1910,7 +1910,7 @@
           text-align: center !important;
           border: 3px solid #4CAF50 !important;
         ">
-          <h3 style="margin: 0 0 25px 0; color: #333; font-size: 20px; font-weight: bold;">💾 儲存節目</h3>
+          <h3 style="margin: 0 0 25px 0; color: #333; font-size: 20px; font-weight: bold;">💾 節目上架</h3>
           <div style="margin-bottom: 25px;">
             <div style="
               width: 100%;
@@ -6419,155 +6419,192 @@
       }
     }
     
-    // 顯示重複時間槽確認對話框
+    // 顯示重複時間槽確認對話框（每個節目可手動選擇保留/刪除，每槽僅能保留一個）
     function showDuplicateTimeSlotsDialog(duplicateSlots) {
+      // 為每個節目設定預設保留狀態：每個時間槽預設保留最後一個（最新的）
+      duplicateSlots.forEach(slot => {
+        slot.programs.forEach((p, idx) => {
+          p.keep = idx === slot.programs.length - 1;
+        });
+      });
+
+      function countToDelete() {
+        return duplicateSlots.reduce((sum, slot) => sum + slot.programs.filter(p => !p.keep).length, 0);
+      }
+
+      function renderSlot(slotIdx) {
+        const slot = duplicateSlots[slotIdx];
+        const container = dialog.querySelector(`[data-cleanup-slot="${slotIdx}"]`);
+        if (!container) return;
+        container.innerHTML = slot.programs.map((p, pIdx) => {
+          const isKeep = !!p.keep;
+          const titleShort = p.title.length > 60 ? p.title.slice(0, 60) + '…' : p.title;
+          return `
+            <div class="cleanup-program-row" data-slot-index="${slotIdx}" data-program-index="${pIdx}" style="display: flex; align-items: center; gap: 8px; margin: 6px 0; padding: 6px 8px; background: ${isKeep ? '#e7f5ec' : '#fff5f5'}; border-radius: 4px; border-left: 3px solid ${isKeep ? '#28a745' : '#dc3545'};">
+              <span style="flex: 1; font-size: 0.9em; overflow: hidden; text-overflow: ellipsis;" title="${escapeHtml(p.title)}">${escapeHtml(titleShort)}</span>
+              <button type="button" class="cleanup-btn-keep" data-slot-index="${slotIdx}" data-program-index="${pIdx}" style="flex-shrink: 0; background: #28a745; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 0.85rem;">保留</button>
+              <button type="button" class="cleanup-btn-delete" data-slot-index="${slotIdx}" data-program-index="${pIdx}" style="flex-shrink: 0; background: #dc3545; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 0.85rem;">刪除</button>
+              <span style="flex-shrink: 0; font-weight: 600; font-size: 0.85rem; ${isKeep ? 'color: #28a745;' : 'color: #dc3545;'}">${isKeep ? '(保留)' : '(刪除)'}</span>
+            </div>`;
+        }).join('');
+      }
+
+      function updateCleanButton() {
+        const n = countToDelete();
+        const btn = dialog.querySelector('.cleanup-start-btn');
+        if (btn) btn.textContent = n > 0 ? `開始清理 (${n} 個)` : '開始清理';
+      }
+
       const dialog = document.createElement('div');
+      dialog.className = 'cleanup-duplicate-dialog';
       dialog.style.cssText = `
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
         background: rgba(0,0,0,0.8); z-index: 10000;
         display: flex; align-items: center; justify-content: center;
       `;
-      
+
       const totalDuplicates = duplicateSlots.reduce((sum, slot) => sum + slot.programs.length - 1, 0);
-      
       dialog.innerHTML = `
-        <div style="background: white; padding: 30px; border-radius: 10px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto;">
+        <div style="background: white; padding: 30px; border-radius: 10px; max-width: 700px; width: 90%; max-height: 85vh; overflow-y: auto;">
           <h3>🧹 清理重複節目</h3>
-          <p>發現 <strong>${duplicateSlots.length}</strong> 個重複時間槽，共 <strong>${totalDuplicates}</strong> 個重複節目需要清理。</p>
-          
-          <div style="margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 5px;">
-            <h4>清理策略：</h4>
-            <ul style="margin: 10px 0; padding-left: 20px;">
-              <li>保留每個時間槽最後一次上傳的節目（最新的）</li>
-              <li>刪除其他重複的節目</li>
-              <li>同時從 Contentful 和本地數據中清理</li>
-            </ul>
+          <p>發現 <strong>${duplicateSlots.length}</strong> 個重複時間槽，共 <strong>${totalDuplicates}</strong> 個重複節目。請在每個時間槽中選擇要<strong>保留</strong>的節目（僅能一個），其餘將被刪除。</p>
+          <div style="margin: 15px 0; padding: 12px; background: #f8f9fa; border-radius: 5px; font-size: 0.9rem;">
+            <strong>說明：</strong>點擊某節目的「保留」後，該時間槽內其他節目會自動標為刪除；每個時間槽只能保留一個節目。確定後按「開始清理」執行。
           </div>
-          
           <div style="margin: 20px 0;">
-            <h4>重複時間槽預覽：</h4>
-            <div style="max-height: 200px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; border-radius: 5px;">
-              ${duplicateSlots.slice(0, 10).map(slot => `
-                <div style="margin: 5px 0; padding: 5px; background: #fff3cd; border-radius: 3px;">
-                  <strong>${slot.date} ${slot.time}</strong> (${slot.programs.length} 個節目)
-                  <div style="font-size: 0.9em; color: #666;">
-                    ${slot.programs.slice(0, 3).map((p, index) => {
-                      const isLast = index === slot.programs.length - 1;
-                      const isKeep = index === slot.programs.length - 1;
-                      return `• ${p.title}${isKeep ? ' <span style="color: #28a745; font-weight: bold;">(保留)</span>' : ' <span style="color: #dc3545;">(刪除)</span>'}`;
-                    }).join('<br>')}
-                    ${slot.programs.length > 3 ? `<br>• ... 還有 ${slot.programs.length - 3} 個` : ''}
-                  </div>
+            <h4>重複時間槽預覽（可點選保留/刪除）：</h4>
+            <div style="max-height: 320px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; border-radius: 5px;">
+              ${duplicateSlots.map((slot, slotIdx) => `
+                <div style="margin: 12px 0; padding: 10px; background: #fff9e6; border-radius: 5px; border: 1px solid #eee;">
+                  <strong>${slot.date} ${slot.time}</strong>（${slot.programs.length} 個節目）
+                  <div data-cleanup-slot="${slotIdx}" style="margin-top: 8px;"></div>
                 </div>
               `).join('')}
-              ${duplicateSlots.length > 10 ? `<div style="text-align: center; color: #666; margin-top: 10px;">... 還有 ${duplicateSlots.length - 10} 個時間槽</div>` : ''}
             </div>
           </div>
-          
           <div style="margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px;">
-            <button onclick="this.closest('div').parentElement.remove()" style="background: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">
-              取消
-            </button>
-            <button onclick="startCleanupProcess(); this.closest('div').parentElement.remove()" style="background: #dc3545; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">
-              開始清理 (${totalDuplicates} 個)
-            </button>
+            <button type="button" class="cleanup-cancel-btn" style="background: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">取消</button>
+            <button type="button" class="cleanup-start-btn" style="background: #dc3545; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">開始清理 (${totalDuplicates} 個)</button>
           </div>
         </div>
       `;
-      
+
       document.body.appendChild(dialog);
-      
-      // 點擊背景關閉
+
+      duplicateSlots.forEach((_, slotIdx) => renderSlot(slotIdx));
+      updateCleanButton();
+
       dialog.addEventListener('click', function(e) {
-        if (e.target === dialog) {
+        if (e.target === dialog) { dialog.remove(); return; }
+        if (e.target.classList.contains('cleanup-cancel-btn')) {
           dialog.remove();
+          return;
+        }
+        const slotIdx = e.target.getAttribute('data-slot-index');
+        const programIdx = e.target.getAttribute('data-program-index');
+        if (slotIdx == null || programIdx == null) return;
+        const slot = duplicateSlots[parseInt(slotIdx, 10)];
+        const pIdx = parseInt(programIdx, 10);
+        if (!slot || pIdx < 0 || pIdx >= slot.programs.length) return;
+
+        if (e.target.classList.contains('cleanup-btn-keep')) {
+          slot.programs.forEach((p, i) => { p.keep = i === pIdx; });
+          renderSlot(parseInt(slotIdx, 10));
+          updateCleanButton();
+          return;
+        }
+        if (e.target.classList.contains('cleanup-btn-delete')) {
+          slot.programs[pIdx].keep = false;
+          const kept = slot.programs.findIndex(p => p.keep);
+          if (kept === -1) slot.programs[0].keep = true;
+          renderSlot(parseInt(slotIdx, 10));
+          updateCleanButton();
         }
       });
+
+      dialog.querySelector('.cleanup-start-btn').addEventListener('click', function() {
+        const toDelete = countToDelete();
+        if (toDelete === 0) {
+          alert('目前沒有勾選要刪除的節目，請先選擇要刪除的項目後再執行清理。');
+          return;
+        }
+        startCleanupProcess(duplicateSlots);
+        dialog.remove();
+      });
+    }
+
+    function escapeHtml(str) {
+      if (str == null) return '';
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
     }
     
-    // 開始清理過程
-    async function startCleanupProcess() {
+    // 開始清理過程（可傳入使用者選擇的 duplicateSlots，每節目有 .keep 表示保留）
+    async function startCleanupProcess(userSelectedSlots) {
       try {
         console.log('🚀 startCleanupProcess 開始執行');
         showStatus('🔄 開始清理重複節目...', 'info');
         
-        // 檢查 events 是否存在
         if (!events || Object.keys(events).length === 0) {
           console.error('❌ events 數據不存在或為空');
           showStatus('❌ 沒有找到節目數據', 'error');
           return;
         }
-        
-        console.log('📊 events 數據檢查通過，共有', Object.keys(events).length, '個日期的數據');
-        
-        // 使用本地 events 數據檢測重複（與 checkDuplicateTimeSlots 一致）
-        const duplicateSlots = [];
-        
-        Object.keys(events).forEach(date => {
-          const dayEvents = events[date];
-          if (!dayEvents || !Array.isArray(dayEvents)) {
-            console.warn(`⚠️ 日期 ${date} 的數據格式不正確:`, dayEvents);
-            return;
-          }
-          
-          const timeGroups = {};
-          
-          dayEvents.forEach(event => {
-            if (!event.time) {
-              console.warn('⚠️ 節目缺少時間信息:', event);
-              return;
-            }
-            
-            if (!timeGroups[event.time]) {
-              timeGroups[event.time] = [];
-            }
-            timeGroups[event.time].push(event);
+
+        let duplicateSlots;
+        if (userSelectedSlots && userSelectedSlots.length > 0) {
+          duplicateSlots = userSelectedSlots;
+        } else {
+          duplicateSlots = [];
+          Object.keys(events).forEach(date => {
+            const dayEvents = events[date];
+            if (!dayEvents || !Array.isArray(dayEvents)) return;
+            const timeGroups = {};
+            dayEvents.forEach(event => {
+              if (!event.time) return;
+              if (!timeGroups[event.time]) timeGroups[event.time] = [];
+              timeGroups[event.time].push(event);
+            });
+            Object.keys(timeGroups).forEach(time => {
+              if (timeGroups[time].length > 1) {
+                const programs = timeGroups[time];
+                programs.forEach((p, idx) => { p.keep = idx === programs.length - 1; });
+                duplicateSlots.push({ date: date, time: time, programs: programs });
+              }
+            });
           });
-          
-          Object.keys(timeGroups).forEach(time => {
-            if (timeGroups[time].length > 1) {
-              duplicateSlots.push({
-                date: date,
-                time: time,
-                programs: timeGroups[time]
-              });
-            }
-          });
-        });
+        }
         
-        console.log('🔍 開始清理，發現重複時間槽數量:', duplicateSlots.length);
+        console.log('🔍 開始清理，重複時間槽數量:', duplicateSlots.length);
         
         if (duplicateSlots.length === 0) {
-          console.log('✅ 沒有發現重複時間槽');
           showStatus('✅ 沒有發現重複時間槽', 'success');
           return;
         }
         
+        let totalToDelete = 0;
+        duplicateSlots.forEach(slot => {
+          totalToDelete += slot.programs.filter(p => !p.keep).length;
+        });
+        if (totalToDelete === 0) {
+          showStatus('✅ 沒有要刪除的節目', 'success');
+          return;
+        }
+        
+        const progressDialog = showCleanupProgressDialog();
+        let processedCount = 0;
         let cleanedCount = 0;
         let errorCount = 0;
-        let totalToDelete = 0;
         
-        // 計算總共需要刪除的節目數量
-        duplicateSlots.forEach(slot => {
-          totalToDelete += slot.programs.length - 1; // 減去保留的最後一個
-        });
-        
-        // 顯示進度對話框
-        console.log('📊 顯示進度對話框');
-        const progressDialog = showCleanupProgressDialog();
-        
-        let processedCount = 0;
-        
-        // 清理每個重複時間槽
         for (let i = 0; i < duplicateSlots.length; i++) {
           const slot = duplicateSlots[i];
-          const programs = slot.programs;
+          const programsToDelete = slot.programs.filter(p => !p.keep);
           
           console.log(`🔄 處理重複時間槽 ${i + 1}/${duplicateSlots.length}: ${slot.date} ${slot.time}`);
           
-          // 保留最後一個節目（最新的），刪除其他
-          for (let j = 0; j < programs.length - 1; j++) {
-            const programToDelete = programs[j];
+          for (let j = 0; j < programsToDelete.length; j++) {
+            const programToDelete = programsToDelete[j];
             
             try {
               processedCount++;
@@ -6653,6 +6690,131 @@
       return dialog;
     }
     
+    // 依 YouTube ID 搜尋並刪除節目（可僅刪除「排程在指定時間之前」的節目，例如未上映影片）
+    let deleteByYtIdResults = [];
+
+    function showDeleteByYouTubeIdDialog() {
+      const dialog = document.createElement('div');
+      dialog.className = 'delete-by-ytid-dialog';
+      dialog.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:10000;display:flex;align-items:center;justify-content:center;';
+      const defaultDate = '2026-03-08';
+      const defaultTime = '08:00';
+      dialog.innerHTML = `
+        <div style="background:white;padding:24px;border-radius:10px;max-width:560px;width:92%;max-height:90vh;overflow-y:auto;">
+          <h3 style="margin-top:0;">🎬 依 YouTube ID 刪除節目</h3>
+          <p style="color:#666;font-size:0.9rem;">輸入誤上架的 YouTube 影片 ID 或完整網址，可選擇「僅刪除排程在以下時間之前」的節目（例如影片 3/8 上午 8:00 才上映，則只刪該時間前的排程）。</p>
+          <div style="margin:12px 0;">
+            <label style="display:block;font-weight:600;margin-bottom:4px;">YouTube 影片 ID 或網址</label>
+            <input type="text" id="deleteYtIdInput" placeholder="例如 ID 或 youtube.com/watch?v=xxx、youtu.be/xxx" style="width:100%;padding:8px 12px;border:1px solid #ddd;border-radius:6px;box-sizing:border-box;">
+          </div>
+          <div style="margin:12px 0;">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+              <input type="checkbox" id="deleteYtIdBeforeOnly" checked>
+              <span>僅刪除排程在以下時間<strong>之前</strong>的節目</span>
+            </label>
+            <div style="display:flex;gap:8px;margin-top:8px;align-items:center;">
+              <input type="date" id="deleteYtIdBeforeDate" value="${defaultDate}" style="padding:6px 10px;border:1px solid #ddd;border-radius:4px;">
+              <input type="time" id="deleteYtIdBeforeTime" value="${defaultTime}" style="padding:6px 10px;border:1px solid #ddd;border-radius:4px;">
+            </div>
+          </div>
+          <div style="margin:16px 0;">
+            <button type="button" id="deleteYtIdSearchBtn" style="background:#17a2b8;color:white;border:none;padding:10px 20px;border-radius:6px;cursor:pointer;">搜尋</button>
+            <span style="margin-left:10px;color:#666;font-size:0.85rem;">若找不到，請先按「重新載入」再搜尋。</span>
+          </div>
+          <div id="deleteYtIdResultList" style="max-height:240px;overflow-y:auto;border:1px solid #eee;border-radius:6px;padding:10px;background:#f8f9fa;margin:12px 0;display:none;"></div>
+          <div style="margin-top:16px;display:flex;justify-content:flex-end;gap:10px;">
+            <button type="button" class="deleteYtIdCancelBtn" style="background:#6c757d;color:white;border:none;padding:10px 20px;border-radius:6px;cursor:pointer;">取消</button>
+            <button type="button" id="deleteYtIdConfirmBtn" style="background:#dc3545;color:white;border:none;padding:10px 20px;border-radius:6px;cursor:pointer;display:none;">確認刪除</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(dialog);
+
+      const ytIdInput = dialog.querySelector('#deleteYtIdInput');
+      ytIdInput.addEventListener('input', function() {
+        const raw = (this.value || '').trim();
+        const id = extractYouTubeId(raw);
+        if (id && raw !== id) this.value = id;
+      });
+      ytIdInput.addEventListener('paste', function() {
+        setTimeout(() => {
+          const raw = (this.value || '').trim();
+          const id = extractYouTubeId(raw);
+          if (id && raw !== id) this.value = id;
+        }, 0);
+      });
+
+      dialog.querySelector('.deleteYtIdCancelBtn').onclick = () => dialog.remove();
+      dialog.addEventListener('click', e => { if (e.target === dialog) dialog.remove(); });
+
+      dialog.querySelector('#deleteYtIdSearchBtn').onclick = function() {
+        const raw = (document.getElementById('deleteYtIdInput').value || '').trim();
+        const ytId = extractYouTubeId(raw) || raw.slice(0, 11);
+        if (!ytId) {
+          alert('請輸入 YouTube 影片 ID 或貼上 YouTube 網址');
+          return;
+        }
+        const beforeOnly = document.getElementById('deleteYtIdBeforeOnly').checked;
+        const beforeDate = document.getElementById('deleteYtIdBeforeDate').value;
+        const beforeTime = document.getElementById('deleteYtIdBeforeTime').value;
+        const beforeDatetime = beforeOnly && beforeDate && beforeTime ? new Date(beforeDate + 'T' + beforeTime + ':00') : null;
+
+        const list = [];
+        Object.keys(events || {}).forEach(date => {
+          (events[date] || []).forEach(ev => {
+            const evId = (ev.youtubeId || '').trim().slice(0, 11);
+            if (evId !== ytId) return;
+            const slotDt = new Date(date + 'T' + (ev.time || '00:00') + ':00');
+            if (beforeDatetime && slotDt >= beforeDatetime) return;
+            list.push({ date, event: ev });
+          });
+        });
+
+        deleteByYtIdResults = list;
+        const resultEl = dialog.querySelector('#deleteYtIdResultList');
+        const confirmBtn = dialog.querySelector('#deleteYtIdConfirmBtn');
+        if (list.length === 0) {
+          resultEl.style.display = 'block';
+          resultEl.innerHTML = '<p style="margin:0;color:#666;">未找到符合條件的節目。</p>';
+          confirmBtn.style.display = 'none';
+        } else {
+          resultEl.style.display = 'block';
+          resultEl.innerHTML = '<p style="margin:0 0 8px 0;font-weight:600;">找到 ' + list.length + ' 筆：</p>' +
+            list.map(({ date, event }) => `<div style="padding:6px 8px;margin:4px 0;background:white;border-radius:4px;border-left:3px solid #dc3545;">${date} ${event.time || ''} － ${escapeHtml((event.title || '').slice(0, 50))}${(event.title || '').length > 50 ? '…' : ''}</div>`).join('');
+          confirmBtn.style.display = 'inline-block';
+          confirmBtn.textContent = '確認刪除 (' + list.length + ' 筆)';
+        }
+      };
+
+      dialog.querySelector('#deleteYtIdConfirmBtn').onclick = async function() {
+        if (deleteByYtIdResults.length === 0) return;
+        if (!confirm('確定要刪除 ' + deleteByYtIdResults.length + ' 筆節目嗎？將同時從 Contentful 與本地數據刪除，無法復原。')) return;
+        const btn = this;
+        btn.disabled = true;
+        btn.textContent = '刪除中…';
+        let ok = 0, err = 0;
+        for (const { date, event } of deleteByYtIdResults) {
+          try {
+            if (event.contentfulId) await deleteProgramFromContentful(event.contentfulId);
+          } catch (e) {
+            err++;
+            console.error('Contentful 刪除失敗:', event.title, e);
+          }
+          const idx = (events[date] || []).findIndex(e => e === event);
+          if (idx !== -1) {
+            events[date].splice(idx, 1);
+            if (events[date].length === 0) delete events[date];
+            ok++;
+          }
+          await new Promise(r => setTimeout(r, 200));
+        }
+        saveEvents();
+        renderCurrentView();
+        showStatus('✅ 已刪除 ' + ok + ' 筆節目' + (err > 0 ? '，' + err + ' 筆 Contentful 刪除失敗' : ''), err > 0 ? 'warning' : 'success');
+        dialog.remove();
+      };
+    }
+
     // 從 Contentful 刪除節目
     async function deleteProgramFromContentful(contentfulId) {
       try {
@@ -10520,6 +10682,170 @@
         showStatus('批次刪除失敗: ' + error.message, 'error');
         alert('批次刪除失敗：' + error.message);
       }
+    }
+
+    function getOrderedTimeSlots(periodKey) {
+      const order = ['MIDNIGHT', 'MORNING', 'AFTERNOON', 'EVENING'];
+      if (periodKey && TIME_SLOTS[periodKey]) {
+        return TIME_SLOTS[periodKey].slots.slice();
+      }
+      const all = [];
+      order.forEach(key => {
+        if (TIME_SLOTS[key]) {
+          all.push(...TIME_SLOTS[key].slots);
+        }
+      });
+      return all;
+    }
+
+    // 空檔查詢
+    function showEmptySlotsDialog() {
+      const dialog = document.createElement('div');
+      dialog.className = 'modal';
+      dialog.style.display = 'block';
+      dialog.style.zIndex = '10050';
+      dialog.innerHTML = `
+        <div class="modal-content" style="max-width: 700px;">
+          <div class="modal-header">
+            <h3 style="margin: 0;">🕳️ 空檔查詢</h3>
+            <button class="modal-close" onclick="this.closest('.modal').remove()">&times;</button>
+          </div>
+          <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:12px;">
+            <div>
+              <label style="display:block; margin-bottom:4px; font-weight:600;">開始日期</label>
+              <input type="date" id="emptyStartDate" style="padding:6px 10px; border:1px solid #ddd; border-radius:4px;">
+            </div>
+            <div>
+              <label style="display:block; margin-bottom:4px; font-weight:600;">結束日期</label>
+              <input type="date" id="emptyEndDate" style="padding:6px 10px; border:1px solid #ddd; border-radius:4px;">
+            </div>
+            <div>
+              <label style="display:block; margin-bottom:4px; font-weight:600;">時段</label>
+              <select id="emptyPeriod" style="padding:6px 10px; border:1px solid #ddd; border-radius:4px;">
+                <option value="ALL">全部時段</option>
+                <option value="MIDNIGHT">午夜場</option>
+                <option value="MORNING">早場</option>
+                <option value="AFTERNOON">下午場</option>
+                <option value="EVENING">晚場</option>
+              </select>
+            </div>
+          </div>
+          <div style="display:flex; gap:10px; margin-bottom:10px; flex-wrap:wrap;">
+            <button id="runEmptyQuery" class="btn" style="background:#20c997;">查詢空檔</button>
+            <button id="runMonthlyEmptyByPeriod" class="btn" style="background:#0d6efd;">依時段整月空檔（可批次上架）</button>
+            <button id="copyEmptyResult" class="btn" style="background:#6c757d;">複製結果</button>
+          </div>
+          <div id="emptyResult" style="max-height: 320px; overflow-y: auto; background:#f8f9fa; border:1px solid #eee; border-radius:6px; padding:10px; font-size:13px; white-space:pre-wrap;"></div>
+        </div>
+      `;
+      document.body.appendChild(dialog);
+
+      const startInput = dialog.querySelector('#emptyStartDate');
+      const endInput = dialog.querySelector('#emptyEndDate');
+      const periodSelect = dialog.querySelector('#emptyPeriod');
+      const resultBox = dialog.querySelector('#emptyResult');
+      const runBtn = dialog.querySelector('#runEmptyQuery');
+      const runMonthlyBtn = dialog.querySelector('#runMonthlyEmptyByPeriod');
+      const copyBtn = dialog.querySelector('#copyEmptyResult');
+
+      const today = new Date().toISOString().split('T')[0];
+      const oneMonthLater = new Date();
+      oneMonthLater.setMonth(oneMonthLater.getMonth() + 1);
+      const endDefault = oneMonthLater.toISOString().split('T')[0];
+      if (startInput) startInput.value = today;
+      if (endInput) endInput.value = endDefault;
+
+      runBtn.onclick = () => {
+        const startDate = startInput.value;
+        const endDate = endInput.value;
+        if (!startDate || !endDate) {
+          alert('請選擇開始與結束日期');
+          return;
+        }
+        if (new Date(endDate) < new Date(startDate)) {
+          alert('結束日期不能早於開始日期');
+          return;
+        }
+        const dateRange = generateDateRange(startDate, endDate);
+        const periodKey = periodSelect.value;
+        const timeSlots = getOrderedTimeSlots(periodKey);
+        const now = new Date();
+        const emptyList = [];
+        dateRange.forEach(date => {
+          timeSlots.forEach(time => {
+            const slotDateTime = new Date(date + 'T' + time + ':00');
+            if (slotDateTime <= now) return; // 已過去的時段不列入、不查詢
+            const ev = getEvent(date, time);
+            if (!ev) {
+              emptyList.push(`${date} ${time}`);
+            }
+          });
+        });
+        resultBox.textContent = emptyList.length > 0
+          ? `空檔數量：${emptyList.length}\n` + emptyList.join('\n')
+          : '沒有空檔';
+      };
+
+      runMonthlyBtn.onclick = () => {
+        const startDate = startInput.value;
+        const endDate = endInput.value;
+        if (!startDate || !endDate) {
+          alert('請選擇開始與結束日期');
+          return;
+        }
+        if (new Date(endDate) < new Date(startDate)) {
+          alert('結束日期不能早於開始日期');
+          return;
+        }
+        const dateRange = generateDateRange(startDate, endDate);
+        const now = new Date();
+        const periodOrder = ['MIDNIGHT', 'MORNING', 'AFTERNOON', 'EVENING'];
+        const byMonth = {};
+        dateRange.forEach(d => {
+          const m = d.slice(0, 7);
+          if (!byMonth[m]) byMonth[m] = [];
+          byMonth[m].push(d);
+        });
+        const lines = [];
+        Object.keys(byMonth).sort().forEach(month => {
+          const emptyPeriods = [];
+          periodOrder.forEach(periodKey => {
+            const slots = (TIME_SLOTS[periodKey] && TIME_SLOTS[periodKey].slots) || [];
+            let hasAnyProgram = false;
+            let hasFutureSlot = false;
+            for (const date of byMonth[month]) {
+              for (const time of slots) {
+                const slotDateTime = new Date(date + 'T' + time + ':00');
+                if (slotDateTime <= now) continue;
+                hasFutureSlot = true;
+                if (getEvent(date, time)) {
+                  hasAnyProgram = true;
+                  break;
+                }
+              }
+              if (hasAnyProgram) break;
+            }
+            if (hasFutureSlot && !hasAnyProgram && slots.length > 0) {
+              emptyPeriods.push(TIME_SLOTS[periodKey].name);
+            }
+          });
+          if (emptyPeriods.length > 0) {
+            lines.push(`${month}: ${emptyPeriods.join('、')} 整月無節目，可批次上架`);
+          }
+        });
+        resultBox.textContent = lines.length > 0
+          ? '依時段整月空檔（每月月底計算）\n\n' + lines.join('\n')
+          : '範圍內各月皆有排程，無整月空檔時段。';
+      };
+
+      copyBtn.onclick = async () => {
+        try {
+          await navigator.clipboard.writeText(resultBox.textContent || '');
+          showStatus('✅ 已複製空檔結果', 'success');
+        } catch (e) {
+          alert('複製失敗，請手動選取複製');
+        }
+      };
     }
 
     // 獲取選中的節目

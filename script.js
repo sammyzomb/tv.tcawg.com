@@ -8,6 +8,13 @@ function escapeHtml(s='') {
     .replace(/'/g,'&#39;');
 }
 
+// 首頁標籤一律不顯示（屏蔽）
+var HIDDEN_DISPLAY_TAGS = ['亞洲', '繞著地球跑'];
+function shouldHideDisplayTag(tag) {
+  if (!tag || typeof tag !== 'string') return true;
+  return HIDDEN_DISPLAY_TAGS.some(h => (tag || '').trim() === h);
+}
+
 // 獲取台灣時間
 function getTaiwanTime() {
   // 直接返回當前時間，假設系統時間已經是台灣時間
@@ -1352,7 +1359,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="program-title">${escapeHtml(program.title)}</div>
             <div class="program-description">${escapeHtml(program.description)}</div>
             <div class="schedule-meta">
-              <div class="program-category">${escapeHtml(program.category)}</div>
+              <!-- 節目分類一律隱藏，不顯示 -->
               <div class="schedule-duration">${program.duration}分鐘</div>
             </div>
           </div>
@@ -2601,21 +2608,19 @@ function updateNowPlayingArea(program) {
     nowPlayingDuration.textContent = (program.duration || '30') + '分鐘';
   }
   
-  // 更新標題旁的標籤
+  // 更新標題旁的標籤（亞洲、繞著地球跑一律不顯示）
   const nowPlayingTitleTags = document.getElementById('now-playing-title-tags');
   if (nowPlayingTitleTags) {
     let titleTags = [];
     
-    // 添加節目分類標籤
-    if (program.category && program.category.trim() !== '') {
-      titleTags.push(`<span class="topic-tag">${escapeHtml(program.category)}</span>`);
-    }
+    // 節目分類一律隱藏，不顯示
+    // （不添加 program.category 標籤）
     
-    // 添加主題探索標籤
+    // 添加主題探索標籤（屏蔽繞著地球跑等）
     if (program.tags && program.tags.length > 0) {
-      const topicTags = program.tags.map(topic => 
-        `<span class="topic-tag">${escapeHtml(topic)}</span>`
-      );
+      const topicTags = program.tags
+        .filter(topic => !shouldHideDisplayTag(topic))
+        .map(topic => `<span class="topic-tag">${escapeHtml(topic)}</span>`);
       titleTags = titleTags.concat(topicTags);
     }
     
@@ -2824,13 +2829,13 @@ function renderUpcomingProgramItem(program, upcomingProgramsList) {
       <div class="upcoming-program-title">${escapeHtml(program.title || '未命名節目')}</div>
       <div class="upcoming-program-description">${escapeHtml(program.description || '節目描述暫無')}</div>
       <div class="upcoming-program-meta">
-        ${program.category && program.category.trim() !== '' ? `<span class="upcoming-program-category">${escapeHtml(program.category)}</span>` : ''}
+        <!-- 節目分類一律隱藏，不顯示 -->
       </div>
-      ${program.tags && program.tags.length > 0 ? `
+      ${program.tags && program.tags.length > 0 ? (() => { const filtered = program.tags.filter(t => !shouldHideDisplayTag(t)); return filtered.length > 0 ? `
         <div class="upcoming-program-topics">
-          ${program.tags.map(topic => `<span class="topic-tag">${escapeHtml(topic)}</span>`).join('')}
+          ${filtered.map(topic => `<span class="topic-tag">${escapeHtml(topic)}</span>`).join('')}
         </div>
-      ` : ''}
+      ` : ''; })() : ''}
     </div>
   `;
 

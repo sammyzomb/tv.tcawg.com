@@ -178,11 +178,11 @@ body.menu-open {
 .cap-desc { font-size: 0.88em; color: #e9f6fd; font-weight: 400; }
 
 
-/* --- 影片內容區塊 --- */
+/* --- 影片內容區塊（精選節目推薦）：縮小與上方節目表的間距 --- */
 .video-section {
   background: var(--section-bg);
-  padding: 60px 5%;
-  margin-top: -40px;
+  padding: 24px 5% 40px;
+  margin-top: 0;
   position: relative;
   border-top-left-radius: 20px;
   border-top-right-radius: 20px;
@@ -709,31 +709,32 @@ body.dark-theme .continent-item .label .en{ color: var(--text-color-light); }
   opacity: 0.3;
 }
 
-/* TLC 風格容器 - 滿版寬度 */
+/* TLC 風格容器 - 兩欄等高，底部對齊 */
 .tlc-schedule-container {
   display: grid;
   grid-template-columns: 3fr 2fr;
+  align-items: stretch;
   gap: 0;
   width: 100%;
   max-width: none;
   margin: 0;
   background: var(--card-bg);
   border-radius: 0;
-  overflow: visible; /* 改為 visible，讓按鈕可以顯示 */
+  overflow: visible;
   box-shadow: none;
   border: none;
-  min-height: 900px;
-  height: 900px; /* 調整為適應右側更高的區域 */
+  min-height: 420px;
+  height: auto;
 }
 
-/* 左側現正播出區域 - 固定高度 */
+/* 左側現正播出區域 - 與右側即將播出等高，底部對齊 */
 .now-playing-area {
   padding: 0;
   background: var(--card-bg);
-  height: 800px; /* 固定高度 */
-  overflow: hidden; /* 防止內容溢出 */
+  min-height: 0;
   display: flex;
   flex-direction: column;
+  align-self: stretch;
 }
 
 .now-playing-header {
@@ -774,7 +775,8 @@ body.dark-theme .continent-item .label .en{ color: var(--text-color-light); }
 
 .now-playing-card {
   position: relative;
-  height: 100%;
+  flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
 }
@@ -916,13 +918,35 @@ body.dark-theme .continent-item .label .en{ color: var(--text-color-light); }
   flex-shrink: 0;
 }
 
+/* 現正播出描述：依螢幕高度自適應，區塊內捲動不截字 */
 .now-playing-description {
-  font-size: 1.2rem; /* 縮小一號 */
+  font-size: 1.2rem;
   color: var(--text-color-light);
   line-height: 1.6;
-  margin: 0 0 15px 0; /* 減少底部間距 */
-  flex: none; /* 改為不自動擴展，讓文字自然顯示 */
-  overflow: visible; /* 移除滾動，讓文字完整顯示 */
+  margin: 0 0 15px 0;
+  flex: none;
+  max-height: clamp(140px, 28vh, 320px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 8px;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+.now-playing-description::-webkit-scrollbar {
+  width: 6px;
+}
+.now-playing-description::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.06);
+  border-radius: 3px;
+}
+.now-playing-description::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+.now-playing-description::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
 }
 
 .now-playing-meta {
@@ -966,15 +990,16 @@ body.dark-theme .continent-item .label .en{ color: var(--text-color-light); }
   /* 移除調試用的背景和邊框 */
 }
 
-/* 右側即將播出節目列表區域 - 不同高度 */
+/* 右側即將播出節目列表區域 - 高度由內容決定，左側與此等高對齊 */
 .upcoming-programs-area {
   background: var(--card-bg);
   border-left: 1px solid var(--card-border);
   display: flex;
   flex-direction: column;
-  height: 900px; /* 比左側高 100px */
+  min-height: 420px;
+  height: auto;
   max-height: none;
-  overflow: visible; /* 改為 visible，讓按鈕可以顯示 */
+  overflow: visible;
 }
 
 .upcoming-programs-header {
@@ -1194,24 +1219,38 @@ body.dark-theme .continent-item .label .en{ color: var(--text-color-light); }
   transition: all 0.2s ease;
 }
 
-/* 現正播出藍色按鈕與即將播出一致 */
-.now-playing-title-tags .topic-tag {
+/* 現正播出與即將播出的標籤按鈕：大小、尺寸、顏色一律相同 */
+.now-playing-title-tags .topic-tag,
+.upcoming-program-topics .topic-tag,
+.upcoming-program-meta .upcoming-program-category {
   background: #007bff;
+  color: white;
   padding: 6px 12px;
   border-radius: 10px;
   font-size: 0.9rem;
   font-weight: 700;
+  border: none;
+  display: inline-block;
+  box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
+  transition: all 0.2s ease;
 }
 
-/* 右側即將播出區域的標籤字體適中大小 */
-.upcoming-program-topics .topic-tag {
-  font-size: 1.0rem; /* 縮小一號 */
-  padding: 6px 12px; /* 相應調整內邊距 */
+/* 右側即將播出：分類標籤與現正播出一致 */
+.upcoming-program-category {
+  color: white;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  background: #007bff;
+  border: none;
+  box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
 }
 
-.topic-tag:hover {
-  background: #2980b9;
-  box-shadow: 0 4px 12px rgba(52, 152, 219, 0.4);
+.topic-tag:hover,
+.upcoming-program-category:hover {
+  background: #0056b3;
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.4);
 }
 
 /* 響應式設計 - 滿版寬度 */
@@ -1219,7 +1258,8 @@ body.dark-theme .continent-item .label .en{ color: var(--text-color-light); }
   .tlc-schedule-container {
     grid-template-columns: 3fr 2fr;
     gap: 0;
-    height: 900px;
+    height: auto;
+    min-height: 420px;
   }
   
   .upcoming-programs-area {
@@ -1245,7 +1285,7 @@ body.dark-theme .continent-item .label .en{ color: var(--text-color-light); }
     grid-template-columns: 1fr;
     gap: 0;
     height: auto;
-    min-height: 900px;
+    min-height: 420px;
   }
   
   .upcoming-programs-area {
@@ -1295,7 +1335,7 @@ body.dark-theme .continent-item .label .en{ color: var(--text-color-light); }
   
   .tlc-schedule-container {
     height: auto;
-    min-height: 700px;
+    min-height: 380px;
   }
   
   .upcoming-programs-area {
@@ -1303,7 +1343,7 @@ body.dark-theme .continent-item .label .en{ color: var(--text-color-light); }
   }
   
   .now-playing-thumbnail {
-    height: 350px; /* 從 300px 增加到 350px */
+    height: 350px;
   }
   
   .now-playing-content {
